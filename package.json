@@ -1,0 +1,79 @@
+{
+  "name": "threshold",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "dev": "convex dev --start 'vite dev'",
+    "typecheck": "tsc6 --noEmit",
+    "build": "pnpm typecheck && vite build",
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "effect:diagnostics": "effect-language-service diagnostics --project tsconfig.json --format pretty --strict --severity error,warning",
+    "lint": "pnpm lint:code && pnpm lint:complexity",
+    "lint:code": "oxlint --type-aware --deny-warnings .",
+    "lint:fix": "oxlint --type-aware --fix .",
+    "lint:complexity": "eslint . --no-warn-ignored",
+    "lint:complexity:reject": "LINT_COMPLEXITY_REJECT_ONLY=1 eslint . --quiet --no-warn-ignored",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "deadcode": "knip",
+    "check": "pnpm typecheck && pnpm effect:diagnostics && pnpm lint && pnpm format:check && pnpm test"
+  },
+  "dependencies": {
+    "@agentmail/convex": "^0.1.0",
+    "@convex-dev/agent": "^0.7.1",
+    "@convex-dev/react-query": "^0.1.0",
+    "@convex-dev/static-hosting": "^0.2.1",
+    "@convex-dev/workflow": "^0.4.6",
+    "@convex-dev/workpool": "^0.4.10",
+    "@firecrawl/firecrawl-convex": "^0.1.1",
+    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-router": "^1.170.19",
+    "@tanstack/react-start": "^1.168.36",
+    "@xyflow/react": "^12.11.5",
+    "convex": "^1.44.0",
+    "convex-helpers": "^0.1.123",
+    "effect": "4.0.0-rc.112",
+    "maplibre-gl": "^6.6.0",
+    "motion": "^13.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@convex-dev/eslint-plugin": "^4.0.0",
+    "@effect/language-service": "0.87.2",
+    "@oxlint/plugins": "1.80.0",
+    "@playwright/test": "^1.62.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.3.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@typescript-eslint/parser": "8.68.0",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "10.9.1",
+    "eslint-plugin-sonarjs": "4.2.0",
+    "knip": "^6.32.2",
+    "oxlint": "1.80.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@tailwindcss/oxide"
+    ]
+  },
+  "packageManager": "pnpm@10.10.0",
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}
