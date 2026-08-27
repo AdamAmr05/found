@@ -1,4 +1,4 @@
-# Threshold hackathon log
+# Found hackathon log
 
 ## August 26, 2026
 
@@ -11,7 +11,7 @@
 - Recorded the thread/canvas shared-artifact architecture and approval-gated
   outbound email invariant.
 
-The working title is temporary.
+The initial working title was temporary.
 
 ## August 27, 2026
 
@@ -33,6 +33,8 @@ The working title is temporary.
   interaction rules, typography, sizing, radii, motion, and provider boundaries.
 - Added browser coverage for synchronized state, requirement ranking, evidence
   rewind, approval invalidation, and mobile overflow.
+- Named the product Found: an outcome-led name for a search that continues into
+  verification, comparison, and approved outreach.
 
 These interactions currently run on representative fixtures. Convex
 persistence, OpenAI generation, Firecrawl acquisition, Google Maps, and AgentMail

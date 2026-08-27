@@ -13,7 +13,7 @@ function Playground() {
           className="text-label-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-heat-100"
           to="/"
         >
-          Threshold
+          found
         </Link>
         <div className="flex items-center gap-14">
           <Link

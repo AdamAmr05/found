@@ -13,7 +13,7 @@ function Lab() {
           className="text-label-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-heat-100"
           to="/"
         >
-          Threshold
+          found
         </Link>
         <div className="flex items-center gap-8 font-mono text-mono-x-small text-foreground-muted">
           <span className="size-6 rounded-full bg-heat-100" />

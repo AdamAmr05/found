@@ -3,8 +3,8 @@
 Read this after `DESIGN_SYSTEM.md`. That file defines the visual foundation;
 this file applies it to the accommodation product.
 
-The product name is temporary. These decisions belong to the interaction model,
-not to the word “Threshold.”
+Found is the product name. These decisions belong to the interaction model and
+must remain useful independently of the wordmark.
 
 ## Visual calibration
 

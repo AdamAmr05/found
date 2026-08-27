@@ -11,7 +11,7 @@ function Home() {
         <p className="mb-12 text-label-small text-heat-100">
           Find a place in Berlin
         </p>
-        <h1 className="text-title-h2 text-accent-black">Threshold</h1>
+        <h1 className="text-title-h2 text-accent-black">found</h1>
         <p className="mt-16 max-w-480 text-body-large text-foreground-muted">
           Compare total cost, commute, registration, and the questions each
           listing leaves unanswered.

@@ -12,10 +12,10 @@ Convex agent skills for common tasks can be installed by running
 
 <!-- convex-ai-end -->
 
-# Threshold repository rules
+# Found repository rules
 
-`threshold` is a temporary working name. Do not encode it into domain concepts,
-URLs, copy, or generated identifiers unless a tool requires a package name.
+`found` is the product and package name. Keep branding out of domain concepts
+and generated identifiers unless the name is genuinely part of a public surface.
 
 ## Architecture invariants
 
