@@ -187,6 +187,32 @@ universal representation for every state.
 
 ## Interaction rules
 
+### Adaptive result grammar
+
+- One or two results render as complete `AccommodationInspect` artifacts.
+- The third result changes the collection to `Fold`: the existing image,
+  title, cost, evidence, and selection identities continue into denser rows.
+- Comparison is an explicit user mode, not an automatic consequence of result
+  count. `Merge` receives the same artifacts and raises disagreements above
+  matching claims.
+- Every representation reads one `AccommodationArtifact`. A primary value such
+  as all-in monthly cost must not change meaning between the map, card, Fold,
+  and Merge.
+- Shared-layout motion belongs to identity-bearing internals such as media,
+  title, and cost. The bordered outer surfaces do not share transform geometry;
+  they enter and leave without distorting their one-pixel edges or corners.
+
+### Representation motion contracts
+
+| Representation | Geometry owner                                                                                            | Stable anchors                                                                                      | Dynamic numbers                                                  |
+| -------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Card           | The measured details viewport animates its real height. The bordered card never transform-scales.         | Media, title, cost, tabs, and save control remain fixed while the details view changes.             | Rent, evidence values, and decision metrics use tabular figures. |
+| Fold           | The clipped body owns open and close height. The bordered row does not receive layout projection.         | Media, title, all-in cost, and row position preserve artifact identity.                             | Cost and claim values use tabular figures.                       |
+| Merge          | Slots remain fixed; only candidate contents enter, leave, or drag. The comparison surface does not scale. | Candidate identity remains attached to its image, name, cost, and slot throughout drag and removal. | Slot costs and comparison values use tabular figures.            |
+
+All three use interruptible Motion springs for state and spatial changes.
+Reduced motion removes travel while preserving the state change.
+
 - Thread and canvas transitions must preserve object identity. Movement should
   explain where an artifact came from and where it went.
 - Animate state change, spatial causality, and direct manipulation. Do not

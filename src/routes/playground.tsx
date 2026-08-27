@@ -24,7 +24,7 @@ function Playground() {
           </Link>
           <div className="hidden items-center gap-8 font-mono text-mono-x-small text-foreground-muted sm:flex">
             <span className="size-6 rounded-full bg-accent-forest" />
-            Berlin · two places
+            Berlin · live shortlist
           </div>
         </div>
       </nav>

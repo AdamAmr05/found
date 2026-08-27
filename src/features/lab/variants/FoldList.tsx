@@ -27,6 +27,7 @@ export function FoldList({
   onToggleSave,
 }: VariantProps) {
   const [openId, setOpenId] = useState<CandidateId | null>(focusedId)
+  const savedIdSet = new Set(savedIds)
 
   const open = (candidate: Candidate) => {
     const next = openId === candidate.id ? null : candidate.id
@@ -42,7 +43,7 @@ export function FoldList({
             candidate={candidate}
             isOpen={openId === candidate.id}
             isFocused={focusedId === candidate.id}
-            isSaved={savedIds.includes(candidate.id)}
+            isSaved={savedIdSet.has(candidate.id)}
             onOpen={() => open(candidate)}
             onToggleSave={() => onToggleSave(candidate.id)}
           />
@@ -70,7 +71,7 @@ function FoldRow({
   onToggleSave,
 }: FoldRowProps) {
   const prefersReducedMotion = useReducedMotion()
-  const mediaId = `fold-media-${candidate.id}`
+  const mediaId = `accommodation-media-${candidate.id}`
 
   return (
     <motion.article
@@ -107,7 +108,7 @@ function FoldRow({
           >
             <img
               alt=""
-              className="size-full object-cover"
+              className="size-full object-cover outline-1 -outline-offset-1 outline-black/10"
               loading="lazy"
               src={candidate.imageUrl}
             />
@@ -115,7 +116,12 @@ function FoldRow({
         )}
 
         <motion.div className="min-w-0 flex-1" layout="position">
-          <p className="truncate text-label-medium">{candidate.name}</p>
+          <motion.p
+            className="truncate text-label-medium"
+            layoutId={`accommodation-title-${candidate.id}`}
+          >
+            {candidate.name}
+          </motion.p>
           <p className="truncate text-body-small text-foreground-muted">
             {candidate.area}
           </p>
@@ -128,7 +134,10 @@ function FoldRow({
           </p>
         </motion.div>
 
-        <motion.div layout="position">
+        <motion.div
+          layout="position"
+          layoutId={`accommodation-cost-${candidate.id}`}
+        >
           <CostReadout candidate={candidate} />
         </motion.div>
       </motion.button>
@@ -187,7 +196,7 @@ function FoldBody({
       >
         <img
           alt={candidate.imageAlt}
-          className="size-full object-cover"
+          className="size-full object-cover outline-1 -outline-offset-1 outline-black/10"
           loading="lazy"
           src={candidate.imageUrl}
         />
@@ -229,7 +238,7 @@ function FoldBody({
               </span>
             </div>
             <div className="text-right">
-              <p className="text-body-small">
+              <p className="text-body-small tabular-nums">
                 {claim.confirmed ?? claim.claimed}
               </p>
               <p className={`text-label-x-small ${claimText[claim.status]}`}>
@@ -257,7 +266,7 @@ function FoldBody({
           } focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100`}
           onClick={onToggleSave}
           type="button"
-          whileTap={{ scale: 0.97 }}
+          whileTap={{ scale: 0.96 }}
         >
           {isSaved ? (
             <CheckIcon className="size-15" />

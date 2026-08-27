@@ -35,6 +35,10 @@ The initial working title was temporary.
   rewind, approval invalidation, and mobile overflow.
 - Named the product Found: an outcome-led name for a search that continues into
   verification, comparison, and approved outreach.
+- Unified the map, complete cards, Fold, and Merge around one provisional
+  accommodation artifact. One or two results stay richly composed, the third
+  condenses the same identities into Fold, and an explicit Compare action turns
+  the same claims into a divergence-first Merge view.
 
 These interactions currently run on representative fixtures. Convex
 persistence, OpenAI generation, Firecrawl acquisition, Google Maps, and AgentMail

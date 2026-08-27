@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import type { RefObject } from 'react'
 import { useRef, useState } from 'react'
 import type { Candidate, CandidateId, Claim } from '../candidates'
-import { euros, getCandidate } from '../candidates'
+import { euros } from '../candidates'
 import { CloseIcon, LayersIcon } from '../icons'
 import {
   revealTransition,
@@ -40,7 +40,13 @@ export function CompareMerge({
   savedIds,
   onToggleSave,
 }: VariantProps) {
-  const [slots, setSlots] = useState<Slots>({ a: focusedId, b: null })
+  const initialSaved = savedIds.filter((id) =>
+    candidates.some((candidate) => candidate.id === id),
+  )
+  const [slots, setSlots] = useState<Slots>({
+    a: initialSaved[0] ?? focusedId,
+    b: initialSaved[1] ?? null,
+  })
   const slotA = useRef<HTMLDivElement | null>(null)
   const slotB = useRef<HTMLDivElement | null>(null)
 
@@ -65,8 +71,8 @@ export function CompareMerge({
     return null
   }
 
-  const left = slots.a === null ? null : getCandidate(slots.a)
-  const right = slots.b === null ? null : getCandidate(slots.b)
+  const left = findCandidate(candidates, slots.a)
+  const right = findCandidate(candidates, slots.b)
 
   return (
     <div>
@@ -114,6 +120,14 @@ export function CompareMerge({
   )
 }
 
+function findCandidate(
+  candidates: readonly Candidate[],
+  id: CandidateId | null,
+): Candidate | null {
+  if (id === null) return null
+  return candidates.find((candidate) => candidate.id === id) ?? null
+}
+
 function hits(
   element: HTMLDivElement | null,
   point: { readonly x: number; readonly y: number },
@@ -152,7 +166,7 @@ function DragChip({
       transition={snapTransition}
       type="button"
       whileDrag={{ scale: 1.06, zIndex: 60 }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.96 }}
     >
       <span
         aria-hidden="true"
@@ -160,7 +174,7 @@ function DragChip({
       >
         <img
           alt=""
-          className="size-full object-cover"
+          className="size-full object-cover outline-1 -outline-offset-1 outline-black/10"
           draggable={false}
           src={candidate.imageUrl}
         />
@@ -203,7 +217,7 @@ function Slot({
             <span className="size-64 shrink-0 overflow-hidden rounded-8 bg-black/8">
               <img
                 alt={candidate.imageAlt}
-                className="size-full object-cover"
+                className="size-full object-cover outline-1 -outline-offset-1 outline-black/10"
                 src={candidate.imageUrl}
               />
             </span>
@@ -218,7 +232,7 @@ function Slot({
             </div>
             <button
               aria-label={`Remove ${candidate.name}`}
-              className="grid size-30 shrink-0 place-items-center self-start rounded-full bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"
+              className="grid size-40 shrink-0 place-items-center self-start rounded-full bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"
               onClick={onClear}
               type="button"
             >
@@ -256,6 +270,7 @@ function ComparisonLedger({
   const prefersReducedMotion = useReducedMotion()
   const rows = buildRows(left, right)
   const conflicts = rows.filter((row) => row.differs).length
+  const savedIdSet = new Set(savedIds)
 
   return (
     <motion.section
@@ -309,15 +324,15 @@ function ComparisonLedger({
           <motion.button
             key={candidate.id}
             className={`flex min-h-32 items-center gap-8 rounded-8 px-10 text-label-x-small ${
-              savedIds.includes(candidate.id)
+              savedIdSet.has(candidate.id)
                 ? 'bg-accent-black text-white'
                 : 'bg-black/5'
             } focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100`}
             onClick={() => onToggleSave(candidate.id)}
             type="button"
-            whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.96 }}
           >
-            {savedIds.includes(candidate.id) ? 'Remove' : 'Shortlist'}{' '}
+            {savedIdSet.has(candidate.id) ? 'Remove' : 'Shortlist'}{' '}
             {candidate.name}
           </motion.button>
         ))}
@@ -337,7 +352,9 @@ function ComparisonCell({
     <div
       className={`rounded-8 px-10 py-8 ${differs ? 'bg-heat-4' : 'bg-black/3'}`}
     >
-      <p className="text-body-small">{claim.confirmed ?? claim.claimed}</p>
+      <p className="text-body-small tabular-nums">
+        {claim.confirmed ?? claim.claimed}
+      </p>
       <p className="mt-3 flex items-center gap-6">
         <StatusDot className="size-6" status={claim.status} />
         <span className={`text-label-x-small ${claimText[claim.status]}`}>

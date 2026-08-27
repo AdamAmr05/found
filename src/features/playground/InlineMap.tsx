@@ -146,7 +146,7 @@ export function InlineMap({
           return (
             <motion.button
               key={accommodation.id}
-              aria-label={`Select ${accommodation.name}, €${accommodation.price} per month`}
+              aria-label={`Select ${accommodation.name}, €${accommodation.allIn} all in per month`}
               aria-pressed={isSelected}
               className="absolute z-10 flex min-h-44 -translate-x-1/2 -translate-y-1/2 items-center rounded-full bg-white pr-12 pl-5 text-label-small shadow-[0_2px_4px_rgba(38,38,38,0.08),0_8px_24px_rgba(38,38,38,0.12)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100"
               animate={{
@@ -170,7 +170,7 @@ export function InlineMap({
               >
                 {accommodation.commuteMinutes}m
               </span>
-              €{accommodation.price.toLocaleString('en-US')}
+              €{accommodation.allIn.toLocaleString('en-US')}
             </motion.button>
           )
         })}
