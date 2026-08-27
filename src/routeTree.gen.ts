@@ -10,33 +10,64 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LabRouteImport } from './routes/lab'
+import { Route as PlaygroundRouteImport } from './routes/playground'
+import { Route as PlaygroundMaterialsAsciiRouteImport } from './routes/playground_.materials.ascii'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LabRoute = LabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlaygroundRoute = PlaygroundRouteImport.update({
+  id: '/playground',
+  path: '/playground',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlaygroundMaterialsAsciiRoute =
+  PlaygroundMaterialsAsciiRouteImport.update({
+    id: '/playground_/materials/ascii',
+    path: '/playground/materials/ascii',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/lab': typeof LabRoute
+  '/playground': typeof PlaygroundRoute
+  '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/lab': typeof LabRoute
+  '/playground': typeof PlaygroundRoute
+  '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/lab': typeof LabRoute
+  '/playground': typeof PlaygroundRoute
+  '/playground_/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/lab' | '/playground' | '/playground/materials/ascii'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/lab' | '/playground' | '/playground/materials/ascii'
+  id: '__root__' | '/' | '/lab' | '/playground' | '/playground_/materials/ascii'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LabRoute: typeof LabRoute
+  PlaygroundRoute: typeof PlaygroundRoute
+  PlaygroundMaterialsAsciiRoute: typeof PlaygroundMaterialsAsciiRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +79,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lab': {
+      id: '/lab'
+      path: '/lab'
+      fullPath: '/lab'
+      preLoaderRoute: typeof LabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/playground': {
+      id: '/playground'
+      path: '/playground'
+      fullPath: '/playground'
+      preLoaderRoute: typeof PlaygroundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/playground_/materials/ascii': {
+      id: '/playground_/materials/ascii'
+      path: '/playground/materials/ascii'
+      fullPath: '/playground/materials/ascii'
+      preLoaderRoute: typeof PlaygroundMaterialsAsciiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LabRoute: LabRoute,
+  PlaygroundRoute: PlaygroundRoute,
+  PlaygroundMaterialsAsciiRoute: PlaygroundMaterialsAsciiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
