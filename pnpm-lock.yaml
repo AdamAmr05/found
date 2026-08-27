@@ -29,6 +29,12 @@ importers:
       '@firecrawl/firecrawl-convex':
         specifier: ^0.1.1
         version: 0.1.1(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3)
+      '@fontsource-variable/geist-mono':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/roboto-mono':
+        specifier: 5.3.0
+        version: 5.3.0
       '@tanstack/react-query':
         specifier: ^5.101.4
         version: 5.102.4(react@19.2.8)
@@ -489,6 +495,12 @@ packages:
     resolution: {integrity: sha512-fecepodOAcKLUKFD+4dyqRfU8ATn3y15nYtayyAmmQAV0FT/6sVwKNY0+rpq8/NKTLrEpuHr+cE0htNQ+ssU+g==}
     peerDependencies:
       convex: ^1.43.0
+
+  '@fontsource-variable/geist-mono@5.3.0':
+    resolution: {integrity: sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==}
+
+  '@fontsource-variable/roboto-mono@5.3.0':
+    resolution: {integrity: sha512-h5r+KY/6qy8JEOj33JgcrFO81YAnvrc1EAwMpl/EPJLb2OIvOy0/jmB5M7qs7x/uXk5JUP5Ux4LrkeOK7faHkQ==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -3075,6 +3087,10 @@ snapshots:
       - react
       - typescript
       - zod
+
+  '@fontsource-variable/geist-mono@5.3.0': {}
+
+  '@fontsource-variable/roboto-mono@5.3.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

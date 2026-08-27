@@ -4,6 +4,8 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
+import '@fontsource-variable/geist-mono'
+import '@fontsource-variable/roboto-mono'
 import * as React from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import appCss from '~/styles/app.css?url'
@@ -25,6 +27,16 @@ export const Route = createRootRouteWithContext<{
       },
     ],
     links: [
+      { rel: 'preconnect', href: 'https://api.fontshare.com' },
+      {
+        rel: 'preconnect',
+        href: 'https://cdn.fontshare.com',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'stylesheet',
+        href: 'https://api.fontshare.com/v2/css?f[]=switzer@1&display=swap',
+      },
       { rel: 'stylesheet', href: appCss },
       {
         rel: 'apple-touch-icon',

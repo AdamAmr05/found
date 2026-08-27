@@ -1,33 +1,155 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Firecrawl sizing semantics: every numeric utility step is one pixel. */
+  /* Every numeric utility step is one literal pixel. */
   --spacing: 1px;
-  --color-heat-100: #fa5d19;
+  --radius-0: 0px;
+  --radius-1: 1px;
+  --radius-2: 2px;
+  --radius-3: 3px;
+  --radius-4: 4px;
+  --radius-5: 5px;
+  --radius-6: 6px;
+  --radius-7: 7px;
+  --radius-8: 8px;
+  --radius-9: 9px;
+  --radius-10: 10px;
+  --radius-11: 11px;
+  --radius-12: 12px;
+  --radius-13: 13px;
+  --radius-14: 14px;
+  --radius-15: 15px;
+  --radius-16: 16px;
+  --radius-17: 17px;
+  --radius-18: 18px;
+  --radius-19: 19px;
+  --radius-20: 20px;
+  --radius-21: 21px;
+  --radius-22: 22px;
+  --radius-23: 23px;
+  --radius-24: 24px;
+  --radius-25: 25px;
+  --radius-26: 26px;
+  --radius-27: 27px;
+  --radius-28: 28px;
+  --radius-29: 29px;
+  --radius-30: 30px;
+  --radius-31: 31px;
+  --radius-32: 32px;
+  --color-heat-4: rgb(250 93 25 / 4%);
+  --color-heat-8: rgb(250 93 25 / 8%);
+  --color-heat-12: rgb(250 93 25 / 12%);
+  --color-heat-100: color(display-p3 0.980392 0.364706 0.098039);
   --color-accent-black: #262626;
   --color-accent-white: #ffffff;
+  --color-accent-amethyst: #9061ff;
+  --color-accent-bluetron: #2a6dfb;
+  --color-accent-crimson: #eb3424;
+  --color-accent-forest: #42c366;
+  --color-accent-honey: #ecb730;
+  --color-background-lighter: #ffffff;
+  --color-background-base: #f9f9f9;
+  --color-border-faint: rgb(38 38 38 / 6%);
+  --color-border-muted: rgb(38 38 38 / 10%);
+  --color-border-loud: rgb(38 38 38 / 18%);
   --color-foreground-muted: rgb(38 38 38 / 56%);
-  --font-sans: 'Suisse Intl', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --font-sans: 'Switzer', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
+  --font-ascii: 'Roboto Mono Variable', 'Roboto Mono', ui-monospace, monospace;
+  --text-title-h1: 60px;
+  --text-title-h1--line-height: 64px;
+  --text-title-h1--letter-spacing: -0.3px;
+  --text-title-h1--font-weight: 500;
+  --text-title-h3: 40px;
+  --text-title-h3--line-height: 44px;
+  --text-title-h3--letter-spacing: -0.4px;
+  --text-title-h3--font-weight: 500;
   --text-title-h2: 52px;
   --text-title-h2--line-height: 56px;
   --text-title-h2--letter-spacing: -0.52px;
+  --text-title-h2--font-weight: 500;
+  --text-title-h4: 32px;
+  --text-title-h4--line-height: 36px;
+  --text-title-h4--letter-spacing: -0.32px;
+  --text-title-h4--font-weight: 500;
+  --text-title-h5: 24px;
+  --text-title-h5--line-height: 32px;
+  --text-title-h5--letter-spacing: -0.24px;
+  --text-title-h5--font-weight: 500;
+  --text-body-x-large: 20px;
+  --text-body-x-large--line-height: 28px;
+  --text-body-x-large--letter-spacing: -0.1px;
   --text-body-large: 16px;
   --text-body-large--line-height: 24px;
+  --text-body-medium: 14px;
+  --text-body-medium--line-height: 20px;
+  --text-body-medium--letter-spacing: 0.14px;
+  --text-body-small: 13px;
+  --text-body-small--line-height: 20px;
+  --text-body-input: 15px;
+  --text-body-input--line-height: 24px;
+  --text-label-x-large: 20px;
+  --text-label-x-large--line-height: 28px;
+  --text-label-x-large--font-weight: 450;
+  --text-label-large: 16px;
+  --text-label-large--line-height: 24px;
+  --text-label-large--font-weight: 450;
+  --text-label-medium: 14px;
+  --text-label-medium--line-height: 20px;
+  --text-label-medium--font-weight: 450;
   --text-label-small: 13px;
   --text-label-small--line-height: 20px;
   --text-label-small--font-weight: 450;
+  --text-label-x-small: 12px;
+  --text-label-x-small--line-height: 20px;
+  --text-label-x-small--font-weight: 450;
+  --text-mono-medium: 14px;
+  --text-mono-medium--line-height: 22px;
+  --text-mono-small: 13px;
+  --text-mono-small--line-height: 20px;
+  --text-mono-small--font-weight: 500;
+  --text-mono-x-small: 12px;
+  --text-mono-x-small--line-height: 16px;
 }
 
 @layer base {
   html,
   body {
-    @apply bg-accent-white font-sans text-accent-black;
+    @apply bg-background-base font-sans text-accent-black;
     margin: 0;
     min-height: 100%;
   }
 
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-width: 320px;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: rgb(250 93 25 / 20%);
+  }
+
   .using-mouse * {
     outline: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }

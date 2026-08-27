@@ -14,7 +14,7 @@ Status: accepted on August 26, 2026.
 - Require approval of the exact content hash before any outbound email.
 - Use Oxlint as the primary and only linter if its Convex plugin compatibility
   remains green.
-- Preserve Firecrawl's pixel-based design-system semantics.
+- Use literal-pixel numeric utilities for spacing, sizing, and radii.
 
 ## Deferred
 

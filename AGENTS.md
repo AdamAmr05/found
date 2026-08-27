@@ -19,6 +19,8 @@ URLs, copy, or generated identifiers unless a tool requires a package name.
 
 ## Architecture invariants
 
+- Read `docs/ARCHITECTURE.md` before changing provider ownership, artifact
+  flow, the thread/canvas relationship, or the map stack.
 - Convex is the only backend and the source of durable truth.
 - The canvas and thread are projections of the same canonical artifacts. Never
   duplicate domain state into UI-specific tables.
@@ -80,12 +82,15 @@ URLs, copy, or generated identifiers unless a tool requires a package name.
 
 - Read `docs/DESIGN_SYSTEM.md` completely before creating or changing UI. It is
   the authoritative repository Design System.
-- Its title is localized for this repository; the remaining content is copied
-  verbatim from the linked upstream source. Do not auto-format the file.
+- Then read `docs/PRODUCT_UI.md`. It records this product's component grammar,
+  interaction rules, and measured visual choices.
+- The design system is product-owned. External sites and systems may inform a
+  measurement, but their brand, component structure, and application code are
+  not repository conventions.
 - Preserve its pixel-based numeric sizing model unless the user explicitly
   changes it.
-- When the prose reference and upstream source implementation disagree, inspect
-  the upstream implementation and treat code as authoritative.
+- When prose and repository implementation disagree, inspect the local tokens
+  and components and resolve the inconsistency explicitly.
 - Shared thread parts and canvas nodes must use the same renderer registry.
 - Create components around stable responsibilities and reusable behaviors;
   avoid both monolithic components and arbitrary fragmentation.

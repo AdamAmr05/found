@@ -1,6 +1,8 @@
 # Design System
 
-This document provides a comprehensive overview of the new design system structure implemented in the Firecrawl web application. The design system is built on top of modern web technologies including Tailwind CSS, shadcn/ui, and custom component libraries.
+This document defines the product's visual foundation and implementation rules.
+It is product-owned: provider brands, websites, and component structures are
+references, not authorities.
 
 ## Table of Contents
 
@@ -8,45 +10,39 @@ This document provides a comprehensive overview of the new design system structu
 2. [Color System](#color-system)
 3. [Tailwind Configuration](#tailwind-configuration)
 4. [Component Architecture](#component-architecture)
-5. [Brand Assets](#brand-assets)
-6. [Development Guidelines](#development-guidelines)
+5. [Development Guidelines](#development-guidelines)
 
 ## Overview
 
-The Firecrawl design system is organized around a modular component architecture located in the `components-new/` directory. The system integrates multiple UI libraries and provides a consistent visual language across the application.
+The design system is implemented through Tailwind theme tokens, shared motion
+rules, and feature-owned components. A component stays with the feature that
+owns it until genuine reuse justifies promoting it.
 
 ### Key Technologies
 
-- **Tailwind CSS**: Utility-first CSS framework with custom configuration
-- **shadcn/ui**: High-quality React components built on Radix UI
-- **Custom Components**: Application-specific shared components
+- **Tailwind CSS v4**: Theme tokens and literal-pixel utilities
+- **Motion**: Shared springs, gestures, and layout transitions
+- **Custom React components**: Product-specific interface vocabulary
 
-### Directory Structure
+### Current Directory Structure
 
 ```
-components-new/
-├── ui/                    # Core UI components
-│   ├── shadcn/           # shadcn/ui components
-│   ├── magic/            # Magic UI animated components
-│   ├── tremor/           # Tremor data visualization components
-│   └── motion/           # Motion and animation utilities
-├── shared/               # Shared application components
-│   ├── icons/            # Icon components and brand assets
-│   ├── buttons/          # Custom button components
-│   ├── cards/            # Card components
-│   ├── effects/          # Visual effects and animations
-│   ├── layout/           # Layout utilities
-│   └── ui/               # Shared UI utilities
-├── app/                  # Application-specific components
-│   ├── brand/            # Brand-related components
-│   ├── pricing/          # Pricing page components
-│   └── (home)/           # Home page components
-└── providers/            # Context providers and theme management
+src/
+├── features/             # Current product studies and feature-owned behavior
+│   ├── lab/              # Interaction studies
+│   ├── materials/        # Materials being evaluated for reuse
+│   └── playground/       # Composed product studies
+├── routes/               # TanStack Router entry points
+└── styles/app.css        # Theme tokens and base styles
 ```
+
+This is the repository as it exists today. The component architecture below
+defines where responsibilities live as they become clear.
 
 ## Color System
 
-The design system uses a comprehensive color palette defined in `colors.json` and `styles/colors.json`. The color system is designed to provide consistent theming across light and dark modes.
+The palette is defined in `src/styles/app.css`. Components consume semantic
+tokens rather than local color values.
 
 ### Color Categories
 
@@ -77,19 +73,26 @@ Specific colors for interface elements:
 
 ### Color Usage
 
-Colors are integrated into Tailwind CSS through CSS custom properties:
+Colors are declared as CSS custom properties inside Tailwind's `@theme` block:
 
-```typescript
-const colors = Object.keys(colorsJson).reduce(
-  (acc, key) => {
-    acc[key] = `var(--${key})`;
-    return acc;
-  },
-  {} as Record<string, string>
-);
+```css
+@theme {
+  --color-heat-100: color(display-p3 0.980392 0.364706 0.098039);
+  --color-accent-black: #262626;
+  --color-background-base: #f9f9f9;
+}
 ```
 
-This allows for dynamic theming and consistent color usage across components:
+Each declaration has two public forms:
+
+- a Tailwind utility, such as `bg-background-base`, `text-accent-black`, or
+  `border-border-muted`;
+- the CSS custom property itself, such as
+  `var(--color-background-base)` or `var(--color-heat-100)`.
+
+This keeps Tailwind components, authored CSS, SVG, canvas, and motion code on the
+same palette. A component must not duplicate a token as a local hex, RGB, or P3
+value.
 
 ```jsx
 <div className="bg-heat-100 text-accent-white">
@@ -103,7 +106,8 @@ This allows for dynamic theming and consistent color usage across components:
 
 ## Tailwind Configuration
 
-The Tailwind configuration (`tailwind.config.ts`) extends the default theme with custom typography, spacing, and utility classes specifically designed for the Firecrawl design system.
+Tailwind v4 reads the theme directly from `src/styles/app.css`. The theme defines
+semantic typography, literal-pixel spacing, colors, and radii.
 
 ### Typography Scale
 
@@ -137,7 +141,7 @@ The design system includes a comprehensive typography scale with semantic naming
 
 ### Font Families
 
-- **Sans**: SuisseIntl (primary), system fallbacks
+- **Sans**: Switzer (primary), system fallbacks
 - **Mono**: Geist Mono, system fallbacks
 - **ASCII**: Roboto Mono, system fallbacks
 
@@ -168,25 +172,22 @@ The configuration includes several custom utility classes:
 - `cmw-{maxWidth},{padding}`: Centered max-width with padding
 - `mw-{maxWidth},{padding}`: Max-width with padding
 
-### 🚨 Critical: Custom Sizing System
+### Critical: Custom Sizing System
 
-**The Firecrawl design system uses a custom sizing system where numeric values equal literal pixels, NOT rem units like standard Tailwind.**
+**Numeric values equal literal pixels, not rem units like standard Tailwind.**
 
 #### What This Means
 
-In `tailwind.config.ts`, a custom `sizes` object is defined (lines 16-37) that maps numbers to pixel values:
+In `src/styles/app.css`, `--spacing: 1px` makes each numeric spacing step one
+literal pixel:
 
-```typescript
-const sizes = Array.from({ length: 1000 }, (_, i) => i).reduce(
-  (acc, curr) => {
-    acc[curr] = `${curr}px`;  // 3 = "3px", 8 = "8px", 100 = "100px"
-    return acc;
-  },
-  { /* fractional percentages */ }
-);
+```css
+@theme {
+  --spacing: 1px;
+}
 ```
 
-This `sizes` object is then applied to multiple CSS properties (lines 337-344):
+This affects numeric utilities for multiple CSS properties:
 - `spacing` - affects padding (`p-*`), margin (`m-*`), gap (`gap-*`)
 - `width` - affects width (`w-*`)
 - `height` - affects height (`h-*`)
@@ -195,7 +196,7 @@ This `sizes` object is then applied to multiple CSS properties (lines 337-344):
 
 #### Comparison with Standard Tailwind
 
-| Class | Standard Tailwind | Firecrawl System |
+| Class | Standard Tailwind | Repository System |
 |-------|------------------|------------------|
 | `w-3` | 0.75rem (12px) | **3px** |
 | `h-8` | 2rem (32px) | **8px** |
@@ -288,8 +289,8 @@ This `sizes` object is then applied to multiple CSS properties (lines 337-344):
 When porting components from standard Tailwind or other projects:
 
 1. **Spacing remains the same** - `p-24` = 24px padding ✓
-2. **Heights need conversion** - `h-9` (36px) → `h-144` (144px) or use style
-3. **Sizes need conversion** - `size-4` (16px) → `size-64` (64px) or use style
+2. **Heights need conversion** - a standard 36px `h-9` becomes `h-36`
+3. **Sizes need conversion** - a standard 16px `size-4` becomes `size-16`
 4. **Border radius** - Use pixel numbers: `rounded-8` instead of `rounded-lg`
 5. **Border width** - Be explicit: `border-1` instead of `border`
 
@@ -454,159 +455,131 @@ screens: {
 
 ## Component Architecture
 
-### UI Components (`components-new/ui/`)
+The architecture keeps reusable interface mechanics separate from product
+meaning. We retain the useful layered structure from our references without
+copying their brands, directory names, or library inventory.
 
-The UI layer consists of three main component libraries:
+### Product structure
 
-#### shadcn/ui Components
-High-quality, accessible React components:
-- Form controls: `Button`, `Input`, `Select`, `Checkbox`, `Switch`
-- Layout: `Card`, `Sheet`, `Dialog`, `Tabs`, `Accordion`
-- Navigation: `NavigationMenu`, `DropdownMenu`, `ContextMenu`
-- Feedback: `Toast`, `Alert`, `Progress`, `Badge`
-- Data: `Table`, `DataTable`, `Calendar`
+Organize stable responsibilities toward this shape:
 
-#### Magic UI Components
-Animated and interactive components:
-- `animated-shiny-text`: Shimmer text effects
-- `animated-list`: List animations
-- `dot-pattern`: Background patterns
-- `dock`: macOS-style dock component
-- `ripple`: Ripple effects
-- `gradual-spacing`: Text spacing animations
-
-#### Tremor Components
-Data visualization and dashboard components:
-- Charts: `LineChart`, `BarChart`, `AreaChart`
-- Controls: `Button`, `Badge`, `Dropdown`
-- Layout: `Card`, `Calendar`, `DatePicker`
-- Progress: `ProgressBar`
-
-### Shared Components (`components-new/shared/`)
-
-#### Icons (`shared/icons/`)
-Brand and utility icons with organized exports:
-
-```typescript
-// Brand Icons
-export { default as SymbolWhite } from './symbol-white';
-export { default as SymbolColored } from './symbol-colored';
-export { default as WordmarkWhite } from './wordmark-white';
-export { default as WordmarkColored } from './wordmark-colored';
-
-// Utility Icons
-export { default as AnimatedLogo } from './animated-logo';
-export { default as Check } from './check';
-export { default as GitHub } from './github';
+```
+src/
+├── components/
+│   ├── ui/                # Accessible, domain-neutral controls and surfaces
+│   ├── icons/             # Product and utility SVG components
+│   ├── motion/            # Reusable gesture, presence, and layout behavior
+│   ├── layout/            # Repeated spatial composition primitives
+│   └── materials/         # Reusable visual materials and atmosphere
+├── features/
+│   ├── accommodation/     # Candidate and inspection representations
+│   ├── comparison/        # Shortlist, ranking, and comparison behavior
+│   ├── outreach/          # Drafting, approval, sending, and replies
+│   ├── thread/            # Conversation and generative part rendering
+│   ├── workspace/         # Persistent canvas and arranged artifact views
+│   ├── lab/               # Rapid interaction exploration
+│   └── playground/        # Composed product journeys
+├── providers/             # App-level React providers only
+├── routes/                # Page composition and navigation
+└── styles/app.css         # Global theme tokens and base rules
 ```
 
-#### Buttons (`shared/buttons/`)
-Custom button components with brand styling:
+`lab` and `playground` are first-class building surfaces. Prototype freely in
+them. As soon as a responsibility becomes clear, place it in the appropriate
+product or component layer during the same iteration. Do not wait for a formal
+migration phase, and do not create a generic `shared/` dumping ground.
 
-```typescript
-export { SlateButton } from './slate-button';
-export { HeatButton } from './heat-button';
-export { FireActionLink } from './fire-action-link';
-```
+### UI primitives (`src/components/ui/`)
 
-#### Layout Components
-- `curvy-rect`: Curved rectangle shapes
-- `animated-height`: Height animations
-- `animated-width`: Width animations
-- `unified-blur-overlay`: Backdrop blur effects
+This layer owns accessible, domain-neutral building blocks such as:
 
-#### Effects and Animations
-- `flame/`: Fire animation effects
-- `animated-beam`: Connecting beam animations
-- `data-sources-beam`: Data flow visualizations
+- controls: `Button`, `IconButton`, `Input`, `Textarea`, `Checkbox`, `Switch`,
+  `Select`;
+- disclosure and overlays: `Dialog`, `Sheet`, `Popover`, `Tooltip`, `Accordion`;
+- navigation: `Tabs`, `Menu`, `Breadcrumb`;
+- feedback: `Toast`, `Progress`, `Badge`, `Skeleton`;
+- surfaces: `Card`, `Divider`, `ScrollArea`.
 
-### Application Components (`components-new/app/`)
+We may adopt a well-built shadcn primitive as a starting point, but the exported
+component, tokens, variants, and motion belong to this product. Do not mirror a
+third-party registry or install a large component inventory speculatively.
 
-#### Brand Components (`app/brand/`)
-Components specific to brand presentation:
+### Icons (`src/components/icons/`)
 
-- `brand-hero.tsx`: Brand page hero section
-- `brand-assets-copy.tsx`: Asset copying functionality
-- `brand-assets-download.tsx`: Asset download functionality
-- `brand-group.tsx`: Brand asset grouping
-- `firecrawl-logo.tsx`: Logo component variants
-- `firecrawl-wordmark.tsx`: Wordmark components
+Product marks and utility icons are typed SVG components with organized exports.
+Precision controls never use text glyphs as icons. An icon component owns its
+view box and geometry; its consumer owns accessible labeling, color, and size.
 
-Example brand hero component:
+### Motion and layout (`src/components/motion/`, `src/components/layout/`)
 
-```tsx
-export default function BrandHero() {
-  return (
-    <section className='max-w-[1112px] mx-auto -mt-1'>
-      <SectionHead
-        action={(
-          <a className="contents" href="/brand/brand-assets.zip" download>
-            <Button className='mx-auto' size='large' variant='primary'>
-              Download brand assets
-            </Button>
-          </a>
-        )}
-        description="Welcome to the Firecrawl brand hub..."
-        title={<><span className="text-heat-100">Firecrawl </span> Brand Assets</>}
-        titleClassName='text-title-h3'
-      >
-        <DeveloperFlame />
-      </SectionHead>
-    </section>
-  );
-}
-```
+Reusable mechanics belong here after they appear in more than one product
+interaction. Likely responsibilities include:
 
-## Brand Assets
+- presence-driven height and width transitions;
+- shared-layout movement between thread and workspace;
+- drag surfaces with one-to-one tracking, velocity, and cancellation;
+- focus-preserving overlays and media expansion;
+- repeated split-pane, dock, rail, and anchored-layer behavior.
 
-### Asset Organization (`public/brand/`)
+These are behaviors, not decorative wrappers. A one-use `AnimatedHeight` or
+`CurvyRect` stays with its feature until reuse makes the abstraction honest.
 
-The brand assets are organized in the `public/brand/` directory with comprehensive logo and marketing materials:
+### Materials (`src/components/materials/`)
 
-#### Logo Variants
-- `firecrawl-logo.svg/png`: Primary logo
-- `firecrawl-light-logo.svg/png`: Light theme variant
-- `firecrawl-wordmark.svg/png`: Text-only wordmark
-- `firecrawl-light-wordmark.svg/png`: Light wordmark variant
-- `firecrawl-icon.png`: App icon
-- `firecrawl-app-icon.png`: Application icon variant
+Materials are reusable visual systems such as `AsciiAtmosphere`, evidence-flow
+lines, source activity, or flame treatments. They may render through DOM, SVG,
+or canvas, but expose product tokens, intensity, motion state, and
+reduced-motion behavior through one typed API. They never encode accommodation
+or conversation state directly.
 
-#### Special Assets
-- `firecrawl-logo-transparent.png`: Transparent background logo
-- `firecrawl-logo-with-fire.png`: Logo with fire element
-- `logo_fire.png`: Fire element standalone
+### Product features (`src/features/`)
 
-#### Marketing Materials
-- `scrape-data-from-any-site--firecrawl.jpg`
-- `turn-websites-into-llm-ready-data--firecrawl.jpg`
-- `we-handle-all-the-hard-stuff--firecrawl.jpg`
-- `trusted-by-devs-at-top-companies--firecrawl.jpg`
+Feature-owned components live in `src/features/<feature>/`. Keep domain data,
+interaction state, and feature-specific renderers together. Promote a primitive
+only after multiple features use the same behavior.
 
-#### Asset Distribution
-- `brand-assets.zip`: Complete brand asset package for download
+The product feature families are:
 
-### Brand Usage Guidelines
+- `thread/`: messages, composer, streaming parts, tool progress, inline
+  artifacts, and the typed renderer registry used by generative UI;
+- `workspace/`: persistent artifact arrangement, focused inspection, compare
+  surfaces, and reversible thread-to-workspace transitions;
+- `accommodation/`: `CandidateTile`, `AccommodationInspect`, `MediaExplorer`,
+  `MapScene`, and `RequirementLedger`;
+- `comparison/`: shortlist state, `CompareDock`, rankings, contradictions, and
+  trade-off views;
+- `outreach/`: `OutreachProposal`, `ApprovalGate`, sending state, and replies.
 
-#### Logo Usage
-- Use `firecrawl-logo.svg` for primary brand representation
-- Use `firecrawl-light-logo.svg` on dark backgrounds
-- Use `firecrawl-wordmark.svg` when space is constrained
-- Maintain proper spacing and sizing ratios
+The exploration surfaces are:
 
-#### Color Usage
-- Primary brand color: `heat-100` (#fa5d19)
-- Use accent colors sparingly for highlights and CTAs
-- Maintain sufficient contrast ratios for accessibility
+- `lab/`: candidate representations, comparison, ranking, evidence freshness,
+  shortlist state, and conversation studies;
+- `materials/`: reusable visual materials such as ASCII atmosphere;
+- `playground/`: composed map and accommodation studies.
+
+### Routes
+
+Route files in `src/routes/` compose feature components and own page-level
+navigation. They do not contain reusable product logic.
+
+### Shared primitives
+
+Small primitives may stay inside a feature when their meaning is local. Shared
+components must encode a stable visual or behavioral responsibility rather than
+exist only to shorten one file.
+
+Use proper SVG components for interface icons. Precision controls never use text
+glyphs as icons.
 
 ## Development Guidelines
 
 ### Component Development
 
 #### File Organization
-- Place reusable components in `shared/`
-- Place page-specific components in `app/`
-- Use index files for clean imports
-- Group related components in subdirectories
+- Keep feature components in `src/features/<feature>/`
+- Keep route composition in `src/routes/`
+- Keep global tokens and base styles in `src/styles/app.css`
+- Group files by a real responsibility rather than by visual type alone
 
 #### Naming Conventions
 - Use PascalCase for component files and exports
@@ -621,24 +594,21 @@ The brand assets are organized in the `public/brand/` directory with comprehensi
 
 #### Component Structure
 ```tsx
-// Import statements
-import { ComponentProps } from 'react';
-import { Button } from '@/components/ui/shadcn/button';
-
-// Type definitions
-interface MyComponentProps {
-  title: string;
-  variant?: 'primary' | 'secondary';
+interface CandidateButtonProps {
+  readonly name: string
+  readonly onSelect: () => void
 }
 
-// Component implementation
-export default function MyComponent({ title, variant = 'primary' }: MyComponentProps) {
+export function CandidateButton({ name, onSelect }: CandidateButtonProps) {
   return (
-    <div className="bg-background-base border border-border-muted rounded-8">
-      <h2 className="text-title-h4 text-heat-100">{title}</h2>
-      <Button variant={variant}>Action</Button>
-    </div>
-  );
+    <button
+      className="min-h-40 rounded-8 bg-background-lighter px-12 text-label-small"
+      onClick={onSelect}
+      type="button"
+    >
+      {name}
+    </button>
+  )
 }
 ```
 
@@ -653,27 +623,11 @@ export default function MyComponent({ title, variant = 'primary' }: MyComponentP
 #### Performance
 - Use dynamic imports for large components
 - Optimize images and assets
-- Leverage React Server Components when possible
-- Minimize client-side JavaScript
+- Keep continuous animation work outside React's render cycle
+- Pause ambient animation when it is offscreen or the document is hidden
 
 #### Consistency
 - Follow established patterns from existing components
 - Use design system tokens consistently
 - Maintain consistent spacing and typography
 - Follow the established file and folder structure
-
-### Integration with Existing Systems
-
-The design system is designed to work alongside the existing component structure while providing a migration path to the new system. Components in `components-new/` should be preferred for new development, while existing components can be gradually migrated.
-
-#### Import Patterns
-```tsx
-// Preferred: Use components-new
-import { Button } from '@/components/ui/shadcn/button';
-import { HeatButton } from '@/components/shared/buttons';
-
-// Legacy: Existing components (migrate when possible)
-import { OldButton } from '@/components/ui/button';
-```
-
-This design system provides a solid foundation for building consistent, accessible, and maintainable user interfaces across the Firecrawl application while supporting both current needs and future growth.
