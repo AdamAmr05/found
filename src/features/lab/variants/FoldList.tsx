@@ -7,7 +7,6 @@ import { revealTransition, settleTransition, travel } from '../motion'
 import {
   CostReadout,
   EvidenceMeter,
-  FocusRing,
   Meta,
   StatusDot,
   claimText,
@@ -75,17 +74,27 @@ function FoldRow({
 
   return (
     <motion.article
+      animate={{ borderRadius: isOpen ? 16 : 12 }}
       className="relative overflow-hidden bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.07),0_1px_2px_rgb(38_38_38/0.04)]"
-      layout
-      style={{ borderRadius: isOpen ? 16 : 12 }}
+      data-testid={`fold-row-${candidate.id}`}
+      initial={false}
       transition={settleTransition}
     >
-      {isFocused ? <FocusRing radius={isOpen ? 16 : 12} /> : null}
+      <motion.span
+        animate={{ opacity: isFocused ? 1 : 0 }}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-20"
+        initial={false}
+        style={{
+          borderRadius: 'inherit',
+          boxShadow: 'inset 0 0 0 1px rgb(250 93 25 / 0.5)',
+        }}
+        transition={revealTransition}
+      />
 
       <motion.button
         aria-expanded={isOpen}
         className="flex w-full items-center gap-14 px-14 py-12 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-heat-100"
-        layout
         onClick={onOpen}
         type="button"
       >
@@ -126,12 +135,17 @@ function FoldRow({
 
       <AnimatePresence initial={false}>
         {isOpen ? (
+          /*
+           * This height is the fold's only geometry animation. Transforming the
+           * bordered article distorts its one-pixel edge and rounded corners.
+           */
           <motion.div
             key="body"
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: 'auto' }}
             className="overflow-hidden"
-            exit={{ height: 0, opacity: 0 }}
-            initial={{ height: 0, opacity: 0 }}
+            exit={{ height: 0 }}
+            initial={{ height: 0 }}
+            style={{ transformOrigin: 'top' }}
             transition={settleTransition}
           >
             <FoldBody

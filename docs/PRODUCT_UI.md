@@ -195,6 +195,12 @@ universal representation for every state.
   updates require it; commit semantic state at meaningful boundaries.
 - Prefer transform and opacity for continuous animation. Shared-layout motion
   must not make surrounding text jump.
+- Do not transform-scale a one-pixel bordered surface through a large size
+  change. On a small, isolated fold or tray, animate its actual width or height
+  and clip the contents so the border and radius remain geometrically correct.
+- Give each size morph one geometry owner. Do not combine layout projection on
+  the outer surface with a separate height animation inside it; the second
+  measurement produces a delayed snap after the first animation finishes.
 - Respect reduced motion and provide keyboard equivalents for drag, image
   navigation, map selection, and approval.
 - Use proper SVG icons with optical sizing. Do not use a text glyph such as `+`

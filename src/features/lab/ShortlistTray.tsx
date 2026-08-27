@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Candidate, CandidateId } from './candidates'
 import { euros } from './candidates'
 import { useCeiling } from './requirements'
@@ -29,65 +29,99 @@ export function ShortlistTray({
   readonly onClear: () => void
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [collapsedWidth, setCollapsedWidth] = useState<number | null>(null)
+  const headerContentRef = useRef<HTMLSpanElement>(null)
   const ceiling = useCeiling()
   const prefersReducedMotion = useReducedMotion()
   const saved = candidates.filter((entry) => savedIds.includes(entry.id))
   const total = saved.reduce((sum, entry) => sum + entry.allIn, 0)
   const withinCeiling = saved.filter((entry) => entry.allIn <= ceiling).length
 
+  const toggleOpen = () => {
+    if (isOpen) {
+      const content = headerContentRef.current
+      if (content) {
+        const horizontalPadding = 22
+        setCollapsedWidth(
+          content.getBoundingClientRect().width + horizontalPadding,
+        )
+      }
+    }
+
+    setIsOpen((current) => !current)
+  }
+
   return (
     <aside
       aria-label="Shortlist"
       className="pointer-events-none sticky bottom-20 z-40 flex justify-center"
     >
+      {/*
+       * Width and body height deliberately animate at their real size. A
+       * transform-scaled tray deforms the hairline and delays the pill collapse
+       * until the exiting body unmounts.
+       */}
       <motion.div
+        animate={{
+          borderRadius: isOpen ? 16 : 24,
+          width: isOpen ? 380 : (collapsedWidth ?? 'auto'),
+        }}
         className="pointer-events-auto overflow-hidden bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.1),0_12px_32px_rgb(38_38_38/0.12)]"
-        layout
-        style={{ borderRadius: isOpen ? 16 : 999 }}
+        data-testid="shortlist-surface"
+        initial={false}
         transition={settleTransition}
       >
         <motion.button
           aria-expanded={isOpen}
-          className="flex min-h-48 w-full items-center gap-12 pr-14 pl-8 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-heat-100"
+          className="flex min-h-48 w-full items-center pr-14 pl-8 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-heat-100"
           disabled={saved.length === 0}
-          layout
-          onClick={() => setIsOpen((current) => !current)}
+          onClick={toggleOpen}
           type="button"
         >
-          <ThumbnailStack saved={saved} />
+          <span
+            ref={headerContentRef}
+            className="flex w-max shrink-0 items-center gap-12"
+          >
+            <ThumbnailStack saved={saved} />
 
-          <motion.span className="flex items-baseline gap-8" layout="position">
-            <span className="text-label-small whitespace-nowrap">
-              {saved.length === 0
-                ? 'Nothing shortlisted yet'
-                : `${saved.length} shortlisted`}
-            </span>
-            {saved.length > 0 ? (
-              <span className="font-mono text-mono-x-small text-foreground-muted tabular-nums">
-                {euros(total)} / month
+            <span className="flex items-baseline gap-8">
+              <span className="text-label-small whitespace-nowrap">
+                {saved.length === 0
+                  ? 'Nothing shortlisted yet'
+                  : `${saved.length} shortlisted`}
               </span>
-            ) : null}
-          </motion.span>
+              {saved.length > 0 ? (
+                <span className="font-mono text-mono-x-small text-foreground-muted tabular-nums">
+                  {euros(total)} / month
+                </span>
+              ) : null}
+            </span>
 
-          {saved.length > 0 ? (
-            <motion.span
-              animate={{ rotate: isOpen ? -90 : 90 }}
-              className="ml-4 text-foreground-muted"
-              transition={snapTransition}
-            >
-              <ChevronIcon className="size-15" />
-            </motion.span>
-          ) : null}
+            {saved.length > 0 ? (
+              <motion.span
+                animate={{ rotate: isOpen ? -90 : 90 }}
+                className="ml-4 text-foreground-muted"
+                transition={snapTransition}
+              >
+                <ChevronIcon className="size-15" />
+              </motion.span>
+            ) : null}
+          </span>
         </motion.button>
 
-        <AnimatePresence initial={false}>
+        <AnimatePresence
+          initial={false}
+          onExitComplete={() => setCollapsedWidth(null)}
+        >
           {isOpen && saved.length > 0 ? (
             <motion.div
               key="tray"
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: 'auto' }}
               className="overflow-hidden"
-              exit={{ height: 0, opacity: 0 }}
-              initial={{ height: 0, opacity: 0 }}
+              data-testid="shortlist-body"
+              exit={{ height: 0 }}
+              initial={{ height: 0 }}
+              style={{ transformOrigin: 'top' }}
               transition={settleTransition}
             >
               <div className="w-380 border-t-1 border-border-faint p-8">

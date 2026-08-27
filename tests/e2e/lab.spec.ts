@@ -31,6 +31,73 @@ test('carries focus and the shortlist across representations', async ({
   await expect(tray.getByText('1 of 1 within your ceiling')).toBeVisible()
 })
 
+test('keeps Fold and the shortlist crisp through their size morphs', async ({
+  page,
+}) => {
+  await page.goto('/lab')
+
+  const fold = page.getByTestId('fold-row-maybachufer')
+  const foldToggle = fold.getByRole('button', { name: /Canal-side Altbau/ })
+
+  await foldToggle.click()
+  await page.waitForTimeout(40)
+
+  const folding = await fold.evaluate((element) => {
+    const style = getComputedStyle(element)
+    const body = element.querySelector(':scope > div:last-child')
+
+    return {
+      bodyOpacity: body ? getComputedStyle(body).opacity : null,
+      radius: style.borderRadius,
+      transform: style.transform,
+    }
+  })
+
+  expect(folding.transform).toBe('none')
+  expect(folding.radius).not.toContain('%')
+  expect(folding.bodyOpacity).toBe('1')
+
+  await foldToggle.click()
+  await expect(
+    fold.getByRole('button', { name: 'Add to shortlist' }),
+  ).toBeVisible()
+  await fold.getByRole('button', { name: 'Add to shortlist' }).click()
+
+  const tray = page.getByRole('complementary', { name: 'Shortlist' })
+  const trayToggle = tray.getByRole('button', { name: /1 shortlisted/ })
+  const traySurface = page.getByTestId('shortlist-surface')
+
+  await trayToggle.click()
+  await expect(page.getByTestId('shortlist-body')).toBeVisible()
+  await page.waitForTimeout(420)
+  await trayToggle.click()
+  await page.waitForTimeout(40)
+
+  const collapsing = await traySurface.evaluate((element) => {
+    const style = getComputedStyle(element)
+    const body = element.querySelector('[data-testid="shortlist-body"]')
+
+    return {
+      bodyOpacity: body ? getComputedStyle(body).opacity : null,
+      radius: Number.parseFloat(style.borderRadius),
+      transform: style.transform,
+      width: element.getBoundingClientRect().width,
+    }
+  })
+
+  expect(collapsing.transform).toBe('none')
+  expect(collapsing.radius).toBeLessThanOrEqual(24)
+  expect(collapsing.bodyOpacity).toBe('1')
+  expect(collapsing.width).toBeLessThan(380)
+
+  await expect(page.getByTestId('shortlist-body')).toHaveCount(0)
+  await expect
+    .poll(() =>
+      traySurface.evaluate((element) => element.getBoundingClientRect().width),
+    )
+    .toBeLessThan(collapsing.width)
+})
+
 test('re-ranks candidates when a requirement becomes a must-have', async ({
   page,
 }) => {
