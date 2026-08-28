@@ -7,12 +7,12 @@
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
 - **Convex deployment:** not deployed
-- **Components:** none
-- **Convex features:** schema
-- **Auth:** none
-- **AI models:** none
+- **Components:** Agent
+- **Convex features:** schema, components, queries, mutations, internal actions, scheduler, realtime subscriptions
+- **Auth:** temporary anonymous session ownership; Convex Auth v2 not connected
+- **AI models:** OpenAI `gpt-5-mini` (integration wired; deployment key pending)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T01:05:48Z
+- **Last updated:** 2026-08-28T12:15:47Z
 
 ## Log
 
@@ -65,6 +65,21 @@ generated types. Designed the initial Firecrawl-facing `searchWeb` and
 `readPage` tools around the Firecrawl Convex component and kept research output
 separate from the agent-authored candidate presentation.
 
+### 2026-08-28 - 9283973
+
+Registered the Convex Agent component and connected the first real product
+slice. Found now creates durable, session-owned Agent threads, stores user and
+assistant messages through the component, schedules model work in an internal
+action, persists stream deltas, and renders live UI messages in the real
+composer. The agent calls OpenAI directly through the official AI SDK provider
+with a server-owned `gpt-5-mini` model choice.
+
+Added ownership checks around every public thread read and write, a durable
+failure path when provider configuration is missing, and browser coverage for
+the new conversation entry point. Local OpenAI generation still needs a key in
+the Convex deployment environment; no key is exposed to the browser.
+
 The interactive product still runs on representative fixtures. Convex
-persistence, OpenAI generation, Firecrawl acquisition, Google Maps, AgentMail,
-auth, and deployment are not connected yet.
+persistence and the Agent message stream are connected. Live OpenAI generation
+is wired but not yet verified with a configured key. Firecrawl acquisition,
+Google Maps, AgentMail, final auth, and deployment are not connected yet.
