@@ -12,7 +12,7 @@
 - **Auth:** temporary anonymous session ownership; Convex Auth v2 not connected
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T15:30:40Z
+- **Last updated:** 2026-08-28T15:41:09Z
 
 ## Log
 
@@ -168,3 +168,17 @@ stable card and Fold borders. Evidence now shows each source once with compact
 claim-level references, image failures recover cleanly, and candidate sections
 respect reduced motion and keyboard navigation. Repository checks, the Convex
 deployment, React Doctor, and all 15 browser tests pass.
+
+### 2026-08-28 - 4def6a3
+
+Removed the duplicated candidate payload from `showCandidates`: the Agent
+message now stores the model-authored snapshot once as tool input, while tool
+output is only a compact presentation acknowledgement. Historical candidate
+parts remain the sole source of candidate content.
+
+Hardened Firecrawl acquisition with bounded provider URLs and text, compact
+typed failures, shared contract limits, and surrogate-safe truncation. Tightened
+thread ownership error handling, exact AI SDK tool states, candidate parsing,
+image failure recovery, fallback styling, Fold disclosure semantics, and tool
+completion announcements. Repository checks, the Convex deployment, production
+build, and all 15 browser tests pass.
