@@ -5,7 +5,7 @@ import {
   useSessionIdArg,
   useSessionMutation,
 } from 'convex-helpers/react/sessions'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 
 import { api } from '../../../convex/_generated/api'
@@ -249,6 +249,29 @@ function Composer({
   onChange: (value: string) => void
   onSubmit: () => void
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const currentHeight = textarea.getBoundingClientRect().height
+    const transition = textarea.style.transition
+    textarea.style.transition = 'none'
+    textarea.style.minHeight = '0px'
+    textarea.style.height = '0px'
+    const nextHeight = Math.min(160, Math.max(40, textarea.scrollHeight))
+    textarea.style.minHeight = ''
+    textarea.style.height = `${currentHeight}px`
+    void textarea.offsetHeight
+    textarea.style.transition = transition
+
+    const frame = requestAnimationFrame(() => {
+      textarea.style.height = `${nextHeight}px`
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [value])
+
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     onSubmit()
@@ -263,23 +286,24 @@ function Composer({
 
   return (
     <form
-      className="rounded-20 bg-background-lighter p-8 shadow-surface-raised"
+      className="rounded-20 bg-background-lighter p-10 shadow-surface-raised"
       onSubmit={handleSubmit}
     >
       <label className="sr-only" htmlFor="found-message">
         Message Found
       </label>
       <textarea
+        ref={textareaRef}
         id="found-message"
-        className="max-h-180 min-h-52 w-full resize-none bg-transparent px-10 py-8 text-body-input text-accent-black outline-none placeholder:text-foreground-muted disabled:opacity-50"
+        className="min-h-40 w-full resize-none overflow-y-auto bg-transparent px-8 py-6 text-body-input text-accent-black transition-[height] duration-200 ease-[cubic-bezier(0.2,0,0,1)] outline-none placeholder:text-foreground-muted disabled:opacity-50"
         disabled={disabled}
         placeholder="Tell Found what you’re looking for…"
-        rows={2}
+        rows={1}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={handleKeyDown}
       />
-      <div className="flex items-center justify-between gap-12 pl-10">
+      <div className="flex items-center justify-between gap-12 pl-8">
         <span className="font-mono text-mono-x-small text-foreground-muted">
           Enter to send · Shift Enter for a new line
         </span>

@@ -1,8 +1,9 @@
 import type { UIMessage } from '@convex-dev/agent'
 import { useSmoothText } from '@convex-dev/agent/react'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 
 import type { FoundUITools } from '../../../shared/foundTools'
+import type { ReadPageOutput } from '../../../shared/foundTools'
 import { ThinkingStep, ToolStep } from './ThreadToolStep'
 import { type FoundToolState, isToolActive } from './toolState'
 
@@ -69,6 +70,16 @@ function AssistantMessage({
   readonly message: FoundUIMessage
   readonly threadId: string
 }) {
+  const readPages = useMemo(
+    () =>
+      message.parts.flatMap((part): ReadPageOutput[] =>
+        part.type === 'tool-readPage' && part.state === 'output-available'
+          ? [part.output]
+          : [],
+      ),
+    [message.parts],
+  )
+
   return (
     <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black">
       {failed ? (
@@ -81,6 +92,7 @@ function AssistantMessage({
           <AssistantPart
             key={`${message.key}-${part.type}-${index}`}
             part={part}
+            readPages={readPages}
             streaming={message.status === 'streaming'}
             threadId={threadId}
           />
@@ -92,10 +104,12 @@ function AssistantMessage({
 
 function AssistantPart({
   part,
+  readPages,
   streaming,
   threadId,
 }: {
   readonly part: FoundUIMessage['parts'][number]
+  readonly readPages: readonly ReadPageOutput[]
   readonly streaming: boolean
   readonly threadId: string
 }) {
@@ -111,7 +125,11 @@ function AssistantPart({
         <Suspense
           fallback={<ToolStep active label="Preparing the useful options" />}
         >
-          <CandidateToolPart part={part} threadId={threadId} />
+          <CandidateToolPart
+            part={part}
+            readPages={readPages}
+            threadId={threadId}
+          />
         </Suspense>
       )
     default:
@@ -156,7 +174,7 @@ function MessageText({
   return (
     <Suspense fallback={<p className="whitespace-pre-wrap">{smoothText}</p>}>
       <StreamingMarkdown
-        className="[&_a]:text-heat-100 [&_a]:underline [&_a]:underline-offset-3 [&_h1]:mt-16 [&_h1]:text-title-h5 [&_h2]:mt-14 [&_h2]:text-label-x-large [&_h3]:mt-12 [&_h3]:text-label-large [&_li]:my-3 [&_ol]:my-8 [&_ol]:pl-18 [&_p+p]:mt-8 [&_ul]:my-8 [&_ul]:pl-18"
+        className="[&_a]:text-heat-100 [&_a]:underline [&_a]:underline-offset-3 [&_h1]:mt-16 [&_h1]:text-title-h5 [&_h2]:mt-14 [&_h2]:text-label-x-large [&_h3]:mt-12 [&_h3]:text-label-large [&_li]:my-3 [&_li]:pl-2 [&_ol]:my-8 [&_ol]:list-decimal [&_ol]:pl-22 [&_p+p]:mt-8 [&_ul]:my-8 [&_ul]:list-disc [&_ul]:pl-22"
         controls={false}
         isAnimating={streaming}
         mode={streaming ? 'streaming' : 'static'}

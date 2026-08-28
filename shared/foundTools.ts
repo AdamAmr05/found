@@ -130,20 +130,6 @@ const candidateSnapshotSchema = z.object({
       confidence: z.enum(['stated', 'derived', 'estimated']),
     })
     .optional(),
-  images: z
-    .array(
-      z.object({
-        url: httpUrl,
-        alt: z.string().trim().min(1).max(180),
-        sourceRef: z
-          .string()
-          .trim()
-          .min(1)
-          .max(CANDIDATE_REF_MAX_LENGTH)
-          .optional(),
-      }),
-    )
-    .max(6),
   sources: z.array(sourceSchema).min(1).max(12),
   contact: z
     .object({
@@ -220,22 +206,6 @@ function createCandidatesSchema(requireSourceBackedEvidence: boolean) {
             })
           }
           sourceRefs.add(source.ref)
-        }
-
-        for (const [imageIndex, image] of candidate.images.entries()) {
-          if (image.sourceRef && !sourceRefs.has(image.sourceRef)) {
-            context.addIssue({
-              code: 'custom',
-              message: `Image source ref "${image.sourceRef}" does not exist`,
-              path: [
-                'candidates',
-                candidateIndex,
-                'images',
-                imageIndex,
-                'sourceRef',
-              ],
-            })
-          }
         }
 
         for (const [evidenceIndex, finding] of candidate.evidence.entries()) {

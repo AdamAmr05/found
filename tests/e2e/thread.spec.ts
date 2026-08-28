@@ -13,6 +13,20 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
   const send = page.getByRole('button', { name: 'Send message' })
   await expect(send).toBeDisabled()
 
+  await expect
+    .poll(() => composer.evaluate((node) => node.clientHeight))
+    .toBe(40)
+  await composer.fill(
+    'I need somewhere quiet, furnished, close to transit, and flexible enough for a short stay while I settle into the city.',
+  )
+  await expect
+    .poll(() => composer.evaluate((node) => node.clientHeight))
+    .toBeGreaterThan(40)
+  await composer.fill('')
+  await expect
+    .poll(() => composer.evaluate((node) => node.clientHeight))
+    .toBe(40)
+
   await composer.fill('I need a place in Berlin')
   await expect(send).toBeEnabled()
   await composer.press('Shift+Enter')

@@ -1,17 +1,20 @@
-import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import { m, useReducedMotion } from 'motion/react'
 import { useId, useState } from 'react'
 
-import type { CandidateSnapshot } from '../../../shared/foundTools'
-import { AnimatedHeight } from '../../components/motion/AnimatedHeight'
 import { CandidateDetails } from './CandidateDetails'
 import { CandidateImageFallback } from './CandidateImageFallback'
 import { CandidateMedia } from './CandidateMedia'
 import { CandidateSectionTabs } from './CandidateSectionTabs'
+import type {
+  CandidateImage,
+  RenderableCandidate,
+} from './candidateMediaCatalog'
 import type { CandidateSection } from './candidatePresentation'
 import { formatCandidatePrice } from './candidatePresentation'
 
 interface CandidateFoldProps {
-  readonly candidates: readonly CandidateSnapshot[]
+  readonly candidates: readonly RenderableCandidate[]
+  readonly layoutScope: string
   readonly saveErrorRef: string | undefined
   readonly savedRefs: ReadonlySet<string>
   readonly onToggleSave: (candidateRef: string) => void
@@ -19,6 +22,7 @@ interface CandidateFoldProps {
 
 export function CandidateFold({
   candidates,
+  layoutScope,
   saveErrorRef,
   savedRefs,
   onToggleSave,
@@ -31,6 +35,7 @@ export function CandidateFold({
         <li key={candidate.ref}>
           <FoldRow
             candidate={candidate}
+            layoutScope={layoutScope}
             open={candidate.ref === openRef}
             saveError={candidate.ref === saveErrorRef}
             saved={savedRefs.has(candidate.ref)}
@@ -49,13 +54,15 @@ export function CandidateFold({
 
 function FoldRow({
   candidate,
+  layoutScope,
   open,
   saveError,
   saved,
   onOpen,
   onToggleSave,
 }: {
-  readonly candidate: CandidateSnapshot
+  readonly candidate: RenderableCandidate
+  readonly layoutScope: string
   readonly open: boolean
   readonly saveError: boolean
   readonly saved: boolean
@@ -67,46 +74,56 @@ function FoldRow({
   const tabsId = useId()
   const detailsId = `${tabsId}-disclosure`
   const price = formatCandidatePrice(candidate.price)
+  const mediaLayoutId = `${layoutScope}-${candidate.ref}-media`
+  const titleLayoutId = `${layoutScope}-${candidate.ref}-title`
+  const priceLayoutId = `${layoutScope}-${candidate.ref}-price`
 
   return (
-    <article className="overflow-hidden rounded-12 bg-background-lighter shadow-surface-compact">
+    <m.article
+      animate={{ borderRadius: open ? 16 : 12 }}
+      className={`overflow-hidden rounded-12 bg-background-lighter transition-shadow duration-200 ${
+        open ? 'shadow-surface-artifact' : 'shadow-surface-compact'
+      }`}
+      data-testid={`fold-row-${candidate.ref}`}
+      transition={reducedMotion ? { duration: 0 } : { duration: 0.2 }}
+    >
       <FoldHeader
         candidate={candidate}
         controlsId={detailsId}
         open={open}
+        mediaLayoutId={mediaLayoutId}
         price={price?.amount}
+        priceLayoutId={priceLayoutId}
         reducedMotion={reducedMotion}
+        titleLayoutId={titleLayoutId}
         onOpen={onOpen}
       />
 
-      <AnimatedHeight id={detailsId} open={open}>
-        <AnimatePresence initial={false}>
-          {open ? (
-            <m.div
-              key="details"
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reducedMotion ? 0 : -4 }}
-              initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
-              transition={
-                reducedMotion
-                  ? { duration: 0 }
-                  : { type: 'spring', stiffness: 360, damping: 38 }
-              }
-            >
-              <FoldExpandedDetails
-                candidate={candidate}
-                saveError={saveError}
-                saved={saved}
-                section={section}
-                tabsId={tabsId}
-                onSectionChange={setSection}
-                onToggleSave={onToggleSave}
-              />
-            </m.div>
-          ) : null}
-        </AnimatePresence>
-      </AnimatedHeight>
-    </article>
+      <m.div
+        id={detailsId}
+        animate={{ height: open ? 'auto' : 0 }}
+        aria-hidden={!open}
+        className="overflow-hidden"
+        initial={false}
+        inert={!open}
+        transition={
+          reducedMotion
+            ? { duration: 0 }
+            : { type: 'spring', bounce: 0, duration: 0.32 }
+        }
+      >
+        <FoldExpandedDetails
+          candidate={candidate}
+          mediaLayoutId={open ? mediaLayoutId : undefined}
+          saveError={saveError}
+          saved={saved}
+          section={section}
+          tabsId={tabsId}
+          onSectionChange={setSection}
+          onToggleSave={onToggleSave}
+        />
+      </m.div>
+    </m.article>
   )
 }
 
@@ -114,15 +131,21 @@ function FoldHeader({
   candidate,
   controlsId,
   open,
+  mediaLayoutId,
   price,
+  priceLayoutId,
   reducedMotion,
+  titleLayoutId,
   onOpen,
 }: {
-  readonly candidate: CandidateSnapshot
+  readonly candidate: RenderableCandidate
   readonly controlsId: string
   readonly open: boolean
+  readonly mediaLayoutId: string
   readonly price: string | undefined
+  readonly priceLayoutId: string
   readonly reducedMotion: boolean | null
+  readonly titleLayoutId: string
   readonly onOpen: () => void
 }) {
   return (
@@ -133,24 +156,34 @@ function FoldHeader({
       type="button"
       onClick={onOpen}
     >
-      <CandidateThumbnail images={candidate.images} />
-      <span className="min-w-0 flex-1">
+      {open ? null : (
+        <CandidateThumbnail
+          images={candidate.images}
+          layoutId={mediaLayoutId}
+          reducedMotion={reducedMotion}
+        />
+      )}
+      <m.span
+        className="min-w-0 flex-1"
+        layout="position"
+        layoutId={titleLayoutId}
+      >
         <span className="block truncate text-label-medium">
           {candidate.title}
         </span>
         <span className="block truncate text-body-small text-foreground-muted">
           {candidate.location.label}
         </span>
-      </span>
-      <span className="shrink-0 text-right">
+      </m.span>
+      <m.span
+        className="shrink-0 text-right"
+        layout="position"
+        layoutId={priceLayoutId}
+      >
         <span className="block font-mono text-mono-small tabular-nums">
           {price ?? 'Unknown'}
         </span>
-        <span className="block text-label-x-small text-foreground-muted">
-          {candidate.sources.length} source
-          {candidate.sources.length === 1 ? '' : 's'}
-        </span>
-      </span>
+      </m.span>
       <m.span
         aria-hidden="true"
         animate={{ rotate: open ? 45 : 0 }}
@@ -165,6 +198,7 @@ function FoldHeader({
 
 function FoldExpandedDetails({
   candidate,
+  mediaLayoutId,
   saveError,
   saved,
   section,
@@ -172,7 +206,8 @@ function FoldExpandedDetails({
   onSectionChange,
   onToggleSave,
 }: {
-  readonly candidate: CandidateSnapshot
+  readonly candidate: RenderableCandidate
+  readonly mediaLayoutId: string | undefined
   readonly saveError: boolean
   readonly saved: boolean
   readonly section: CandidateSection
@@ -184,7 +219,11 @@ function FoldExpandedDetails({
 
   return (
     <div className="px-14 pb-14">
-      <CandidateMedia candidate={candidate} compact />
+      <CandidateMedia
+        candidate={candidate}
+        compact
+        {...(mediaLayoutId ? { layoutId: mediaLayoutId } : {})}
+      />
       <div className="mt-12">
         <CandidateSectionTabs
           idBase={tabsId}
@@ -239,8 +278,12 @@ function PlusIcon() {
 
 function CandidateThumbnail({
   images,
+  layoutId,
+  reducedMotion,
 }: {
-  readonly images: CandidateSnapshot['images']
+  readonly images: readonly CandidateImage[]
+  readonly layoutId: string
+  readonly reducedMotion: boolean | null
 }) {
   const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -248,12 +291,20 @@ function CandidateThumbnail({
   const image = images.find((item) => !failedUrls.has(item.url))
 
   return (
-    <span className="size-44 shrink-0 overflow-hidden rounded-8 bg-black/4">
+    <m.div
+      className="h-52 w-64 shrink-0 overflow-hidden rounded-8 bg-black/4"
+      layoutId={layoutId}
+      transition={
+        reducedMotion
+          ? { duration: 0 }
+          : { type: 'spring', bounce: 0, duration: 0.34 }
+      }
+    >
       {image ? (
         <img
           alt=""
           className="size-full object-cover"
-          loading="lazy"
+          loading="eager"
           src={image.url}
           onError={() =>
             setFailedUrls((current) => new Set([...current, image.url]))
@@ -262,6 +313,6 @@ function CandidateThumbnail({
       ) : (
         <CandidateImageFallback compact />
       )}
-    </span>
+    </m.div>
   )
 }

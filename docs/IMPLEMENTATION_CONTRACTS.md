@@ -203,11 +203,6 @@ type CandidateSnapshot = {
     basis: 'all_in' | 'base'
     confidence: 'stated' | 'derived' | 'estimated'
   }
-  images: readonly {
-    url: string
-    alt: string
-    sourceRef?: string
-  }[]
   sources: readonly {
     ref: string
     url: string
@@ -238,15 +233,18 @@ type CandidateSnapshot = {
 }
 ```
 
-The runtime validator will own the implemented type. This TypeScript shape
-records the interface before that validator exists.
+The runtime validator owns the implemented type. This shape records the
+agent-facing presentation interface.
 
 ### Meaning
 
 - `ref` is unique only within one tool output. It connects the candidate's
   Card, Fold row, media, and map focus without pretending to be a global
   accommodation ID.
-- `title`, `location`, `price`, and `images` form the stable card envelope.
+- `title`, `location`, and `price` form the stable card envelope.
+- The model does not select gallery images. The renderer matches candidate
+  sources to completed `readPage` outputs in the same message, then filters and
+  deduplicates those images for the Card or Fold presentation.
 - `At a glance` contains one concise summary and the facts that matter for this
   user and this search.
 - `Evidence` keeps the agent's claim, finding, status, and supporting source
@@ -263,7 +261,8 @@ records the interface before that validator exists.
 These are interface bounds, not research rules:
 
 - one `showCandidates` call contains 1–12 candidates;
-- one candidate contains up to 6 images and 12 sources;
+- one candidate contains up to 12 sources;
+- the renderer attaches up to 6 usable images from matching page reads;
 - `At a glance` contains up to 6 facts;
 - `Evidence` contains up to 8 findings;
 - summaries are short card copy, not report bodies;
@@ -280,7 +279,7 @@ agent's conclusions.
 
 - candidate refs are unique within the call;
 - source refs are unique within a candidate;
-- every image and evidence source ref resolves inside that candidate;
+- every evidence source ref resolves inside that candidate;
 - URLs are valid HTTP or HTTPS URLs;
 - coordinates, amounts, and array sizes stay within their bounds;
 - unknown information is absent or marked `unresolved`, never invented;

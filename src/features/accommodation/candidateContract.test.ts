@@ -11,13 +11,6 @@ const candidate: ShowCandidatesInput['candidates'][number] = {
   ref: 'lichtenberg-1',
   title: 'Furnished apartment in Lichtenberg',
   location: { label: 'Berlin-Lichtenberg' },
-  images: [
-    {
-      url: 'https://example.com/room.jpg',
-      alt: 'A furnished room',
-      sourceRef: 'listing',
-    },
-  ],
   sources: [
     {
       ref: 'listing',
@@ -45,6 +38,24 @@ describe('showCandidates contract', () => {
     expect(
       showCandidatesInputSchema.safeParse({ candidates: [candidate] }).success,
     ).toBe(true)
+  })
+
+  it('keeps gallery selection outside the agent-facing candidate contract', () => {
+    const result = showCandidatesInputSchema.parse({
+      candidates: [
+        {
+          ...candidate,
+          images: [
+            {
+              alt: 'A room selected by the model',
+              url: 'https://example.com/model-selected-room.jpg',
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(result.candidates[0]).not.toHaveProperty('images')
   })
 
   it('rejects evidence that points at a source outside the candidate', () => {

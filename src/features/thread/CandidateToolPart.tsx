@@ -1,8 +1,12 @@
-import { domAnimation, LazyMotion } from 'motion/react'
+import { domMax, LazyMotion } from 'motion/react'
 import { useMemo } from 'react'
 
-import { historicalCandidatesInputSchema } from '../../../shared/foundTools'
+import {
+  historicalCandidatesInputSchema,
+  type ReadPageOutput,
+} from '../../../shared/foundTools'
 import { CandidateResults } from '../accommodation/CandidateResults'
+import { attachCandidateMedia } from '../accommodation/candidateMediaCatalog'
 import type { FoundUIMessage } from './ThreadMessage'
 import { ToolStep } from './ThreadToolStep'
 import { isToolActive } from './toolState'
@@ -19,9 +23,11 @@ type CompletedCandidatePart = Extract<
 
 export default function CandidateToolPart({
   part,
+  readPages,
   threadId,
 }: {
   readonly part: CandidatePart
+  readonly readPages: readonly ReadPageOutput[]
   readonly threadId: string
 }) {
   if (part.state !== 'output-available') {
@@ -40,28 +46,43 @@ export default function CandidateToolPart({
     )
   }
 
-  return <CompletedCandidateToolPart part={part} threadId={threadId} />
+  return (
+    <CompletedCandidateToolPart
+      part={part}
+      readPages={readPages}
+      threadId={threadId}
+    />
+  )
 }
 
 function CompletedCandidateToolPart({
   part,
+  readPages,
   threadId,
 }: {
   readonly part: CompletedCandidatePart
+  readonly readPages: readonly ReadPageOutput[]
   readonly threadId: string
 }) {
   const parsed = useMemo(
     () => historicalCandidatesInputSchema.safeParse(part.input),
     [part.input],
   )
+  const candidates = useMemo(
+    () =>
+      parsed.success
+        ? attachCandidateMedia(parsed.data.candidates, readPages)
+        : [],
+    [parsed, readPages],
+  )
   if (!parsed.success) {
     return <ToolStep error label="Candidate output could not be displayed" />
   }
 
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={domMax} strict>
       <CandidateResults
-        candidates={parsed.data.candidates}
+        candidates={candidates}
         threadId={threadId}
         toolCallId={part.toolCallId}
       />

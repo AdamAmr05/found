@@ -1,7 +1,7 @@
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
-import { AnimatedHeight } from '../../components/motion/AnimatedHeight'
 import type { CandidateSection } from './candidatePresentation'
 import { evidenceStatusClass, factSignalClass } from './candidatePresentation'
 
@@ -17,6 +17,21 @@ export function CandidateDetails({
   section,
 }: CandidateDetailsProps) {
   const reducedMotion = useReducedMotion()
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [contentHeight, setContentHeight] = useState<number | null>(null)
+
+  useLayoutEffect(() => {
+    const content = contentRef.current
+    if (!content) return
+
+    const measure = () =>
+      setContentHeight(content.getBoundingClientRect().height)
+    measure()
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [section])
 
   return (
     <div
@@ -25,25 +40,37 @@ export function CandidateDetails({
       role="tabpanel"
       tabIndex={0}
     >
-      <AnimatedHeight minimum={176}>
-        <div className="relative">
-          <AnimatePresence initial={false} mode="popLayout">
-            <m.div
-              key={section}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reducedMotion ? 0 : -3 }}
-              initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
-              transition={
-                reducedMotion
-                  ? { duration: 0 }
-                  : { type: 'spring', bounce: 0, duration: 0.22 }
-              }
-            >
-              <SectionContent candidate={candidate} section={section} />
-            </m.div>
-          </AnimatePresence>
-        </div>
-      </AnimatedHeight>
+      <m.div
+        animate={{ height: contentHeight ?? 'auto' }}
+        className="overflow-hidden"
+        initial={false}
+        transition={
+          reducedMotion
+            ? { duration: 0 }
+            : { type: 'spring', stiffness: 340, damping: 36 }
+        }
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          <m.div
+            key={section}
+            ref={contentRef}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{
+              opacity: 0,
+              y: reducedMotion ? 0 : -4,
+              transition: { duration: reducedMotion ? 0 : 0.08 },
+            }}
+            initial={{ opacity: 0, y: reducedMotion ? 0 : 5 }}
+            transition={{
+              delay: reducedMotion ? 0 : 0.06,
+              duration: reducedMotion ? 0 : 0.16,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <SectionContent candidate={candidate} section={section} />
+          </m.div>
+        </AnimatePresence>
+      </m.div>
     </div>
   )
 }
@@ -82,75 +109,52 @@ function SectionContent({
   }
 
   if (section === 'evidence') {
-    const sourceNumberByRef = new Map(
-      candidate.sources.map((source, index) => [source.ref, index + 1]),
-    )
+    const uniqueSources = [
+      ...new Map(
+        candidate.sources.map((source) => [source.url, source] as const),
+      ).values(),
+    ]
 
     return (
       <div>
-        <div className="flex items-center justify-between rounded-8 bg-heat-8 px-12 py-10">
-          <span className="text-label-small">
-            {candidate.sources.length} source
-            {candidate.sources.length === 1 ? '' : 's'} connected
-          </span>
-          <span className="font-mono text-mono-x-small text-foreground-muted">
-            claim-level evidence
-          </span>
+        <div className="divide-y-1 divide-border-faint">
+          {candidate.evidence.map((finding) => (
+            <div
+              key={`${finding.claim}-${finding.finding}`}
+              className="grid grid-cols-1 gap-8 py-10 first:pt-0 md:grid-cols-[minmax(96px,0.65fr)_1fr] md:gap-14"
+            >
+              <div>
+                <p className="text-label-small">{finding.claim}</p>
+                <p
+                  className={`mt-2 font-mono text-mono-x-small ${evidenceStatusClass(finding.status)}`}
+                >
+                  {finding.status}
+                </p>
+              </div>
+              <p className="text-body-small text-pretty text-foreground-muted">
+                {finding.finding}
+              </p>
+            </div>
+          ))}
+          {candidate.evidence.length === 0 ? (
+            <p className="py-12 text-body-small text-foreground-muted">
+              No supporting details were included in this result.
+            </p>
+          ) : null}
         </div>
-        <div className="mt-7 flex flex-wrap gap-x-12 gap-y-5">
-          {candidate.sources.map((source, index) => (
+        <div className="mt-10 flex flex-wrap gap-x-12 gap-y-6 border-t border-border-faint pt-10">
+          {uniqueSources.map((source) => (
             <a
               key={source.ref}
-              className="inline-flex min-h-24 items-center gap-5 font-mono text-mono-x-small text-heat-100 underline decoration-heat-100/30 underline-offset-3 hover:decoration-heat-100"
+              className="inline-flex items-center gap-4 font-mono text-mono-x-small text-heat-100 underline decoration-heat-100/30 underline-offset-3 hover:decoration-heat-100"
               href={source.url}
               rel="noreferrer"
               target="_blank"
             >
-              <span aria-hidden="true">[{index + 1}]</span>
               {source.label}
               <ExternalLinkIcon />
             </a>
           ))}
-        </div>
-        <div className="mt-8 divide-y-1 divide-border-faint">
-          {candidate.evidence.map((finding) => {
-            const sourceNumbers = finding.sourceRefs.flatMap((sourceRef) => {
-              const sourceNumber = sourceNumberByRef.get(sourceRef)
-              return sourceNumber === undefined ? [] : [sourceNumber]
-            })
-
-            return (
-              <div
-                key={`${finding.claim}-${finding.finding}`}
-                className="grid grid-cols-1 gap-8 py-10 md:grid-cols-[minmax(96px,0.65fr)_1fr] md:gap-14"
-              >
-                <div>
-                  <p className="text-label-small">{finding.claim}</p>
-                  <p
-                    className={`mt-2 font-mono text-mono-x-small ${evidenceStatusClass(finding.status)}`}
-                  >
-                    {finding.status}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-body-small text-pretty text-foreground-muted">
-                    {finding.finding}
-                  </p>
-                  {sourceNumbers.length > 0 ? (
-                    <p className="mt-6 font-mono text-mono-x-small text-foreground-muted">
-                      source{' '}
-                      {sourceNumbers.map((number) => `[${number}]`).join(', ')}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            )
-          })}
-          {candidate.evidence.length === 0 ? (
-            <p className="py-12 text-body-small text-foreground-muted">
-              No claim-level evidence was included in this snapshot.
-            </p>
-          ) : null}
         </div>
       </div>
     )

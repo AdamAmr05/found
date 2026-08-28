@@ -59,6 +59,9 @@
   --shadow-surface-compact:
     0 16px 24px -12px rgb(0 0 0 / 3%), 0 2px 4px rgb(0 0 0 / 3%),
     0 0 0 1px rgb(0 0 0 / 5%);
+  --shadow-surface-artifact:
+    0 16px 44px rgb(38 38 38 / 6%), 0 2px 4px rgb(38 38 38 / 4%),
+    0 0 0 1px rgb(38 38 38 / 8%);
   --shadow-action-heat:
     inset 0 -6px 12px color(display-p3 0.9804 0.1127 0.098 / 20%),
     0 2px 4px color(display-p3 0.9804 0.3647 0.098 / 12%),

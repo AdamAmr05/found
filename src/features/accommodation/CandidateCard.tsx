@@ -1,14 +1,16 @@
+import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { useId, useState } from 'react'
 
-import type { CandidateSnapshot } from '../../../shared/foundTools'
 import { CandidateDetails } from './CandidateDetails'
 import { CandidateMedia } from './CandidateMedia'
 import { CandidateSectionTabs } from './CandidateSectionTabs'
+import type { RenderableCandidate } from './candidateMediaCatalog'
 import type { CandidateSection } from './candidatePresentation'
 import { formatCandidatePrice } from './candidatePresentation'
 
 interface CandidateCardProps {
-  readonly candidate: CandidateSnapshot
+  readonly candidate: RenderableCandidate
+  readonly layoutScope: string
   readonly saveError: boolean
   readonly saved: boolean
   readonly onToggleSave: () => void
@@ -16,6 +18,7 @@ interface CandidateCardProps {
 
 export function CandidateCard({
   candidate,
+  layoutScope,
   saveError,
   saved,
   onToggleSave,
@@ -24,11 +27,13 @@ export function CandidateCard({
   const tabsId = useId()
   const saveErrorId = `${tabsId}-shortlist-error`
   const price = formatCandidatePrice(candidate.price)
+  const reducedMotion = useReducedMotion()
+  const mediaLayoutId = `${layoutScope}-${candidate.ref}-media`
 
   return (
-    <article className="overflow-hidden rounded-16 bg-background-lighter shadow-surface-compact">
+    <article className="overflow-hidden rounded-16 bg-background-lighter shadow-surface-artifact">
       <div className="relative">
-        <CandidateMedia candidate={candidate} />
+        <CandidateMedia candidate={candidate} layoutId={mediaLayoutId} />
         <button
           aria-label={saved ? 'Remove from shortlist' : 'Add to shortlist'}
           aria-describedby={saveError ? saveErrorId : undefined}
@@ -39,7 +44,39 @@ export function CandidateCard({
           type="button"
           onClick={onToggleSave}
         >
-          {saved ? <CheckIcon /> : <PlusIcon />}
+          <AnimatePresence initial={false} mode="popLayout">
+            {saved ? (
+              <m.span
+                key="saved"
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                className="grid size-26 place-items-center rounded-full bg-heat-100 text-white"
+                exit={{ opacity: 0, rotate: -12, scale: 0.4 }}
+                initial={{ opacity: 0, rotate: 12, scale: 0.4 }}
+                transition={
+                  reducedMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', stiffness: 520, damping: 28 }
+                }
+              >
+                <CheckIcon />
+              </m.span>
+            ) : (
+              <m.span
+                key="add"
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                className="grid size-24 place-items-center"
+                exit={{ opacity: 0, rotate: 12, scale: 0.4 }}
+                initial={{ opacity: 0, rotate: -12, scale: 0.4 }}
+                transition={
+                  reducedMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', stiffness: 520, damping: 28 }
+                }
+              >
+                <PlusIcon />
+              </m.span>
+            )}
+          </AnimatePresence>
         </button>
         {saveError ? (
           <p
