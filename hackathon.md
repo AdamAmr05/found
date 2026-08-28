@@ -8,13 +8,13 @@
 - **Live app:** not deployed
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
-- **Convex deployment:** not deployed
+- **Convex deployment:** https://sensible-bee-189.eu-west-1.convex.cloud
 - **Components:** @convex-dev/agent, @firecrawl/firecrawl-convex
 - **Convex features:** schema, components, queries, mutations, internal actions, scheduler, realtime subscriptions
 - **Auth:** none
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T15:41:09Z
+- **Last updated:** 2026-08-28T19:18:42Z
 
 ## Log
 
@@ -127,3 +127,11 @@ messages. Saves keep only the session, thread, tool-call, and candidate refs;
 server-side provenance rejects fabricated relationships. Hardened candidate
 evidence, prices, images, accessibility, motion, and Firecrawl failures while
 keeping the model-authored snapshot stored once in its historical tool part.
+
+### 2026-08-28 - 3260cb2
+
+Refined the first live research interface into a cohesive result flow. Real
+Firecrawl page media, evidence, candidate previews, Card/Fold motion, and the
+thread composer now behave consistently from streamed response through
+saveable result views. Added focused contract tests and kept the full browser
+suite green.
