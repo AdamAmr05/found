@@ -1,16 +1,20 @@
 import { Agent } from '@convex-dev/agent'
-import { openai } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
+import { isStepCount } from 'ai'
 
 import { components } from './_generated/api'
+import { env } from './_generated/server'
+import { FOUND_BASE_INSTRUCTIONS } from './agentInstructions'
 
-export const FOUND_MODEL = 'gpt-5-mini' as const
+export const FOUND_MODEL = 'gpt-5.6-luna' as const
+
+const openai = env.OPENAI_API_KEY
+  ? createOpenAI({ apiKey: env.OPENAI_API_KEY })
+  : createOpenAI()
 
 export const foundAgent = new Agent(components.agent, {
   name: 'Found',
   languageModel: openai(FOUND_MODEL),
-  instructions: `You are Found, an accommodation research partner.
-
-Help the user find somewhere they can actually live or stay. Begin from what the user tells you. If the request is too vague to research usefully, ask one concise clarification that moves the search forward. Prefer location, timing, budget, household, and any constraint the user already cares about, but do not turn the conversation into a form or insist on every field.
-
-Be direct, warm, and concise. Never invent listings, prices, availability, sources, or research you did not perform. The live web research tools are not connected yet, so say that plainly if the user asks you to search in this version.`,
+  instructions: FOUND_BASE_INSTRUCTIONS,
+  stopWhen: isStepCount(10),
 })

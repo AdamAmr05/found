@@ -76,6 +76,9 @@ and generated identifiers unless the name is genuinely part of a public surface.
   mutations.
 - Check installed Convex components and existing repository infrastructure
   before building a parallel implementation.
+- Found currently calls OpenAI directly because the Convex AI Gateway requires
+  a paid plan. Do not replace that transport with generic Gateway guidance
+  unless the user explicitly revisits the decision.
 - Do not add authentication until the user supplies the Convex Auth v2 alpha
   documentation.
 - Never deploy or modify production data without explicit user approval.
@@ -141,6 +144,17 @@ and generated identifiers unless the name is genuinely part of a public surface.
 - Test observable behavior through the closest stable public interface.
 - Keep tests deterministic with explicit fixtures or factories.
 - Unit tests must not use the network or production side effects.
+- A test must be capable of catching a broken product behavior or stable
+  boundary. Do not add tests that only prove a dependency imports, a mock
+  returns what it was told to return, static copy exists, or one implementation
+  detail called another.
+- Follow Google's Testing on the Toilet principles: keep tests clear, complete,
+  concise, and resilient to internal refactors. Prefer state and returned
+  behavior over call-sequence assertions.
+- Fake only true external systems. Exercise real domain logic, Convex functions,
+  and component boundaries when the test harness supports them.
+- A regression test should fail against the broken behavior before the fix
+  whenever that can be demonstrated safely.
 
 ## Required checks
 

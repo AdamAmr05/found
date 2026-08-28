@@ -21,6 +21,7 @@ import {
   query,
 } from './_generated/server'
 import { foundAgent } from './agent'
+import { buildFoundRunInstructions } from './agentInstructions'
 
 const MAX_PROMPT_LENGTH = 8_000
 
@@ -129,14 +130,16 @@ export const listMessages = query({
   returns: v.any(),
   handler: async (ctx, args) => {
     await assertThreadOwner(ctx, args.threadId, args.sessionId)
-    const page = await listUIMessages(ctx, components.agent, {
-      threadId: args.threadId,
-      paginationOpts: {
-        ...args.paginationOpts,
-        numItems: Math.min(args.paginationOpts.numItems, 100),
-      },
-    })
-    const streams = await syncStreams(ctx, components.agent, args)
+    const [page, streams] = await Promise.all([
+      listUIMessages(ctx, components.agent, {
+        threadId: args.threadId,
+        paginationOpts: {
+          ...args.paginationOpts,
+          numItems: Math.min(args.paginationOpts.numItems, 100),
+        },
+      }),
+      syncStreams(ctx, components.agent, args),
+    ])
     return { ...page, streams }
   },
 })
@@ -153,8 +156,13 @@ export const respond = internalAction({
     await foundAgent.streamText(
       ctx,
       { threadId: args.threadId, userId: args.sessionId },
-      { promptMessageId: args.promptMessageId },
-      { saveStreamDeltas: true },
+      {
+        promptMessageId: args.promptMessageId,
+        instructions: buildFoundRunInstructions({
+          researchToolsAvailable: false,
+        }),
+      },
+      { saveStreamDeltas: { throttleMs: 500 } },
     )
     return null
   },

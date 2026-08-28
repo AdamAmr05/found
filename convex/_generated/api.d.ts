@@ -9,6 +9,7 @@
  */
 
 import type * as agent from "../agent.js";
+import type * as agentInstructions from "../agentInstructions.js";
 import type * as thread from "../thread.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
+  agentInstructions: typeof agentInstructions;
   thread: typeof thread;
 }>;
 

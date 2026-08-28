@@ -18,4 +18,15 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
   await composer.press('Shift+Enter')
   await composer.type('from October.')
   await expect(composer).toHaveValue('I need a place in Berlin\nfrom October.')
+
+  await composer.press('Enter')
+  const savedPrompt = page.getByText(
+    'I need a place in Berlin\nfrom October.',
+    { exact: true },
+  )
+  await expect(savedPrompt).toBeVisible()
+
+  await page.reload()
+  await expect(savedPrompt).toBeVisible()
+  await expect(page.getByRole('button', { name: 'New thread' })).toBeVisible()
 })
