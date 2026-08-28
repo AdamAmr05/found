@@ -69,7 +69,7 @@ function FoldRow({
   const price = formatCandidatePrice(candidate.price)
 
   return (
-    <article className="overflow-hidden rounded-12 bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.08),0_1px_2px_rgb(38_38_38/0.04)]">
+    <article className="overflow-hidden rounded-12 bg-background-lighter shadow-surface-compact">
       <FoldHeader
         candidate={candidate}
         controlsId={detailsId}

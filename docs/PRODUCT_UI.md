@@ -29,6 +29,12 @@ internet to apply them:
 - The live heat token is
   `color(display-p3 0.980392 0.364706 0.098039)`. Use `#fa5d19` only as the
   sRGB fallback when a surface cannot accept Display P3.
+- The authenticated app composer uses a white 20px-radius surface. Its optical
+  edge is a 1px, 3%-black ring inside a restrained stack of 2–3%-black shadows;
+  the input is 15/24. Primary controls are 32px high with an 8px radius, an
+  inset heat shadow, and several tiny heat-colored outer shadows. Found reuses
+  that surface and control grammar without copying provider-specific dividers
+  or tool controls.
 - The live landing ASCII renderer swaps complete multiline frames every 85ms
   using an 8×10 Roboto Mono grid. Frames form coherent moving shapes rather
   than procedurally drifting individual glyphs.

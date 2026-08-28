@@ -53,6 +53,18 @@
   --color-border-muted: rgb(38 38 38 / 10%);
   --color-border-loud: rgb(38 38 38 / 18%);
   --color-foreground-muted: rgb(38 38 38 / 56%);
+  --shadow-surface-raised:
+    0 40px 48px -20px rgb(0 0 0 / 2%), 0 32px 32px -20px rgb(0 0 0 / 3%),
+    0 16px 24px -12px rgb(0 0 0 / 3%), 0 0 0 1px rgb(0 0 0 / 3%);
+  --shadow-surface-compact:
+    0 16px 24px -12px rgb(0 0 0 / 3%), 0 2px 4px rgb(0 0 0 / 3%),
+    0 0 0 1px rgb(0 0 0 / 5%);
+  --shadow-action-heat:
+    inset 0 -6px 12px color(display-p3 0.9804 0.1127 0.098 / 20%),
+    0 2px 4px color(display-p3 0.9804 0.3647 0.098 / 12%),
+    0 1px 1px color(display-p3 0.9804 0.3647 0.098 / 12%),
+    0 0.5px 0.5px color(display-p3 0.9804 0.3647 0.098 / 16%),
+    0 0.25px 0.25px color(display-p3 0.9804 0.3647 0.098 / 20%);
   --font-sans: 'Switzer', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
   --font-ascii: 'Roboto Mono Variable', 'Roboto Mono', ui-monospace, monospace;

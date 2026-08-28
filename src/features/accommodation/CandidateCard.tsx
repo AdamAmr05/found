@@ -26,7 +26,7 @@ export function CandidateCard({
   const price = formatCandidatePrice(candidate.price)
 
   return (
-    <article className="overflow-hidden rounded-16 bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.08),0_2px_4px_rgb(38_38_38/0.04),0_16px_44px_rgb(38_38_38/0.06)]">
+    <article className="overflow-hidden rounded-16 bg-background-lighter shadow-surface-compact">
       <div className="relative">
         <CandidateMedia candidate={candidate} />
         <button

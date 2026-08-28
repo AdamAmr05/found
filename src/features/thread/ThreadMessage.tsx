@@ -46,7 +46,7 @@ export function ThreadMessage({
 
 function UserMessage({ message }: { message: FoundUIMessage }) {
   return (
-    <article className="ml-auto max-w-560 rounded-16 bg-accent-black px-16 py-12 text-body-large text-white">
+    <article className="ml-auto max-w-560 rounded-12 bg-accent-black px-14 py-10 text-body-large text-white">
       {message.parts.map((part, index) =>
         part.type === 'text' ? (
           <MessageText
@@ -70,7 +70,7 @@ function AssistantMessage({
   readonly threadId: string
 }) {
   return (
-    <article className="flex max-w-720 flex-col gap-16 text-body-large text-accent-black">
+    <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black">
       {failed ? (
         <p className="text-accent-crimson">
           I couldn’t finish that response. Check the service configuration and
@@ -156,7 +156,7 @@ function MessageText({
   return (
     <Suspense fallback={<p className="whitespace-pre-wrap">{smoothText}</p>}>
       <StreamingMarkdown
-        className="[&_a]:text-heat-100 [&_a]:underline [&_a]:underline-offset-3 [&_h1]:mt-18 [&_h1]:text-title-h4 [&_h2]:mt-16 [&_h2]:text-title-h5 [&_h3]:mt-14 [&_h3]:text-label-large [&_li]:my-4 [&_ol]:my-10 [&_ol]:pl-20 [&_p+p]:mt-10 [&_ul]:my-10 [&_ul]:pl-20"
+        className="[&_a]:text-heat-100 [&_a]:underline [&_a]:underline-offset-3 [&_h1]:mt-16 [&_h1]:text-title-h5 [&_h2]:mt-14 [&_h2]:text-label-x-large [&_h3]:mt-12 [&_h3]:text-label-large [&_li]:my-3 [&_ol]:my-8 [&_ol]:pl-18 [&_p+p]:mt-8 [&_ul]:my-8 [&_ul]:pl-18"
         controls={false}
         isAnimating={streaming}
         mode={streaming ? 'streaming' : 'static'}

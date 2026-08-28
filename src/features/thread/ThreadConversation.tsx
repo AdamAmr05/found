@@ -33,7 +33,7 @@ export function ThreadConversation({ children }: ThreadConversationProps) {
         role="log"
         onScrollCapture={handleScroll}
       >
-        <StickToBottom.Content className="mx-auto flex w-full max-w-720 flex-col gap-32 py-48 sm:py-64">
+        <StickToBottom.Content className="mx-auto flex w-full max-w-720 flex-col gap-24 py-36 sm:py-44">
           {children}
         </StickToBottom.Content>
         <ConversationScrollButton />
@@ -60,7 +60,7 @@ function ConversationScrollButton() {
   return (
     <button
       aria-label="Jump to latest message"
-      className="absolute bottom-16 left-1/2 z-20 grid size-42 -translate-x-1/2 place-items-center rounded-full border border-border-muted bg-background-lighter text-accent-black shadow-[0_8px_24px_rgb(38_38_38/0.12)] transition-[border-color,scale] duration-150 hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:scale-[0.96]"
+      className="absolute bottom-16 left-1/2 z-20 grid size-40 -translate-x-1/2 place-items-center rounded-full bg-background-lighter text-accent-black shadow-surface-compact transition-[transform,box-shadow] duration-150 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:translate-y-0 active:scale-[0.98]"
       type="button"
       onClick={handleScrollToBottom}
     >

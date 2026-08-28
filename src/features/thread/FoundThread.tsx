@@ -62,10 +62,11 @@ export function FoundThread() {
   const messages = messageQuery.results as FoundUIMessage[]
   const latestMessage = messages.at(-1)
   const runActive = Boolean(
-    latestMessage?.role === 'user' ||
-    (latestMessage?.role === 'assistant' &&
-      (latestMessage.status === 'pending' ||
-        latestMessage.status === 'streaming')),
+    threadId &&
+    (latestMessage?.role === 'user' ||
+      (latestMessage?.role === 'assistant' &&
+        (latestMessage.status === 'pending' ||
+          latestMessage.status === 'streaming'))),
   )
 
   useEffect(() => {
@@ -122,7 +123,7 @@ export function FoundThread() {
           />
         ) : (
           <ThreadConversation>
-            <div className="flex flex-col gap-32">
+            <div className="flex flex-col gap-24">
               {messages.map((message) => (
                 <ThreadMessage
                   key={message.key}
@@ -134,7 +135,7 @@ export function FoundThread() {
             </div>
           </ThreadConversation>
         )}
-        <div className="mt-auto shrink-0 bg-gradient-to-t from-background-base via-background-base to-transparent pt-20 pb-20 sm:pt-24 sm:pb-28">
+        <div className="mt-auto shrink-0 bg-gradient-to-t from-background-base via-background-base to-transparent pt-16 pb-16 sm:pt-20 sm:pb-22">
           <div className="mx-auto max-w-720">
             {submitError ? (
               <p
@@ -216,15 +217,15 @@ function EmptyThread({
       <h1 className="mt-16 max-w-660 text-title-h2 text-accent-black sm:text-title-h1">
         Where do you need to live?
       </h1>
-      <p className="mt-16 max-w-560 text-body-large text-foreground-muted">
+      <p className="mt-14 max-w-560 text-body-medium text-foreground-muted">
         Tell Found the place, timing, budget, and whatever would make an option
         actually work. It will ask only when something important is missing.
       </p>
-      <div className="mt-28 grid w-full max-w-640 gap-10 sm:grid-cols-2">
+      <div className="mt-24 grid w-full max-w-640 gap-10 sm:grid-cols-2">
         {STARTERS.map((prompt) => (
           <button
             key={prompt}
-            className="rounded-12 border border-border-muted bg-background-lighter p-16 text-left text-body-medium text-accent-black shadow-[0_1px_2px_rgba(38,38,38,0.03)] transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-1 hover:border-border-loud hover:shadow-[0_8px_24px_rgba(38,38,38,0.06)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50"
+            className="rounded-12 bg-background-lighter p-16 text-left text-body-medium text-accent-black shadow-surface-compact transition-[transform,box-shadow] duration-150 hover:-translate-y-1 hover:shadow-surface-raised focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50"
             disabled={disabled}
             type="button"
             onClick={() => onSelect(prompt)}
@@ -262,7 +263,7 @@ function Composer({
 
   return (
     <form
-      className="rounded-20 border border-border-muted bg-background-lighter p-8 shadow-[0_14px_44px_rgba(38,38,38,0.08),0_1px_2px_rgba(38,38,38,0.04)] focus-within:border-border-loud"
+      className="rounded-20 bg-background-lighter p-8 shadow-surface-raised"
       onSubmit={handleSubmit}
     >
       <label className="sr-only" htmlFor="found-message">
@@ -270,7 +271,7 @@ function Composer({
       </label>
       <textarea
         id="found-message"
-        className="max-h-180 min-h-64 w-full resize-none bg-transparent px-10 py-10 text-body-input text-accent-black outline-none placeholder:text-foreground-muted disabled:opacity-50"
+        className="max-h-180 min-h-52 w-full resize-none bg-transparent px-10 py-8 text-body-input text-accent-black outline-none placeholder:text-foreground-muted disabled:opacity-50"
         disabled={disabled}
         placeholder="Tell Found what you’re looking for…"
         rows={2}
@@ -284,13 +285,13 @@ function Composer({
         </span>
         <button
           aria-label="Send message"
-          className="grid size-42 shrink-0 place-items-center rounded-12 bg-heat-100 text-white shadow-[0_2px_7px_rgba(250,93,25,0.24)] transition-transform duration-150 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:scale-[0.96] disabled:bg-border-loud disabled:shadow-none"
+          className="grid size-36 shrink-0 place-items-center rounded-8 bg-heat-100 text-white shadow-action-heat transition-[transform,background-color,color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:scale-[0.995] disabled:bg-black/8 disabled:text-foreground-muted disabled:shadow-none"
           disabled={disabled || value.trim().length === 0}
           type="submit"
         >
           <svg
             aria-hidden="true"
-            className="size-19"
+            className="size-18"
             viewBox="0 0 20 20"
             fill="none"
           >

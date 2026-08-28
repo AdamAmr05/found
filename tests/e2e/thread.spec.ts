@@ -28,5 +28,10 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
 
   await page.reload()
   await expect(savedPrompt).toBeVisible()
-  await expect(page.getByRole('button', { name: 'New thread' })).toBeVisible()
+  await page.getByRole('button', { name: 'New thread' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Where do you need to live?' }),
+  ).toBeVisible()
+  await expect(composer).toBeEnabled()
+  await expect(send).toBeDisabled()
 })
