@@ -12,7 +12,7 @@
 - **Auth:** temporary anonymous session ownership; Convex Auth v2 not connected
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T12:34:01Z
+- **Last updated:** 2026-08-28T13:31:32Z
 
 ## Log
 
@@ -108,3 +108,26 @@ live official Berlin housing result through the component, and OpenAI
 `gpt-5.6-luna` produced and persisted an assistant reply through the Agent
 component. The agent-facing Firecrawl research tools remain the next
 implementation step.
+
+### 2026-08-28 - researched candidate interface
+
+Connected the first complete research-to-interface path. The Agent component
+now exposes typed `searchWeb`, `readPage`, and `showCandidates` tools. Search
+and focused page extraction run through the Firecrawl Convex component; Found
+turns those sources into a validated historical candidate part; and the real
+thread renders one or two candidates as Cards and larger sets as Fold.
+
+Added optimistic message sending, human-readable live tool steps, streaming
+Markdown, and the stable At a glance, Evidence, and Next move sections. The
+thread now follows streamed content only while the user remains pinned to the
+latest message, preserves the reading position when that follow is interrupted,
+and offers an explicit jump back to the latest message. Candidate sections
+animate through one measured height owner so their outer card geometry remains
+stable while the details change.
+
+A live browser run verified OpenAI clarification, persisted streaming,
+Firecrawl web search and page reads, structured candidate output, card tabs,
+interrupted thread following, and the jump-to-latest path. Shortlist interaction
+is currently local UI state, and its live card control still needs to be aligned
+with the proven static component. Google Maps, durable bookmarks, comparison,
+outreach, final auth, and production deployment remain unconnected.

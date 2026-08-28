@@ -1,14 +1,20 @@
-import type { UIMessage } from '@convex-dev/agent'
-import { useSmoothText, useUIMessages } from '@convex-dev/agent/react'
+import { optimisticallySendMessage } from '@convex-dev/agent/react'
+import { useUIMessages } from '@convex-dev/agent/react'
 import { Link } from '@tanstack/react-router'
 import {
   useSessionIdArg,
   useSessionMutation,
 } from 'convex-helpers/react/sessions'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 
 import { api } from '../../../convex/_generated/api'
+import {
+  ThreadMessage,
+  ThinkingStep,
+  type FoundUIMessage,
+} from './ThreadMessage'
+import { ThreadConversation } from './ThreadConversation'
 
 const THREAD_STORAGE_KEY = 'found-active-thread-id'
 
@@ -34,9 +40,15 @@ export function FoundThread() {
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
-  const scrollAnchorRef = useRef<HTMLDivElement>(null)
   const startThread = useSessionMutation(api.thread.start)
-  const sendMessage = useSessionMutation(api.thread.send)
+  const sendMessage = useSessionMutation(api.thread.send).withOptimisticUpdate(
+    (store, args) => {
+      optimisticallySendMessage(api.thread.listMessages)(store, {
+        threadId: args.threadId,
+        prompt: args.prompt,
+      })
+    },
+  )
   const messageArgs = useSessionIdArg(
     threadId ? { threadId } : ('skip' as const),
   )
@@ -45,9 +57,10 @@ export function FoundThread() {
     stream: true,
   })
   // SAFETY: listMessages returns the Agent component's UIMessage values unchanged.
-  const messages = messageQuery.results as UIMessage[]
+  // The Agent component owns the full message union. Found narrows only its
+  // three stable tool parts in ThreadMessage.
+  const messages = messageQuery.results as FoundUIMessage[]
   const latestMessage = messages.at(-1)
-  const latestText = latestMessage?.text
   const runActive = Boolean(
     latestMessage?.role === 'user' ||
     (latestMessage?.role === 'assistant' &&
@@ -59,13 +72,6 @@ export function FoundThread() {
     // oxlint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage is an external system unavailable during SSR.
     setThreadId(readStoredThreadId())
   }, [])
-
-  useEffect(() => {
-    scrollAnchorRef.current?.scrollIntoView({
-      block: 'end',
-      behavior: runActive ? 'auto' : 'smooth',
-    })
-  }, [messages.length, latestText, runActive])
 
   async function submit(promptOverride?: string): Promise<void> {
     const prompt = (promptOverride ?? draft).trim()
@@ -102,9 +108,9 @@ export function FoundThread() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col bg-background-base">
+    <main className="fixed inset-0 flex flex-col overflow-hidden bg-background-base">
       <FoundHeader hasThread={Boolean(threadId)} onNewThread={startNewThread} />
-      <section className="mx-auto flex min-h-0 w-full max-w-920 flex-1 flex-col px-20 sm:px-32">
+      <section className="mx-auto flex min-h-0 w-full max-w-920 flex-1 flex-col overflow-hidden px-20 sm:px-32">
         {threadId && messageQuery.status === 'LoadingFirstPage' ? (
           <div className="grid flex-1 place-items-center">
             <ThinkingStep label="Opening thread" />
@@ -115,17 +121,16 @@ export function FoundThread() {
             onSelect={(prompt) => void submit(prompt)}
           />
         ) : (
-          <div className="flex-1 py-48 sm:py-64">
-            <div className="mx-auto flex max-w-720 flex-col gap-32">
+          <ThreadConversation>
+            <div className="flex flex-col gap-32">
               {messages.map((message) => (
                 <ThreadMessage key={message.key} message={message} />
               ))}
               {submitting && !runActive ? <ThinkingStep /> : null}
-              <div ref={scrollAnchorRef} aria-hidden="true" />
             </div>
-          </div>
+          </ThreadConversation>
         )}
-        <div className="sticky bottom-0 mt-auto bg-gradient-to-t from-background-base via-background-base to-transparent pt-28 pb-20 sm:pb-28">
+        <div className="mt-auto shrink-0 bg-gradient-to-t from-background-base via-background-base to-transparent pt-20 pb-20 sm:pt-24 sm:pb-28">
           <div className="mx-auto max-w-720">
             {submitError ? (
               <p
@@ -142,7 +147,7 @@ export function FoundThread() {
               onSubmit={() => void submit()}
             />
             <p className="mt-8 text-center font-mono text-mono-x-small text-foreground-muted">
-              Research tools connect next. Found will not invent live results.
+              Live research · sources stay attached to what Found shows
             </p>
           </div>
         </div>
@@ -159,7 +164,7 @@ function FoundHeader({
   onNewThread: () => void
 }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-border-faint bg-background-base/90 backdrop-blur-xl">
+    <header className="z-20 shrink-0 border-b border-border-faint bg-background-base/90 backdrop-blur-xl">
       <div className="mx-auto flex h-64 max-w-1120 items-center justify-between px-20 sm:px-32">
         <Link className="text-label-large text-accent-black" to="/">
           found
@@ -224,55 +229,6 @@ function EmptyThread({
           </button>
         ))}
       </div>
-    </div>
-  )
-}
-
-function ThreadMessage({ message }: { message: UIMessage }) {
-  const [text] = useSmoothText(message.text, {
-    startStreaming: message.status === 'streaming',
-  })
-  const failed = message.status === 'failed'
-
-  if (message.role === 'system') return null
-  if (message.role === 'assistant' && !text && !failed) {
-    return <ThinkingStep />
-  }
-
-  return (
-    <article
-      className={
-        message.role === 'user'
-          ? 'ml-auto max-w-560 rounded-16 bg-accent-black px-16 py-12 text-body-large text-white'
-          : 'max-w-680 text-body-large text-accent-black'
-      }
-    >
-      {failed ? (
-        <p className="text-accent-crimson">
-          I couldn’t finish that response. Check the OpenAI configuration and
-          try again.
-        </p>
-      ) : (
-        <p className="whitespace-pre-wrap">{text}</p>
-      )}
-    </article>
-  )
-}
-
-function ThinkingStep({ label = 'Thinking' }: { label?: string }) {
-  return (
-    <div
-      className="flex items-center gap-10 text-body-medium text-foreground-muted"
-      aria-live="polite"
-    >
-      <span
-        className="relative grid size-18 place-items-center"
-        aria-hidden="true"
-      >
-        <span className="absolute size-18 animate-ping rounded-full bg-heat-12" />
-        <span className="size-7 rounded-full bg-heat-100" />
-      </span>
-      {label}
     </div>
   )
 }

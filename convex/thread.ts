@@ -159,7 +159,7 @@ export const respond = internalAction({
       {
         promptMessageId: args.promptMessageId,
         instructions: buildFoundRunInstructions({
-          researchToolsAvailable: false,
+          researchToolsAvailable: true,
         }),
       },
       { saveStreamDeltas: { throttleMs: 500 } },

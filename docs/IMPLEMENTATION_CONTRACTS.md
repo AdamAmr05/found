@@ -154,8 +154,8 @@ type ReadPageOutput = {
 }
 ```
 
-`readPage` extracts a known source. With `focus`, it uses Firecrawl's `query`
-format for a compact answer about the page and requests images in the same
+`readPage` extracts a known source. With `focus`, it uses Firecrawl's focused
+question format for a compact answer about the page and requests images in the same
 scrape. Without `focus`, it returns main-content markdown when the agent truly
 needs the complete page. The adapter normalizes both forms into `content`,
 validates source and image URLs, removes base64 images, and reports truncation

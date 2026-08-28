@@ -1,0 +1,231 @@
+import { z } from 'zod'
+
+const httpUrl = z
+  .string()
+  .trim()
+  .min(1)
+  .max(2_048)
+  .refine(
+    (value) => value.startsWith('http://') || value.startsWith('https://'),
+    {
+      message: 'Expected an HTTP or HTTPS URL',
+    },
+  )
+
+const emailAddress = z
+  .string()
+  .trim()
+  .min(3)
+  .max(254)
+  .refine((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), {
+    message: 'Expected an email address',
+  })
+
+const shortText = z.string().trim().min(1).max(240)
+
+export const searchWebInputSchema = z.object({
+  query: z
+    .string()
+    .trim()
+    .min(2)
+    .max(400)
+    .describe(
+      'A focused web search query. Search broadly before reading pages.',
+    ),
+  location: z
+    .string()
+    .trim()
+    .min(2)
+    .max(120)
+    .optional()
+    .describe('A geographic search hint, such as Berlin, Germany.'),
+  limit: z.number().int().min(1).max(8).optional().describe('Result count.'),
+})
+
+export const searchWebOutputSchema = z.object({
+  results: z
+    .array(
+      z.object({
+        url: httpUrl,
+        title: z.string().trim().min(1).max(300).optional(),
+        description: z.string().trim().min(1).max(600).optional(),
+      }),
+    )
+    .max(8),
+})
+
+export const readPageInputSchema = z.object({
+  url: httpUrl.describe('The exact page URL returned by searchWeb.'),
+  focus: z
+    .string()
+    .trim()
+    .min(2)
+    .max(600)
+    .optional()
+    .describe(
+      'A precise question about the page. Prefer this to full-page reading.',
+    ),
+})
+
+export const readPageOutputSchema = z.object({
+  url: httpUrl,
+  title: z.string().trim().min(1).max(300).optional(),
+  description: z.string().trim().min(1).max(600).optional(),
+  mode: z.enum(['focused', 'full']),
+  content: z.string().max(16_000),
+  images: z.array(httpUrl).max(12),
+  warning: z.string().trim().min(1).max(500).optional(),
+  truncated: z.boolean(),
+})
+
+const sourceSchema = z.object({
+  ref: z.string().trim().min(1).max(48),
+  url: httpUrl,
+  label: z.string().trim().min(1).max(120),
+})
+
+const candidateSnapshotSchema = z.object({
+  ref: z.string().trim().min(1).max(48),
+  title: z.string().trim().min(1).max(100),
+  location: z.object({
+    label: z.string().trim().min(1).max(140),
+    coordinates: z
+      .object({
+        latitude: z.number().min(-90).max(90),
+        longitude: z.number().min(-180).max(180),
+      })
+      .optional(),
+  }),
+  price: z
+    .object({
+      amount: z.number().nonnegative().max(10_000_000),
+      currency: z.string().trim().min(3).max(3),
+      period: z.enum(['night', 'week', 'month', 'stay']),
+      basis: z.enum(['all_in', 'base']),
+      confidence: z.enum(['stated', 'derived', 'estimated']),
+    })
+    .optional(),
+  images: z
+    .array(
+      z.object({
+        url: httpUrl,
+        alt: z.string().trim().min(1).max(180),
+        sourceRef: z.string().trim().min(1).max(48).optional(),
+      }),
+    )
+    .max(6),
+  sources: z.array(sourceSchema).min(1).max(12),
+  contact: z
+    .object({
+      name: shortText.optional(),
+      email: emailAddress.optional(),
+      url: httpUrl.optional(),
+    })
+    .optional(),
+  atAGlance: z.object({
+    summary: z.string().trim().min(1).max(320),
+    facts: z
+      .array(
+        z.object({
+          label: z.string().trim().min(1).max(60),
+          value: z.string().trim().min(1).max(140),
+          signal: z
+            .enum(['positive', 'neutral', 'caution', 'negative'])
+            .optional(),
+        }),
+      )
+      .max(6),
+  }),
+  evidence: z
+    .array(
+      z.object({
+        claim: z.string().trim().min(1).max(120),
+        finding: z.string().trim().min(1).max(260),
+        status: z.enum(['supported', 'claimed', 'contradicted', 'unresolved']),
+        sourceRefs: z.array(z.string().trim().min(1).max(48)).max(6),
+      }),
+    )
+    .max(8),
+  nextMove: z.object({
+    summary: z.string().trim().min(1).max(280),
+  }),
+})
+
+export const showCandidatesInputSchema = z
+  .object({
+    candidates: z.array(candidateSnapshotSchema).min(1).max(12),
+  })
+  .superRefine(({ candidates }, context) => {
+    const candidateRefs = new Set<string>()
+
+    for (const [candidateIndex, candidate] of candidates.entries()) {
+      if (candidateRefs.has(candidate.ref)) {
+        context.addIssue({
+          code: 'custom',
+          message: `Candidate ref "${candidate.ref}" must be unique`,
+          path: ['candidates', candidateIndex, 'ref'],
+        })
+      }
+      candidateRefs.add(candidate.ref)
+
+      const sourceRefs = new Set<string>()
+      for (const [sourceIndex, source] of candidate.sources.entries()) {
+        if (sourceRefs.has(source.ref)) {
+          context.addIssue({
+            code: 'custom',
+            message: `Source ref "${source.ref}" must be unique`,
+            path: ['candidates', candidateIndex, 'sources', sourceIndex, 'ref'],
+          })
+        }
+        sourceRefs.add(source.ref)
+      }
+
+      for (const [imageIndex, image] of candidate.images.entries()) {
+        if (image.sourceRef && !sourceRefs.has(image.sourceRef)) {
+          context.addIssue({
+            code: 'custom',
+            message: `Image source ref "${image.sourceRef}" does not exist`,
+            path: [
+              'candidates',
+              candidateIndex,
+              'images',
+              imageIndex,
+              'sourceRef',
+            ],
+          })
+        }
+      }
+
+      for (const [evidenceIndex, finding] of candidate.evidence.entries()) {
+        for (const [refIndex, sourceRef] of finding.sourceRefs.entries()) {
+          if (!sourceRefs.has(sourceRef)) {
+            context.addIssue({
+              code: 'custom',
+              message: `Evidence source ref "${sourceRef}" does not exist`,
+              path: [
+                'candidates',
+                candidateIndex,
+                'evidence',
+                evidenceIndex,
+                'sourceRefs',
+                refIndex,
+              ],
+            })
+          }
+        }
+      }
+    }
+  })
+
+export type CandidateSnapshot = z.infer<typeof candidateSnapshotSchema>
+type ReadPageInput = z.infer<typeof readPageInputSchema>
+export type ReadPageOutput = z.infer<typeof readPageOutputSchema>
+type SearchWebInput = z.infer<typeof searchWebInputSchema>
+export type SearchWebOutput = z.infer<typeof searchWebOutputSchema>
+export type ShowCandidatesInput = z.infer<typeof showCandidatesInputSchema>
+
+export type FoundUITools = {
+  searchWeb: { input: SearchWebInput; output: SearchWebOutput }
+  readPage: { input: ReadPageInput; output: ReadPageOutput }
+  showCandidates: { input: ShowCandidatesInput; output: ShowCandidatesInput }
+}
