@@ -12,7 +12,7 @@
 - **Auth:** temporary anonymous session ownership; Convex Auth v2 not connected
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T14:01:02Z
+- **Last updated:** 2026-08-28T15:30:40Z
 
 ## Log
 
@@ -59,11 +59,12 @@ without inventing the application schema (`docs/PRODUCT.md`,
 
 ### 2026-08-28 - 097d1f8
 
-Defined the Agent component and AI SDK message boundary, OpenAI access through
-the Convex AI Gateway, and clean ownership of Zod, Convex validators, and
-generated types. Designed the initial Firecrawl-facing `searchWeb` and
-`readPage` tools around the Firecrawl Convex component and kept research output
-separate from the agent-authored candidate presentation.
+Initially designed the Agent component and AI SDK message boundary around the
+Convex AI Gateway, plus clean ownership of Zod, Convex validators, and generated
+types. That gateway plan was later superseded by direct OpenAI access. Designed
+the initial Firecrawl-facing `searchWeb` and `readPage` tools around the
+Firecrawl Convex component and kept research output separate from the
+agent-authored candidate presentation.
 
 ### 2026-08-28 - 9283973
 
@@ -109,7 +110,7 @@ live official Berlin housing result through the component, and OpenAI
 component. The agent-facing Firecrawl research tools remain the next
 implementation step.
 
-### 2026-08-28 - researched candidate interface
+### 2026-08-28 - 45344f5
 
 Connected the first complete research-to-interface path. The Agent component
 now exposes typed `searchWeb`, `readPage`, and `showCandidates` tools. Search
@@ -131,7 +132,7 @@ interrupted thread following, and the jump-to-latest path. Shortlist interaction
 was initially local UI state. Google Maps, the Bookmarks view, comparison,
 outreach, final auth, and production deployment remain unconnected.
 
-### 2026-08-28 - durable shortlist references
+### 2026-08-28 - 52d31c2
 
 Made shortlist state durable without introducing a second candidate model.
 Each save stores only the anonymous session owner and the thread, tool-call, and
@@ -142,3 +143,28 @@ that relationship reactively and update it optimistically.
 A browser run saved a real researched candidate and confirmed the state after a
 full reload. The repository checks, Convex deployment validation, and all 15
 browser tests pass.
+
+### 2026-08-28 - b7eaea9
+
+Grounded and hardened the candidate interface for arbitrary model output.
+Candidate claims now carry source references, image attribution stays attached,
+malformed URLs and currencies are rejected, price confidence remains visible,
+and failed remote images fall back to Found's animated ASCII material. Candidate
+rendering is loaded only when a `showCandidates` part appears.
+
+Completed the Card and Fold accessibility behavior, added deterministic
+contract tests, and decoded untrusted Firecrawl component responses at the
+provider boundary with Effect Schema.
+
+### 2026-08-28 - 1b31de9
+
+Made shortlist references server-verifiable without copying candidate payloads
+out of the Agent message. `showCandidates` records only the tool-call and its
+bounded candidate refs; the shortlist mutation rejects references that were not
+actually presented in that thread.
+
+Replaced transform-based layout projection with one measured height owner for
+stable card and Fold borders. Evidence now shows each source once with compact
+claim-level references, image failures recover cleanly, and candidate sections
+respect reduced motion and keyboard navigation. Repository checks, the Convex
+deployment, React Doctor, and all 15 browser tests pass.
