@@ -8,9 +8,7 @@ import { FOUND_BASE_INSTRUCTIONS } from './agentInstructions'
 
 export const FOUND_MODEL = 'gpt-5.6-luna' as const
 
-const openai = env.OPENAI_API_KEY
-  ? createOpenAI({ apiKey: env.OPENAI_API_KEY })
-  : createOpenAI()
+const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
 
 export const foundAgent = new Agent(components.agent, {
   name: 'Found',
