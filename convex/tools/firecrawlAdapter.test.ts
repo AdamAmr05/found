@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ConvexError } from 'convex/values'
 import { Effect } from 'effect'
 
 import {
@@ -9,6 +10,7 @@ import {
 import {
   decodePageResponse,
   decodeSearchResponse,
+  firecrawlRequestErrorFromCause,
   normalizePageResponse,
   normalizeSearchResponse,
   runFirecrawlOperation,
@@ -132,11 +134,22 @@ describe('Firecrawl result normalization', () => {
   })
 
   it('replaces provider and decode failures with one compact error', async () => {
+    const providerFailure = firecrawlRequestErrorFromCause(
+      new ConvexError({
+        code: 'firecrawl_request_failed',
+        message: 'private provider payload',
+        path: '/v2/scrape',
+        status: 401,
+      }),
+    )
+
+    expect(providerFailure).toMatchObject({
+      providerCode: 'firecrawl_request_failed',
+      providerPath: '/v2/scrape',
+      providerStatus: '401',
+    })
     await expect(
-      runFirecrawlOperation(
-        'read',
-        Effect.fail({ raw: 'private provider payload' }),
-      ),
+      runFirecrawlOperation('read', Effect.fail(providerFailure)),
     ).rejects.toMatchObject({
       data: {
         code: 'FIRECRAWL_OPERATION_FAILED',

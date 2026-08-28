@@ -12,12 +12,14 @@ import { formatCandidatePrice } from './candidatePresentation'
 
 interface CandidateFoldProps {
   readonly candidates: readonly CandidateSnapshot[]
+  readonly saveErrorRef: string | undefined
   readonly savedRefs: ReadonlySet<string>
   readonly onToggleSave: (candidateRef: string) => void
 }
 
 export function CandidateFold({
   candidates,
+  saveErrorRef,
   savedRefs,
   onToggleSave,
 }: CandidateFoldProps) {
@@ -30,6 +32,7 @@ export function CandidateFold({
           <FoldRow
             candidate={candidate}
             open={candidate.ref === openRef}
+            saveError={candidate.ref === saveErrorRef}
             saved={savedRefs.has(candidate.ref)}
             onOpen={() =>
               setOpenRef((current) =>
@@ -47,12 +50,14 @@ export function CandidateFold({
 function FoldRow({
   candidate,
   open,
+  saveError,
   saved,
   onOpen,
   onToggleSave,
 }: {
   readonly candidate: CandidateSnapshot
   readonly open: boolean
+  readonly saveError: boolean
   readonly saved: boolean
   readonly onOpen: () => void
   readonly onToggleSave: () => void
@@ -90,6 +95,7 @@ function FoldRow({
             >
               <FoldExpandedDetails
                 candidate={candidate}
+                saveError={saveError}
                 saved={saved}
                 section={section}
                 tabsId={tabsId}
@@ -159,6 +165,7 @@ function FoldHeader({
 
 function FoldExpandedDetails({
   candidate,
+  saveError,
   saved,
   section,
   tabsId,
@@ -166,12 +173,15 @@ function FoldExpandedDetails({
   onToggleSave,
 }: {
   readonly candidate: CandidateSnapshot
+  readonly saveError: boolean
   readonly saved: boolean
   readonly section: CandidateSection
   readonly tabsId: string
   readonly onSectionChange: (section: CandidateSection) => void
   readonly onToggleSave: () => void
 }) {
+  const saveErrorId = `${tabsId}-shortlist-error`
+
   return (
     <div className="px-14 pb-14">
       <CandidateMedia candidate={candidate} compact />
@@ -190,6 +200,7 @@ function FoldExpandedDetails({
         />
       </div>
       <button
+        aria-describedby={saveError ? saveErrorId : undefined}
         aria-pressed={saved}
         className={`mt-12 min-h-40 w-full rounded-10 px-14 text-label-small ${
           saved ? 'bg-accent-black text-white' : 'bg-heat-100 text-white'
@@ -199,6 +210,15 @@ function FoldExpandedDetails({
       >
         {saved ? 'On the shortlist' : 'Add to shortlist'}
       </button>
+      {saveError ? (
+        <p
+          className="mt-8 text-center text-label-x-small text-accent-crimson"
+          id={saveErrorId}
+          role="alert"
+        >
+          Couldn’t update shortlist. Try again.
+        </p>
+      ) : null}
     </div>
   )
 }

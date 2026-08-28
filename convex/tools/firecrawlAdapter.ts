@@ -1,5 +1,5 @@
 import { ConvexError } from 'convex/values'
-import { Effect, Schema } from 'effect'
+import { Effect, Predicate, Schema } from 'effect'
 
 import {
   HTTP_URL_MAX_LENGTH,
@@ -17,6 +17,34 @@ import { truncateText } from '../../shared/text'
 export const DEFAULT_SEARCH_LIMIT = 5
 
 type FirecrawlOperation = 'read' | 'search'
+
+export class FirecrawlRequestError extends Schema.TaggedError<FirecrawlRequestError>()(
+  'FirecrawlRequestError',
+  {
+    cause: Schema.Defect(),
+    providerCode: Schema.String,
+    providerPath: Schema.String,
+    providerStatus: Schema.String,
+  },
+) {}
+
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- A rejected provider Promise is untrusted here and is immediately reduced to safe diagnostics.
+export function firecrawlRequestErrorFromCause(cause: unknown) {
+  const data =
+    cause instanceof ConvexError && Predicate.isObject(cause.data)
+      ? cause.data
+      : undefined
+  const code = data?.code
+  const path = data?.path
+  const status = data?.status
+
+  return new FirecrawlRequestError({
+    cause,
+    providerCode: Predicate.isString(code) ? code : 'unknown',
+    providerPath: Predicate.isString(path) ? path : 'unknown',
+    providerStatus: Predicate.isNumber(status) ? String(status) : 'unknown',
+  })
+}
 
 const providerMetadataSchema = Schema.Struct({
   description: Schema.optionalKey(Schema.String),
@@ -57,18 +85,44 @@ export const decodeSearchResponse = Schema.decodeUnknownEffect(
   providerSearchResponseSchema,
 )
 
-export function runFirecrawlOperation<A, E>(
+type FirecrawlFailure = FirecrawlRequestError | Schema.SchemaError
+
+function logFirecrawlFailure(
   operation: FirecrawlOperation,
-  effect: Effect.Effect<A, E>,
+  error: FirecrawlFailure,
+) {
+  const annotations =
+    error instanceof FirecrawlRequestError
+      ? {
+          failureKind: 'request',
+          providerCode: error.providerCode,
+          providerPath: error.providerPath,
+          providerStatus: error.providerStatus,
+        }
+      : {
+          failureKind: 'response_decode',
+          providerError: error.name,
+        }
+
+  return Effect.logError('Firecrawl operation failed').pipe(
+    Effect.annotateLogs({ operation, ...annotations }),
+  )
+}
+
+export function runFirecrawlOperation<A>(
+  operation: FirecrawlOperation,
+  effect: Effect.Effect<A, FirecrawlFailure>,
 ): Promise<A> {
   return Effect.runPromise(
-    Effect.mapError(
-      effect,
-      () =>
-        new ConvexError({
-          code: 'FIRECRAWL_OPERATION_FAILED',
-          operation,
-        }),
+    effect.pipe(
+      Effect.tapError((error) => logFirecrawlFailure(operation, error)),
+      Effect.mapError(
+        () =>
+          new ConvexError({
+            code: 'FIRECRAWL_OPERATION_FAILED',
+            operation,
+          }),
+      ),
     ),
   )
 }

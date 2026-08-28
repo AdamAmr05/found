@@ -47,6 +47,8 @@ export function CandidateSectionTabs({
   }
 
   return (
+    // Candidate presentation deliberately has exactly three stable sections.
+    // Changing that contract requires revisiting this grid and indicator.
     <div
       aria-label="Candidate information"
       className="relative grid grid-cols-3 rounded-8 bg-black/4 p-3"

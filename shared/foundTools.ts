@@ -9,6 +9,7 @@ export const PAGE_CONTENT_MAX_LENGTH = 16_000
 export const PAGE_IMAGE_MAX_COUNT = 12
 export const PAGE_WARNING_MAX_LENGTH = 500
 export const CANDIDATE_PRESENTATION_MAX_COUNT = 12
+export const CANDIDATE_REF_MAX_LENGTH = 48
 
 const httpUrl = z
   .string()
@@ -99,13 +100,13 @@ export const readPageOutputSchema = z.object({
 })
 
 const sourceSchema = z.object({
-  ref: z.string().trim().min(1).max(48),
+  ref: z.string().trim().min(1).max(CANDIDATE_REF_MAX_LENGTH),
   url: httpUrl,
   label: z.string().trim().min(1).max(120),
 })
 
 const candidateSnapshotSchema = z.object({
-  ref: z.string().trim().min(1).max(48),
+  ref: z.string().trim().min(1).max(CANDIDATE_REF_MAX_LENGTH),
   title: z.string().trim().min(1).max(100),
   location: z.object({
     label: z.string().trim().min(1).max(140),
@@ -134,7 +135,12 @@ const candidateSnapshotSchema = z.object({
       z.object({
         url: httpUrl,
         alt: z.string().trim().min(1).max(180),
-        sourceRef: z.string().trim().min(1).max(48).optional(),
+        sourceRef: z
+          .string()
+          .trim()
+          .min(1)
+          .max(CANDIDATE_REF_MAX_LENGTH)
+          .optional(),
       }),
     )
     .max(6),
@@ -166,7 +172,9 @@ const candidateSnapshotSchema = z.object({
         claim: z.string().trim().min(1).max(120),
         finding: z.string().trim().min(1).max(260),
         status: z.enum(['supported', 'claimed', 'contradicted', 'unresolved']),
-        sourceRefs: z.array(z.string().trim().min(1).max(48)).max(6),
+        sourceRefs: z
+          .array(z.string().trim().min(1).max(CANDIDATE_REF_MAX_LENGTH))
+          .max(6),
       }),
     )
     .max(8),

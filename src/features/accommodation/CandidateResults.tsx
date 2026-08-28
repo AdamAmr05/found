@@ -2,6 +2,7 @@ import {
   useSessionMutation,
   useSessionQuery,
 } from 'convex-helpers/react/sessions'
+import { useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
 import type { CandidateSnapshot } from '../../../shared/foundTools'
@@ -19,6 +20,7 @@ export function CandidateResults({
   threadId,
   toolCallId,
 }: CandidateResultsProps) {
+  const [saveErrorRef, setSaveErrorRef] = useState<string>()
   const savedCandidateRefs = useSessionQuery(api.shortlist.listForToolPart, {
     threadId,
     toolCallId,
@@ -45,18 +47,25 @@ export function CandidateResults({
   const savedRefs = new Set(savedCandidateRefs ?? [])
 
   function toggleSave(candidateRef: string): void {
+    setSaveErrorRef((current) =>
+      current === candidateRef ? undefined : current,
+    )
     void setSaved({
       candidateRef,
       saved: !savedRefs.has(candidateRef),
       threadId,
       toolCallId,
-    }).catch(() => undefined)
+    }).catch((error) => {
+      globalThis.reportError(error)
+      setSaveErrorRef(candidateRef)
+    })
   }
 
   if (candidates.length >= 3) {
     return (
       <CandidateFold
         candidates={candidates}
+        saveErrorRef={saveErrorRef}
         savedRefs={savedRefs}
         onToggleSave={toggleSave}
       />
@@ -69,6 +78,7 @@ export function CandidateResults({
         <CandidateCard
           key={candidate.ref}
           candidate={candidate}
+          saveError={saveErrorRef === candidate.ref}
           saved={savedRefs.has(candidate.ref)}
           onToggleSave={() => toggleSave(candidate.ref)}
         />

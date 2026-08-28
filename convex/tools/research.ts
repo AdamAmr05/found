@@ -14,6 +14,7 @@ import {
   DEFAULT_SEARCH_LIMIT,
   decodePageResponse,
   decodeSearchResponse,
+  firecrawlRequestErrorFromCause,
   normalizePageResponse,
   normalizeSearchResponse,
   runFirecrawlOperation,
@@ -41,7 +42,7 @@ export const searchWeb = createTool({
       'search',
       Effect.tryPromise({
         try: () => firecrawl.search(ctx, input.query, options),
-        catch: () => 'request_failed' as const,
+        catch: firecrawlRequestErrorFromCause,
       }).pipe(Effect.flatMap(decodeSearchResponse)),
     )
     return normalizeSearchResponse(decoded, limit)
@@ -76,7 +77,7 @@ export const readPage = createTool({
       'read',
       Effect.tryPromise({
         try: () => firecrawl.scrape(ctx, input.url, options),
-        catch: () => 'request_failed' as const,
+        catch: firecrawlRequestErrorFromCause,
       }).pipe(Effect.flatMap(decodePageResponse)),
     )
     return normalizePageResponse(decoded, input.url, mode)

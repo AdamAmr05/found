@@ -48,6 +48,36 @@ async function recordCandidatePart(
 }
 
 describe('shortlist references', () => {
+  test('normalizes a malformed component thread id to not found', async () => {
+    const t = setup()
+
+    await expect(
+      t.query(api.shortlist.listForToolPart, {
+        sessionId: ownerSession,
+        threadId: 'not-a-convex-thread-id',
+        toolCallId,
+      }),
+    ).rejects.toMatchObject({
+      data: { code: 'THREAD_NOT_FOUND' },
+    })
+  })
+
+  test('rejects malformed candidate refs at the provenance boundary', async () => {
+    const t = setup()
+    const threadId = await createThread(t, ownerSession)
+
+    await expect(
+      t.mutation(internal.candidateParts.record, {
+        candidateRefs: [''],
+        sessionId: ownerSession,
+        threadId,
+        toolCallId,
+      }),
+    ).rejects.toMatchObject({
+      data: { code: 'INVALID_CANDIDATE_PART' },
+    })
+  })
+
   test('rejects a candidate ref that was not presented by the tool part', async () => {
     const t = setup()
     const threadId = await createThread(t, ownerSession)

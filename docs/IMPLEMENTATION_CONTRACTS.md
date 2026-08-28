@@ -308,10 +308,8 @@ Saving a candidate creates one application-owned relationship containing the
 session owner, thread ID, tool-call ID, and candidate ref. It does not copy the
 candidate payload out of the historical tool part. The mutation verifies the
 relationship against the server-owned provenance index before inserting it.
-Historical parts created before that index existed are verified once against
-the Agent message and indexed lazily. The thread tray reads those relationships
-within one thread; Bookmarks reads the same relationships across the user's
-threads.
+The thread tray reads those relationships within one thread; Bookmarks reads
+the same relationships across the user's threads.
 
 Compare and outreach remain separate user actions. They may act on a candidate
 from a historical tool part without requiring that candidate to be saved, and

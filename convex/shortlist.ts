@@ -1,12 +1,14 @@
 import { ConvexError, v } from 'convex/values'
 import { SessionIdArg } from 'convex-helpers/server/sessions'
 
-import { CANDIDATE_PRESENTATION_MAX_COUNT } from '../shared/foundTools'
+import {
+  CANDIDATE_PRESENTATION_MAX_COUNT,
+  CANDIDATE_REF_MAX_LENGTH,
+} from '../shared/foundTools'
 import { mutation, query } from './_generated/server'
 import { assertCandidatePartReference } from './candidateParts'
 import { assertThreadOwner } from './threadAccess'
 
-const MAX_CANDIDATE_REF_LENGTH = 48
 const MAX_TOOL_CALL_ID_LENGTH = 256
 
 function assertToolCallId(toolCallId: string): void {
@@ -18,7 +20,7 @@ function assertToolCallId(toolCallId: string): void {
 function assertCandidateRef(candidateRef: string): void {
   if (
     candidateRef.length === 0 ||
-    candidateRef.length > MAX_CANDIDATE_REF_LENGTH
+    candidateRef.length > CANDIDATE_REF_MAX_LENGTH
   ) {
     throw new ConvexError({ code: 'INVALID_SHORTLIST_REFERENCE' })
   }
