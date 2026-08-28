@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
 import { CandidateDetails } from './CandidateDetails'
@@ -19,6 +19,7 @@ export function CandidateCard({
   onToggleSave,
 }: CandidateCardProps) {
   const [section, setSection] = useState<CandidateSection>('glance')
+  const tabsId = useId()
   const price = formatCandidatePrice(candidate.price)
 
   return (
@@ -58,13 +59,17 @@ export function CandidateCard({
         </div>
         <div className="mt-18">
           <CandidateSectionTabs
-            candidateRef={candidate.ref}
+            idBase={tabsId}
             section={section}
             onChange={setSection}
           />
         </div>
         <div className="mt-18">
-          <CandidateDetails candidate={candidate} section={section} />
+          <CandidateDetails
+            candidate={candidate}
+            idBase={tabsId}
+            section={section}
+          />
         </div>
       </div>
     </article>

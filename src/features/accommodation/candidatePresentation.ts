@@ -42,12 +42,18 @@ export function formatCandidatePrice(
 ): { amount: string; detail: string } | undefined {
   if (!price) return undefined
 
-  const amount = new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: price.currency.toUpperCase(),
-    maximumFractionDigits: 0,
-  }).format(price.amount)
+  let amount: string
+  try {
+    amount = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: price.currency,
+    }).format(price.amount)
+  } catch {
+    amount = `${price.amount} ${price.currency}`
+  }
   const basis = price.basis === 'all_in' ? 'all in' : 'base price'
+  const confidence =
+    price.confidence === 'stated' ? '' : ` · ${price.confidence}`
 
-  return { amount, detail: `${basis} / ${price.period}` }
+  return { amount, detail: `${basis} / ${price.period}${confidence}` }
 }

@@ -1,7 +1,9 @@
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
+import { CandidateImageFallback } from './CandidateImageFallback'
 
 interface CandidateMediaProps {
   readonly candidate: CandidateSnapshot
@@ -13,32 +15,45 @@ export function CandidateMedia({
   compact = false,
 }: CandidateMediaProps) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
   const reducedMotion = useReducedMotion()
-  const image = candidate.images[activeIndex]
+  const usableImages = candidate.images.filter(
+    (candidateImage) => !failedUrls.has(candidateImage.url),
+  )
+  const safeIndex =
+    usableImages.length === 0 ? 0 : activeIndex % usableImages.length
+  const image = usableImages[safeIndex]
 
   if (!image) {
     return (
-      <div
-        className={`grid place-items-center bg-black/4 ${compact ? 'h-180' : 'h-248 md:h-292'}`}
-      >
-        <span className="font-mono text-mono-small text-foreground-muted">
-          IMAGE NOT FOUND
-        </span>
+      <div className={compact ? 'h-180 rounded-12' : 'h-248 md:h-292'}>
+        <CandidateImageFallback />
       </div>
     )
   }
 
   const move = (direction: -1 | 1) => {
-    const count = candidate.images.length
-    setActiveIndex((current) => (current + direction + count) % count)
+    const count = usableImages.length
+    setActiveIndex((safeIndex + direction + count) % count)
   }
+
+  const handleImageError = (): void => {
+    setFailedUrls((current) => new Set([...current, image.url]))
+    setActiveIndex(0)
+  }
+
+  const source = image.sourceRef
+    ? candidate.sources.find((item) => item.ref === image.sourceRef)
+    : undefined
 
   return (
     <div
       className={`relative overflow-hidden bg-black/4 ${compact ? 'h-180 rounded-12' : 'h-248 md:h-292'}`}
     >
       <AnimatePresence initial={false} mode="popLayout">
-        <motion.img
+        <m.img
           key={image.url}
           alt={image.alt}
           animate={{ opacity: 1, scale: 1 }}
@@ -48,20 +63,37 @@ export function CandidateMedia({
           loading="lazy"
           src={image.url}
           transition={{ duration: reducedMotion ? 0 : 0.2 }}
+          onError={handleImageError}
         />
       </AnimatePresence>
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/60 to-transparent p-10 pt-32">
-        <span className="rounded-full bg-white/92 px-9 py-5 font-mono text-mono-x-small text-accent-black">
-          {candidate.images.length} photo
-          {candidate.images.length === 1 ? '' : 's'}
-        </span>
-        {candidate.images.length > 1 ? (
+        <div className="flex items-center gap-5 rounded-full bg-white/92 px-9 py-5 font-mono text-mono-x-small text-accent-black">
+          <span>
+            {usableImages.length} photo{usableImages.length === 1 ? '' : 's'}
+          </span>
+          {source ? (
+            <>
+              <span aria-hidden className="text-foreground-muted">
+                ·
+              </span>
+              <a
+                className="max-w-132 truncate underline decoration-black/20 underline-offset-2 hover:decoration-black/60"
+                href={source.url}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {source.label}
+              </a>
+            </>
+          ) : null}
+        </div>
+        {usableImages.length > 1 ? (
           <div className="flex gap-6">
             <MediaButton label="Previous photo" onClick={() => move(-1)}>
-              ←
+              <ArrowIcon direction="left" />
             </MediaButton>
             <MediaButton label="Next photo" onClick={() => move(1)}>
-              →
+              <ArrowIcon direction="right" />
             </MediaButton>
           </div>
         ) : null}
@@ -75,7 +107,7 @@ function MediaButton({
   label,
   onClick,
 }: {
-  readonly children: string
+  readonly children: ReactNode
   readonly label: string
   readonly onClick: () => void
 }) {
@@ -88,5 +120,24 @@ function MediaButton({
     >
       {children}
     </button>
+  )
+}
+
+function ArrowIcon({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg aria-hidden className="size-18" viewBox="0 0 18 18">
+      <path
+        d={
+          direction === 'left'
+            ? 'm10.75 4.5-4.5 4.5 4.5 4.5'
+            : 'm7.25 4.5 4.5 4.5-4.5 4.5'
+        }
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
   )
 }

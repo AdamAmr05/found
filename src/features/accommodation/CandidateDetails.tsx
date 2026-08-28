@@ -1,5 +1,4 @@
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
 import type { CandidateSection } from './candidatePresentation'
@@ -7,44 +6,25 @@ import { evidenceStatusClass, factSignalClass } from './candidatePresentation'
 
 interface CandidateDetailsProps {
   readonly candidate: CandidateSnapshot
+  readonly idBase: string
   readonly section: CandidateSection
 }
 
-const MINIMUM_DETAILS_HEIGHT = 176
-
 export function CandidateDetails({
   candidate,
+  idBase,
   section,
 }: CandidateDetailsProps) {
   const reducedMotion = useReducedMotion()
-  const contentRef = useRef<HTMLDivElement | null>(null)
-  const [contentHeight, setContentHeight] = useState(MINIMUM_DETAILS_HEIGHT)
-
-  useLayoutEffect(() => {
-    const content = contentRef.current
-    if (!content) return
-
-    function measure(): void {
-      if (!content) return
-      setContentHeight(
-        Math.max(
-          MINIMUM_DETAILS_HEIGHT,
-          Math.ceil(content.getBoundingClientRect().height),
-        ),
-      )
-    }
-
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(content)
-    return () => observer.disconnect()
-  }, [section])
 
   return (
-    <motion.div
-      animate={{ height: contentHeight }}
-      className="relative overflow-hidden"
-      initial={false}
+    <m.div
+      aria-labelledby={`${idBase}-tab-${section}`}
+      className="relative min-h-176 overflow-hidden"
+      id={`${idBase}-panel`}
+      layout="size"
+      role="tabpanel"
+      tabIndex={0}
       transition={
         reducedMotion
           ? { duration: 0 }
@@ -52,8 +32,7 @@ export function CandidateDetails({
       }
     >
       <AnimatePresence initial={false} mode="popLayout">
-        <motion.div
-          ref={contentRef}
+        <m.div
           key={section}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: reducedMotion ? 0 : -3 }}
@@ -64,10 +43,14 @@ export function CandidateDetails({
               : { type: 'spring', bounce: 0, duration: 0.22 }
           }
         >
-          <SectionContent candidate={candidate} section={section} />
-        </motion.div>
+          <SectionContent
+            candidate={candidate}
+            idBase={idBase}
+            section={section}
+          />
+        </m.div>
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   )
 }
 
@@ -114,24 +97,48 @@ function SectionContent({ candidate, section }: CandidateDetailsProps) {
           </span>
         </div>
         <div className="mt-8 divide-y-1 divide-border-faint">
-          {candidate.evidence.map((finding) => (
-            <div
-              key={`${finding.claim}-${finding.finding}`}
-              className="grid grid-cols-[minmax(96px,0.65fr)_1fr] gap-14 py-10"
-            >
-              <div>
-                <p className="text-label-small">{finding.claim}</p>
-                <p
-                  className={`mt-2 font-mono text-mono-x-small ${evidenceStatusClass(finding.status)}`}
-                >
-                  {finding.status}
-                </p>
+          {candidate.evidence.map((finding) => {
+            const sources = candidate.sources.filter((source) =>
+              finding.sourceRefs.includes(source.ref),
+            )
+
+            return (
+              <div
+                key={`${finding.claim}-${finding.finding}`}
+                className="grid grid-cols-1 gap-8 py-10 md:grid-cols-[minmax(96px,0.65fr)_1fr] md:gap-14"
+              >
+                <div>
+                  <p className="text-label-small">{finding.claim}</p>
+                  <p
+                    className={`mt-2 font-mono text-mono-x-small ${evidenceStatusClass(finding.status)}`}
+                  >
+                    {finding.status}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-body-small text-pretty text-foreground-muted">
+                    {finding.finding}
+                  </p>
+                  {sources.length > 0 ? (
+                    <div className="mt-7 flex flex-wrap gap-x-10 gap-y-5">
+                      {sources.map((source) => (
+                        <a
+                          key={source.ref}
+                          className="inline-flex min-h-24 items-center gap-4 font-mono text-mono-x-small text-heat-100 underline decoration-heat-100/30 underline-offset-3 hover:decoration-heat-100"
+                          href={source.url}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          {source.label}
+                          <ExternalLinkIcon />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
-              <p className="text-body-small text-pretty text-foreground-muted">
-                {finding.finding}
-              </p>
-            </div>
-          ))}
+            )
+          })}
           {candidate.evidence.length === 0 ? (
             <p className="py-12 text-body-small text-foreground-muted">
               No claim-level evidence was included in this snapshot.
@@ -154,5 +161,20 @@ function SectionContent({ candidate, section }: CandidateDetailsProps) {
         </p>
       ) : null}
     </div>
+  )
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg aria-hidden className="size-11" viewBox="0 0 12 12">
+      <path
+        d="M4 2.5H2.5v7h7V8M6 2.5h3.5V6M9.25 2.75 5.5 6.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1"
+      />
+    </svg>
   )
 }

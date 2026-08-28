@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest'
+import { Effect } from 'effect'
 
 import {
   MAX_PAGE_CONTENT_LENGTH,
+  decodePageResponse,
+  decodeSearchResponse,
   normalizePageResponse,
   normalizeSearchResponse,
 } from './firecrawlAdapter'
 
 describe('Firecrawl result normalization', () => {
-  it('drops malformed and duplicate search results without inventing fields', () => {
-    const output = normalizeSearchResponse(
-      {
+  it('drops unusable and duplicate search results without inventing fields', async () => {
+    const response = await Effect.runPromise(
+      decodeSearchResponse({
         web: [
           { url: 'not a url', title: 'Bad' },
           { url: 'https://example.com/a', title: '  First  ' },
@@ -21,9 +24,9 @@ describe('Firecrawl result normalization', () => {
             },
           },
         ],
-      },
-      5,
+      }),
     )
+    const output = normalizeSearchResponse(response, 5)
 
     expect(output).toEqual({
       results: [
@@ -36,9 +39,9 @@ describe('Firecrawl result normalization', () => {
     })
   })
 
-  it('keeps a focused answer and removes unsafe image payloads', () => {
-    const output = normalizePageResponse(
-      {
+  it('keeps a focused answer and removes unsafe image payloads', async () => {
+    const document = await Effect.runPromise(
+      decodePageResponse({
         answer: ' Registration is allowed. ',
         markdown: 'This should not win.',
         images: [
@@ -50,7 +53,10 @@ describe('Firecrawl result normalization', () => {
           sourceURL: 'https://example.com/listing',
           title: ' Listing ',
         },
-      },
+      }),
+    )
+    const output = normalizePageResponse(
+      document,
       'https://example.com/original',
       'focused',
     )
@@ -65,10 +71,20 @@ describe('Firecrawl result normalization', () => {
     })
   })
 
-  it('reports empty and truncated pages explicitly', () => {
-    const empty = normalizePageResponse({}, 'https://example.com/empty', 'full')
+  it('reports empty and truncated pages explicitly', async () => {
+    const emptyDocument = await Effect.runPromise(decodePageResponse({}))
+    const longDocument = await Effect.runPromise(
+      decodePageResponse({
+        markdown: 'x'.repeat(MAX_PAGE_CONTENT_LENGTH + 10),
+      }),
+    )
+    const empty = normalizePageResponse(
+      emptyDocument,
+      'https://example.com/empty',
+      'full',
+    )
     const long = normalizePageResponse(
-      { markdown: 'x'.repeat(MAX_PAGE_CONTENT_LENGTH + 10) },
+      longDocument,
       'https://example.com/long',
       'full',
     )
@@ -76,5 +92,14 @@ describe('Firecrawl result normalization', () => {
     expect(empty.warning).toBe('The page returned no readable content.')
     expect(long.content).toHaveLength(MAX_PAGE_CONTENT_LENGTH)
     expect(long.truncated).toBe(true)
+  })
+
+  it('rejects malformed provider payloads before normalization', async () => {
+    await expect(
+      Effect.runPromise(decodeSearchResponse({ web: [{ url: 42 }] })),
+    ).rejects.toBeDefined()
+    await expect(
+      Effect.runPromise(decodePageResponse({ images: [null] })),
+    ).rejects.toBeDefined()
   })
 })

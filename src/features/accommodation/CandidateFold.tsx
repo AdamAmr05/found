@@ -1,8 +1,9 @@
-import { AnimatePresence, motion } from 'motion/react'
-import { useState } from 'react'
+import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import { useId, useState } from 'react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
 import { CandidateDetails } from './CandidateDetails'
+import { CandidateImageFallback } from './CandidateImageFallback'
 import { CandidateMedia } from './CandidateMedia'
 import { CandidateSectionTabs } from './CandidateSectionTabs'
 import type { CandidateSection } from './candidatePresentation'
@@ -24,7 +25,7 @@ export function CandidateFold({
   return (
     <ul className="flex flex-col gap-8">
       {candidates.map((candidate) => (
-        <li key={candidate.ref}>
+        <m.li key={candidate.ref} layout="position">
           <FoldRow
             candidate={candidate}
             open={candidate.ref === openRef}
@@ -36,7 +37,7 @@ export function CandidateFold({
             }
             onToggleSave={() => onToggleSave(candidate.ref)}
           />
-        </li>
+        </m.li>
       ))}
     </ul>
   )
@@ -56,90 +57,192 @@ function FoldRow({
   readonly onToggleSave: () => void
 }) {
   const [section, setSection] = useState<CandidateSection>('glance')
+  const reducedMotion = useReducedMotion()
+  const tabsId = useId()
   const price = formatCandidatePrice(candidate.price)
-  const thumbnail = candidate.images[0]
 
   return (
-    <article className="overflow-hidden rounded-12 bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.08),0_1px_2px_rgb(38_38_38/0.04)]">
-      <button
-        aria-expanded={open}
-        className="flex w-full items-center gap-13 px-14 py-12 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-heat-100"
-        type="button"
-        onClick={onOpen}
-      >
-        <span className="size-44 shrink-0 overflow-hidden rounded-8 bg-black/4">
-          {thumbnail ? (
-            <img
-              alt=""
-              className="size-full object-cover"
-              loading="lazy"
-              src={thumbnail.url}
-            />
-          ) : null}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-label-medium">
-            {candidate.title}
-          </span>
-          <span className="block truncate text-body-small text-foreground-muted">
-            {candidate.location.label}
-          </span>
-        </span>
-        <span className="shrink-0 text-right">
-          <span className="block font-mono text-mono-small tabular-nums">
-            {price?.amount ?? 'Unknown'}
-          </span>
-          <span className="block text-label-x-small text-foreground-muted">
-            {candidate.sources.length} source
-            {candidate.sources.length === 1 ? '' : 's'}
-          </span>
-        </span>
-        <span
-          aria-hidden="true"
-          className={`ml-2 text-body-large transition-transform ${open ? 'rotate-45' : ''}`}
-        >
-          +
-        </span>
-      </button>
+    <m.article
+      className="overflow-hidden rounded-12 bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.08),0_1px_2px_rgb(38_38_38/0.04)]"
+      layout
+      transition={
+        reducedMotion
+          ? { duration: 0 }
+          : { type: 'spring', stiffness: 360, damping: 38 }
+      }
+    >
+      <FoldHeader
+        candidate={candidate}
+        open={open}
+        price={price?.amount}
+        reducedMotion={reducedMotion}
+        onOpen={onOpen}
+      />
 
       <AnimatePresence initial={false}>
         {open ? (
-          <motion.div
+          <m.div
             key="details"
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ opacity: 1, y: 0 }}
             className="overflow-hidden"
-            exit={{ height: 0, opacity: 0 }}
-            initial={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 360, damping: 38 }}
+            exit={{ opacity: 0, y: reducedMotion ? 0 : -4 }}
+            initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
+            transition={
+              reducedMotion
+                ? { duration: 0 }
+                : { type: 'spring', stiffness: 360, damping: 38 }
+            }
           >
-            <div className="px-14 pb-14">
-              <CandidateMedia candidate={candidate} compact />
-              <div className="mt-12">
-                <CandidateSectionTabs
-                  candidateRef={`fold-${candidate.ref}`}
-                  section={section}
-                  onChange={setSection}
-                />
-              </div>
-              <div className="mt-14">
-                <CandidateDetails candidate={candidate} section={section} />
-              </div>
-              <button
-                aria-pressed={saved}
-                className={`mt-12 min-h-40 w-full rounded-10 px-14 text-label-small ${
-                  saved
-                    ? 'bg-accent-black text-white'
-                    : 'bg-heat-100 text-white'
-                }`}
-                type="button"
-                onClick={onToggleSave}
-              >
-                {saved ? 'On the shortlist' : 'Add to shortlist'}
-              </button>
-            </div>
-          </motion.div>
+            <FoldExpandedDetails
+              candidate={candidate}
+              saved={saved}
+              section={section}
+              tabsId={tabsId}
+              onSectionChange={setSection}
+              onToggleSave={onToggleSave}
+            />
+          </m.div>
         ) : null}
       </AnimatePresence>
-    </article>
+    </m.article>
+  )
+}
+
+function FoldHeader({
+  candidate,
+  open,
+  price,
+  reducedMotion,
+  onOpen,
+}: {
+  readonly candidate: CandidateSnapshot
+  readonly open: boolean
+  readonly price: string | undefined
+  readonly reducedMotion: boolean | null
+  readonly onOpen: () => void
+}) {
+  return (
+    <button
+      aria-expanded={open}
+      className="flex w-full items-center gap-13 px-14 py-12 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-heat-100"
+      type="button"
+      onClick={onOpen}
+    >
+      <CandidateThumbnail images={candidate.images} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-label-medium">
+          {candidate.title}
+        </span>
+        <span className="block truncate text-body-small text-foreground-muted">
+          {candidate.location.label}
+        </span>
+      </span>
+      <span className="shrink-0 text-right">
+        <span className="block font-mono text-mono-small tabular-nums">
+          {price ?? 'Unknown'}
+        </span>
+        <span className="block text-label-x-small text-foreground-muted">
+          {candidate.sources.length} source
+          {candidate.sources.length === 1 ? '' : 's'}
+        </span>
+      </span>
+      <m.span
+        aria-hidden="true"
+        animate={{ rotate: open ? 45 : 0 }}
+        className="ml-2 grid size-20 shrink-0 place-items-center"
+        transition={reducedMotion ? { duration: 0 } : { duration: 0.16 }}
+      >
+        <PlusIcon />
+      </m.span>
+    </button>
+  )
+}
+
+function FoldExpandedDetails({
+  candidate,
+  saved,
+  section,
+  tabsId,
+  onSectionChange,
+  onToggleSave,
+}: {
+  readonly candidate: CandidateSnapshot
+  readonly saved: boolean
+  readonly section: CandidateSection
+  readonly tabsId: string
+  readonly onSectionChange: (section: CandidateSection) => void
+  readonly onToggleSave: () => void
+}) {
+  return (
+    <div className="px-14 pb-14">
+      <CandidateMedia candidate={candidate} compact />
+      <div className="mt-12">
+        <CandidateSectionTabs
+          idBase={tabsId}
+          section={section}
+          onChange={onSectionChange}
+        />
+      </div>
+      <div className="mt-14">
+        <CandidateDetails
+          candidate={candidate}
+          idBase={tabsId}
+          section={section}
+        />
+      </div>
+      <button
+        aria-pressed={saved}
+        className={`mt-12 min-h-40 w-full rounded-10 px-14 text-label-small ${
+          saved ? 'bg-accent-black text-white' : 'bg-heat-100 text-white'
+        }`}
+        type="button"
+        onClick={onToggleSave}
+      >
+        {saved ? 'On the shortlist' : 'Add to shortlist'}
+      </button>
+    </div>
+  )
+}
+
+function PlusIcon() {
+  return (
+    <svg aria-hidden className="size-16" viewBox="0 0 16 16">
+      <path
+        d="M8 3v10M3 8h10"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  )
+}
+
+function CandidateThumbnail({
+  images,
+}: {
+  readonly images: CandidateSnapshot['images']
+}) {
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
+  const image = images.find((item) => !failedUrls.has(item.url))
+
+  return (
+    <span className="size-44 shrink-0 overflow-hidden rounded-8 bg-black/4">
+      {image ? (
+        <img
+          alt=""
+          className="size-full object-cover"
+          loading="lazy"
+          src={image.url}
+          onError={() =>
+            setFailedUrls((current) => new Set([...current, image.url]))
+          }
+        />
+      ) : (
+        <CandidateImageFallback compact />
+      )}
+    </span>
   )
 }

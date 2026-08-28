@@ -1,16 +1,13 @@
 import { z } from 'zod'
 
+import { isHttpUrl } from './httpUrl'
+
 const httpUrl = z
   .string()
   .trim()
   .min(1)
   .max(2_048)
-  .refine(
-    (value) => value.startsWith('http://') || value.startsWith('https://'),
-    {
-      message: 'Expected an HTTP or HTTPS URL',
-    },
-  )
+  .refine(isHttpUrl, { message: 'Expected an HTTP or HTTPS URL' })
 
 const emailAddress = z
   .string()
@@ -99,7 +96,11 @@ const candidateSnapshotSchema = z.object({
   price: z
     .object({
       amount: z.number().nonnegative().max(10_000_000),
-      currency: z.string().trim().min(3).max(3),
+      currency: z
+        .string()
+        .trim()
+        .regex(/^[A-Za-z]{3}$/, 'Expected a three-letter currency code')
+        .transform((currency) => currency.toUpperCase()),
       period: z.enum(['night', 'week', 'month', 'stay']),
       basis: z.enum(['all_in', 'base']),
       confidence: z.enum(['stated', 'derived', 'estimated']),
@@ -151,71 +152,100 @@ const candidateSnapshotSchema = z.object({
   }),
 })
 
-export const showCandidatesInputSchema = z
-  .object({
-    candidates: z.array(candidateSnapshotSchema).min(1).max(12),
-  })
-  .superRefine(({ candidates }, context) => {
-    const candidateRefs = new Set<string>()
+function createCandidatesSchema(requireSourceBackedEvidence: boolean) {
+  return z
+    .object({
+      candidates: z.array(candidateSnapshotSchema).min(1).max(12),
+    })
+    .superRefine(({ candidates }, context) => {
+      const candidateRefs = new Set<string>()
 
-    for (const [candidateIndex, candidate] of candidates.entries()) {
-      if (candidateRefs.has(candidate.ref)) {
-        context.addIssue({
-          code: 'custom',
-          message: `Candidate ref "${candidate.ref}" must be unique`,
-          path: ['candidates', candidateIndex, 'ref'],
-        })
-      }
-      candidateRefs.add(candidate.ref)
-
-      const sourceRefs = new Set<string>()
-      for (const [sourceIndex, source] of candidate.sources.entries()) {
-        if (sourceRefs.has(source.ref)) {
+      for (const [candidateIndex, candidate] of candidates.entries()) {
+        if (candidateRefs.has(candidate.ref)) {
           context.addIssue({
             code: 'custom',
-            message: `Source ref "${source.ref}" must be unique`,
-            path: ['candidates', candidateIndex, 'sources', sourceIndex, 'ref'],
+            message: `Candidate ref "${candidate.ref}" must be unique`,
+            path: ['candidates', candidateIndex, 'ref'],
           })
         }
-        sourceRefs.add(source.ref)
-      }
+        candidateRefs.add(candidate.ref)
 
-      for (const [imageIndex, image] of candidate.images.entries()) {
-        if (image.sourceRef && !sourceRefs.has(image.sourceRef)) {
-          context.addIssue({
-            code: 'custom',
-            message: `Image source ref "${image.sourceRef}" does not exist`,
-            path: [
-              'candidates',
-              candidateIndex,
-              'images',
-              imageIndex,
-              'sourceRef',
-            ],
-          })
-        }
-      }
-
-      for (const [evidenceIndex, finding] of candidate.evidence.entries()) {
-        for (const [refIndex, sourceRef] of finding.sourceRefs.entries()) {
-          if (!sourceRefs.has(sourceRef)) {
+        const sourceRefs = new Set<string>()
+        for (const [sourceIndex, source] of candidate.sources.entries()) {
+          if (sourceRefs.has(source.ref)) {
             context.addIssue({
               code: 'custom',
-              message: `Evidence source ref "${sourceRef}" does not exist`,
+              message: `Source ref "${source.ref}" must be unique`,
+              path: [
+                'candidates',
+                candidateIndex,
+                'sources',
+                sourceIndex,
+                'ref',
+              ],
+            })
+          }
+          sourceRefs.add(source.ref)
+        }
+
+        for (const [imageIndex, image] of candidate.images.entries()) {
+          if (image.sourceRef && !sourceRefs.has(image.sourceRef)) {
+            context.addIssue({
+              code: 'custom',
+              message: `Image source ref "${image.sourceRef}" does not exist`,
+              path: [
+                'candidates',
+                candidateIndex,
+                'images',
+                imageIndex,
+                'sourceRef',
+              ],
+            })
+          }
+        }
+
+        for (const [evidenceIndex, finding] of candidate.evidence.entries()) {
+          if (
+            requireSourceBackedEvidence &&
+            finding.status !== 'unresolved' &&
+            finding.sourceRefs.length === 0
+          ) {
+            context.addIssue({
+              code: 'custom',
+              message: `${finding.status} evidence must reference at least one source`,
               path: [
                 'candidates',
                 candidateIndex,
                 'evidence',
                 evidenceIndex,
                 'sourceRefs',
-                refIndex,
               ],
             })
           }
+
+          for (const [refIndex, sourceRef] of finding.sourceRefs.entries()) {
+            if (!sourceRefs.has(sourceRef)) {
+              context.addIssue({
+                code: 'custom',
+                message: `Evidence source ref "${sourceRef}" does not exist`,
+                path: [
+                  'candidates',
+                  candidateIndex,
+                  'evidence',
+                  evidenceIndex,
+                  'sourceRefs',
+                  refIndex,
+                ],
+              })
+            }
+          }
         }
       }
-    }
-  })
+    })
+}
+
+export const historicalCandidatesInputSchema = createCandidatesSchema(false)
+export const showCandidatesInputSchema = createCandidatesSchema(true)
 
 export type CandidateSnapshot = z.infer<typeof candidateSnapshotSchema>
 type ReadPageInput = z.infer<typeof readPageInputSchema>

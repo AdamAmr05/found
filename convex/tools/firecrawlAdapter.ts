@@ -1,51 +1,49 @@
-import type {
-  FirecrawlDocument,
-  SearchResponse,
-} from '@firecrawl/firecrawl-convex'
-import { z } from 'zod'
+import { Schema } from 'effect'
 
 import type { ReadPageOutput, SearchWebOutput } from '../../shared/foundTools'
+import { isHttpUrl } from '../../shared/httpUrl'
 
 export const DEFAULT_SEARCH_LIMIT = 5
 export const MAX_PAGE_CONTENT_LENGTH = 16_000
 
-const providerMetadataSchema = z.object({
-  description: z.string().optional(),
-  sourceURL: z.string().optional(),
-  title: z.string().optional(),
-  url: z.string().optional(),
+const providerMetadataSchema = Schema.Struct({
+  description: Schema.optionalKey(Schema.String),
+  sourceURL: Schema.optionalKey(Schema.String),
+  title: Schema.optionalKey(Schema.String),
+  url: Schema.optionalKey(Schema.String),
 })
 
-const providerSearchResponseSchema = z.object({
-  web: z
-    .array(
-      z.object({
-        description: z.string().optional(),
-        metadata: providerMetadataSchema.optional(),
-        title: z.string().optional(),
-        url: z.string().optional(),
+const providerSearchResponseSchema = Schema.Struct({
+  web: Schema.optionalKey(
+    Schema.Array(
+      Schema.Struct({
+        description: Schema.optionalKey(Schema.String),
+        metadata: Schema.optionalKey(providerMetadataSchema),
+        title: Schema.optionalKey(Schema.String),
+        url: Schema.optionalKey(Schema.String),
       }),
-    )
-    .optional(),
+    ),
+  ),
 })
 
-const providerPageSchema = z.object({
-  answer: z.string().optional(),
-  images: z.array(z.string()).optional(),
-  markdown: z.string().optional(),
-  metadata: providerMetadataSchema.optional(),
-  summary: z.string().optional(),
-  warning: z.string().optional(),
+const providerPageSchema = Schema.Struct({
+  answer: Schema.optionalKey(Schema.String),
+  images: Schema.optionalKey(Schema.Array(Schema.String)),
+  markdown: Schema.optionalKey(Schema.String),
+  metadata: Schema.optionalKey(providerMetadataSchema),
+  summary: Schema.optionalKey(Schema.String),
+  warning: Schema.optionalKey(Schema.String),
 })
 
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value)
-    return url.protocol === 'http:' || url.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
+type ProviderPage = Schema.Schema.Type<typeof providerPageSchema>
+type ProviderSearchResponse = Schema.Schema.Type<
+  typeof providerSearchResponseSchema
+>
+
+export const decodePageResponse = Schema.decodeUnknownEffect(providerPageSchema)
+export const decodeSearchResponse = Schema.decodeUnknownEffect(
+  providerSearchResponseSchema,
+)
 
 function nonEmpty(value: string | undefined): string | undefined {
   const normalized = value?.trim()
@@ -53,14 +51,13 @@ function nonEmpty(value: string | undefined): string | undefined {
 }
 
 export function normalizeSearchResponse(
-  response: SearchResponse,
+  response: ProviderSearchResponse,
   limit: number,
 ): SearchWebOutput {
-  const parsed = providerSearchResponseSchema.parse(response)
   const results: SearchWebOutput['results'] = []
   const seen = new Set<string>()
 
-  for (const result of parsed.web ?? []) {
+  for (const result of response.web ?? []) {
     const metadata = result.metadata
     const url = nonEmpty(result.url ?? metadata?.sourceURL)
     if (!url || !isHttpUrl(url) || seen.has(url)) continue
@@ -79,27 +76,31 @@ export function normalizeSearchResponse(
 }
 
 export function normalizePageResponse(
-  document: FirecrawlDocument,
+  document: ProviderPage,
   requestedUrl: string,
   mode: ReadPageOutput['mode'],
 ): ReadPageOutput {
-  const parsed = providerPageSchema.parse(document)
-  const focusedAnswer = nonEmpty(parsed.answer)
+  const focusedAnswer = nonEmpty(document.answer)
   const rawContent =
-    focusedAnswer ?? nonEmpty(parsed.markdown) ?? nonEmpty(parsed.summary) ?? ''
+    focusedAnswer ??
+    nonEmpty(document.markdown) ??
+    nonEmpty(document.summary) ??
+    ''
   const truncated = rawContent.length > MAX_PAGE_CONTENT_LENGTH
-  const sourceUrl = nonEmpty(parsed.metadata?.sourceURL ?? parsed.metadata?.url)
+  const sourceUrl = nonEmpty(
+    document.metadata?.sourceURL ?? document.metadata?.url,
+  )
   const url = sourceUrl && isHttpUrl(sourceUrl) ? sourceUrl : requestedUrl
   const images = Array.from(
     new Set(
-      (parsed.images ?? []).filter(
+      (document.images ?? []).filter(
         (image) => !image.startsWith('data:') && isHttpUrl(image),
       ),
     ),
   ).slice(0, 12)
-  const title = nonEmpty(parsed.metadata?.title)
-  const description = nonEmpty(parsed.metadata?.description)
-  const providerWarning = nonEmpty(parsed.warning)
+  const title = nonEmpty(document.metadata?.title)
+  const description = nonEmpty(document.metadata?.description)
+  const providerWarning = nonEmpty(document.warning)
   const emptyWarning = rawContent
     ? undefined
     : 'The page returned no readable content.'

@@ -1,6 +1,7 @@
 import { createTool } from '@convex-dev/agent'
 import { FirecrawlClient } from '@firecrawl/firecrawl-convex'
 import type { ScrapeOptions, SearchOptions } from '@firecrawl/firecrawl-convex'
+import { Effect } from 'effect'
 
 import {
   readPageInputSchema,
@@ -11,6 +12,8 @@ import {
 import { components } from '../_generated/api'
 import {
   DEFAULT_SEARCH_LIMIT,
+  decodePageResponse,
+  decodeSearchResponse,
   normalizePageResponse,
   normalizeSearchResponse,
 } from './firecrawlAdapter'
@@ -34,7 +37,8 @@ export const searchWeb = createTool({
     }
     if (input.location) options.location = input.location
     const response = await firecrawl.search(ctx, input.query, options)
-    return normalizeSearchResponse(response, limit)
+    const decoded = await Effect.runPromise(decodeSearchResponse(response))
+    return normalizeSearchResponse(decoded, limit)
   },
 })
 
@@ -62,6 +66,7 @@ export const readPage = createTool({
       }
     }
     const document = await firecrawl.scrape(ctx, input.url, options)
-    return normalizePageResponse(document, input.url, mode)
+    const decoded = await Effect.runPromise(decodePageResponse(document))
+    return normalizePageResponse(decoded, input.url, mode)
   },
 })

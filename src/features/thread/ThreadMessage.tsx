@@ -3,12 +3,12 @@ import { useSmoothText } from '@convex-dev/agent/react'
 import { lazy, Suspense } from 'react'
 
 import type { FoundUITools } from '../../../shared/foundTools'
-import { showCandidatesInputSchema } from '../../../shared/foundTools'
-import { CandidateResults } from '../accommodation/CandidateResults'
+import { isToolActive, ThinkingStep, ToolStep } from './ThreadToolStep'
 
 const StreamingMarkdown = lazy(() =>
   import('streamdown').then(({ Streamdown }) => ({ default: Streamdown })),
 )
+const CandidateToolPart = lazy(() => import('./CandidateToolPart'))
 
 export type FoundUIMessage = UIMessage<
   Record<string, never>,
@@ -106,7 +106,13 @@ function AssistantPart({
     case 'tool-readPage':
       return <ResearchToolStep kind="read" state={part.state} />
     case 'tool-showCandidates':
-      return <CandidateToolPart part={part} threadId={threadId} />
+      return (
+        <Suspense
+          fallback={<ToolStep active label="Preparing the useful options" />}
+        >
+          <CandidateToolPart part={part} threadId={threadId} />
+        </Suspense>
+      )
     default:
       return null
   }
@@ -138,43 +144,6 @@ function ResearchToolStep({
   return <ToolStep active={active} error={error} label={label} />
 }
 
-function CandidateToolPart({
-  part,
-  threadId,
-}: {
-  readonly part: Extract<
-    FoundUIMessage['parts'][number],
-    { type: 'tool-showCandidates' }
-  >
-  readonly threadId: string
-}) {
-  if (part.state !== 'output-available') {
-    return (
-      <ToolStep
-        active={isToolActive(part.state)}
-        error={part.state === 'output-error'}
-        label={
-          part.state === 'output-error'
-            ? 'Couldn’t prepare the options'
-            : 'Preparing the useful options'
-        }
-      />
-    )
-  }
-
-  const parsed = showCandidatesInputSchema.safeParse(part.output)
-  if (!parsed.success) {
-    return <ToolStep error label="Candidate output could not be displayed" />
-  }
-  return (
-    <CandidateResults
-      candidates={parsed.data.candidates}
-      threadId={threadId}
-      toolCallId={part.toolCallId}
-    />
-  )
-}
-
 function MessageText({
   streaming,
   text,
@@ -197,50 +166,4 @@ function MessageText({
   )
 }
 
-function isToolActive(state: string): boolean {
-  return (
-    state === 'input-streaming' ||
-    state === 'input-available' ||
-    state === 'approval-requested' ||
-    state === 'approval-responded'
-  )
-}
-
-export function ThinkingStep({ label = 'Thinking' }: { label?: string }) {
-  return <ToolStep active label={label} />
-}
-
-function ToolStep({
-  active = false,
-  error = false,
-  label,
-}: {
-  readonly active?: boolean
-  readonly error?: boolean
-  readonly label: string
-}) {
-  return (
-    <div
-      className={`flex items-center gap-10 text-body-medium ${
-        error ? 'text-accent-crimson' : 'text-foreground-muted'
-      }`}
-      aria-live={active ? 'polite' : undefined}
-    >
-      <span className="relative grid size-18 place-items-center" aria-hidden>
-        {active ? (
-          <span className="absolute size-18 animate-ping rounded-full bg-heat-12" />
-        ) : null}
-        <span
-          className={`size-7 rounded-full ${
-            error
-              ? 'bg-accent-crimson'
-              : active
-                ? 'bg-heat-100'
-                : 'bg-accent-forest'
-          }`}
-        />
-      </span>
-      {label}
-    </div>
-  )
-}
+export { ThinkingStep } from './ThreadToolStep'
