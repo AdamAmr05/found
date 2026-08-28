@@ -87,6 +87,9 @@ importers:
       '@convex-dev/eslint-plugin':
         specifier: ^4.0.0
         version: 4.0.0(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(eslint@10.9.1(jiti@2.7.0))
+      '@edge-runtime/vm':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@effect/language-service':
         specifier: 0.87.2
         version: 0.87.2
@@ -117,6 +120,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.11
         version: 4.1.11(vitest@4.1.11)
+      convex-test:
+        specifier: ^0.0.56
+        version: 0.0.56(convex@1.45.0(react@19.2.8))
       eslint:
         specifier: 10.9.1
         version: 10.9.1(jiti@2.7.0)
@@ -149,7 +155,7 @@ importers:
         version: 8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0)
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.3.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0))
+        version: 4.1.11(@edge-runtime/vm@5.0.0)(@types/node@26.3.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0))
 
 packages:
 
@@ -318,6 +324,14 @@ packages:
     peerDependencies:
       convex: ^1.36.1
       convex-helpers: ^0.1.94
+
+  '@edge-runtime/primitives@6.0.0':
+    resolution: {integrity: sha512-FqoxaBT+prPBHBwE1WXS1ocnu/VLTQyZ6NMUBAdbP7N2hsFTTxMC/jMu2D/8GAlMQfxeuppcPuCUk/HO3fpIvA==}
+    engines: {node: '>=18'}
+
+  '@edge-runtime/vm@5.0.0':
+    resolution: {integrity: sha512-NKBGBSIKUG584qrS1tyxVpX/AKJKQw5HgjYEnPLC0QsTw79JrGn+qUr8CXFb955Iy7GUdiiUv1rJ6JBGvaKb6w==}
+    engines: {node: '>=18'}
 
   '@effect/language-service@0.87.2':
     resolution: {integrity: sha512-CfiSoaVQO8pZgaMZGw5VvMvRGybsJ2LaSDoLYaqiVGvo/YYPYVR2GzUKY0h1NtIweq/+SQ5XLrvtzPIttWQ0GQ==}
@@ -1702,6 +1716,11 @@ packages:
         optional: true
       zod:
         optional: true
+
+  convex-test@0.0.56:
+    resolution: {integrity: sha512-dLYXlQjKFoGqvjAmPzyLgb2HsYI7iLo1iuNTU2DZmSrMRLWosYk94erjSU67GG5ovfP6+MjX8RJO+ebhmL6QYA==}
+    peerDependencies:
+      convex: ^1.43.0
 
   convex@1.45.0:
     resolution: {integrity: sha512-AV3B56Ptu/14d76g3urBJ50dwpiZa6uJaLT84OWox5aCwZIJiuAamdjv3lLHDzs8vv5kC31anEZohhUe3qJ2bA==}
@@ -3350,6 +3369,12 @@ snapshots:
     transitivePeerDependencies:
       - react
 
+  '@edge-runtime/primitives@6.0.0': {}
+
+  '@edge-runtime/vm@5.0.0':
+    dependencies:
+      '@edge-runtime/primitives': 6.0.0
+
   '@effect/language-service@0.87.2': {}
 
   '@emnapi/core@1.11.2':
@@ -4352,7 +4377,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.11(@types/node@26.3.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0))
+      vitest: 4.1.11(@edge-runtime/vm@5.0.0)(@types/node@26.3.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0))
 
   '@vitest/expect@4.1.11':
     dependencies:
@@ -4521,6 +4546,10 @@ snapshots:
       react: 19.2.8
       typescript: '@typescript/typescript6@6.0.2'
       zod: 4.4.3
+
+  convex-test@0.0.56(convex@1.45.0(react@19.2.8)):
+    dependencies:
+      convex: 1.45.0(react@19.2.8)
 
   convex@1.45.0(react@19.2.8):
     dependencies:
@@ -6042,7 +6071,7 @@ snapshots:
     optionalDependencies:
       vite: 8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0)
 
-  vitest@4.1.11(@types/node@26.3.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0)):
+  vitest@4.1.11(@edge-runtime/vm@5.0.0)(@types/node@26.3.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0))
@@ -6065,6 +6094,7 @@ snapshots:
       vite: 8.2.2(@types/node@26.3.0)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@edge-runtime/vm': 5.0.0
       '@types/node': 26.3.0
       '@vitest/coverage-v8': 4.1.11(vitest@4.1.11)
     transitivePeerDependencies:
