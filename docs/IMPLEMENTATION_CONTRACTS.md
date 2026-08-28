@@ -13,6 +13,11 @@ One Agent component thread backs one Found workspace. The component owns the
 stored messages, tool calls, tool results, model metadata, and stream deltas.
 Found does not recreate those tables or maintain a second message history.
 
+Until Convex Auth v2 is connected, an unguessable browser session ID acts as a
+temporary bearer credential for thread ownership. Every public thread read and
+write verifies that ownership. This is a development bridge, not the final
+identity model, and it must be replaced rather than layered beside auth.
+
 An agent run uses the Agent component's AI SDK integration:
 
 - tools are defined with the installed `createTool` API and keep their inferred
@@ -38,26 +43,20 @@ large message union. Found-owned tool payloads are validated when they are
 created, and the renderer narrows only the tool part it handles. Client message
 types are derived from the generated query return rather than handwritten.
 
-## Convex AI Gateway
+## OpenAI provider
 
-The Found agent uses an OpenAI model through the Convex AI Gateway. It does not
-call OpenAI directly or manage an OpenAI API key.
-
-The implementation installs `@convex-dev/ai-sdk-provider` alongside direct
-AI SDK 7 and passes `convexGateway(...)` as the Agent component's
-`languageModel`. The provider obtains a short-lived deployment-scoped service
-token inside the action. Found never reads, stores, returns, or forwards that
-token.
+Found calls OpenAI directly through the official AI SDK provider. The OpenAI
+API key exists only in the Convex deployment environment. It is never accepted
+from the client, stored in application tables, or returned from a function.
 
 Model selection is server-owned. The client cannot supply a model ID. The
-initial OpenAI model is chosen with a small tool-calling evaluation that checks
-streaming, parallel `readPage` calls, `showCandidates` schema adherence,
-latency, and cost. The selected `provider/model` identifier is explicit in the
-agent module and is changed deliberately rather than using a moving alias.
+initial model identifier is explicit in the agent module and changes
+deliberately after evaluating tool calling, `showCandidates` schema adherence,
+latency, and cost. There is no silent provider or model fallback.
 
-The Gateway's chat, streaming, and tool-calling support covers the Found agent.
-Gateway failures remain visible agent-run failures; Found does not silently
-switch to a direct OpenAI integration or another model provider.
+The Convex Agent component remains responsible for thread messages, model
+metadata, and persisted stream deltas. Calling OpenAI directly changes the
+model transport, not the message or streaming architecture.
 
 ## Tool type ownership
 

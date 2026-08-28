@@ -19,14 +19,14 @@ human steps.
 
 Each provider has one clear responsibility:
 
-| System                               | Owns                                                                                                                                               | Does not own                                            |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Firecrawl                            | Discovering the fragmented accommodation market, acquiring listing and operator pages, extracting evidence, and refreshing source snapshots        | Geographic truth, product state, or the final interface |
-| Maps Grounding Lite                  | Current place facts, routes, travel times, nearby context, and weather through a model-agnostic MCP service                                        | Listing discovery or durable shortlist state            |
-| Google Maps Agentic UI Toolkit       | Presenting grounded places, routes, place details, imagery, and attribution as interactive inline views                                            | Domain reasoning or canonical artifact state            |
-| OpenAI through the Convex AI Gateway | Reasoning over evidence, choosing tools, resolving the user's intent, and emitting validated render parts and layout operations                    | Executable UI code or durable state                     |
-| Convex                               | The canonical shortlist, requirements, evidence links, decisions, approvals, runs, thread, canvas projection, authentication, and realtime updates | Reimplementing provider search or map engines           |
-| AgentMail                            | Receiving and delivering approved outreach and replies                                                                                             | Deciding what may be sent                               |
+| System                         | Owns                                                                                                                                               | Does not own                                            |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Firecrawl                      | Discovering the fragmented accommodation market, acquiring listing and operator pages, extracting evidence, and refreshing source snapshots        | Geographic truth, product state, or the final interface |
+| Maps Grounding Lite            | Current place facts, routes, travel times, nearby context, and weather through a model-agnostic MCP service                                        | Listing discovery or durable shortlist state            |
+| Google Maps Agentic UI Toolkit | Presenting grounded places, routes, place details, imagery, and attribution as interactive inline views                                            | Domain reasoning or canonical artifact state            |
+| OpenAI                         | Reasoning over evidence, choosing tools, resolving the user's intent, and emitting validated render parts and layout operations                    | Executable UI code or durable state                     |
+| Convex                         | The canonical shortlist, requirements, evidence links, decisions, approvals, runs, thread, canvas projection, authentication, and realtime updates | Reimplementing provider search or map engines           |
+| AgentMail                      | Receiving and delivering approved outreach and replies                                                                                             | Deciding what may be sent                               |
 
 In the shortest form:
 

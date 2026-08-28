@@ -176,8 +176,8 @@ schema.
   evidence message parts; raw provider responses do not become product UI.
 - AgentMail owns inboxes, email threads, durable sending, delivery state,
   inbound messages, and verified webhook ingestion.
-- OpenAI runs through the Convex AI Gateway for the product agent's reasoning
-  and generated interface decisions.
+- OpenAI runs through the official AI SDK provider from a Convex action for the
+  product agent's reasoning and generated interface decisions.
 - Maps Agentic UI gives the agent a spatial presentation layer for interactive
   maps, places, and routes. Grounding Lite is an optional agent tool for current
   place, route, and weather facts.

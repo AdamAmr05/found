@@ -2,6 +2,7 @@ import { createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
 import { ConvexProvider } from 'convex/react'
+import { SessionProvider } from 'convex-helpers/react/sessions'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -32,9 +33,11 @@ export function getRouter() {
     defaultNotFoundComponent: () => <p>not found</p>,
     Wrap: ({ children }) => (
       <ConvexProvider client={convexQueryClient.convexClient}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+        <SessionProvider storageKey="found-session-id" ssrFriendly>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </SessionProvider>
       </ConvexProvider>
     ),
   })
