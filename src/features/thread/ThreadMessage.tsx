@@ -16,7 +16,13 @@ export type FoundUIMessage = UIMessage<
   FoundUITools
 >
 
-export function ThreadMessage({ message }: { message: FoundUIMessage }) {
+export function ThreadMessage({
+  message,
+  threadId,
+}: {
+  message: FoundUIMessage
+  threadId: string
+}) {
   if (message.role === 'system') return null
 
   const failed = message.status === 'failed'
@@ -32,7 +38,9 @@ export function ThreadMessage({ message }: { message: FoundUIMessage }) {
     return <UserMessage message={message} />
   }
 
-  return <AssistantMessage failed={failed} message={message} />
+  return (
+    <AssistantMessage failed={failed} message={message} threadId={threadId} />
+  )
 }
 
 function UserMessage({ message }: { message: FoundUIMessage }) {
@@ -54,9 +62,11 @@ function UserMessage({ message }: { message: FoundUIMessage }) {
 function AssistantMessage({
   failed,
   message,
+  threadId,
 }: {
   readonly failed: boolean
   readonly message: FoundUIMessage
+  readonly threadId: string
 }) {
   return (
     <article className="flex max-w-720 flex-col gap-16 text-body-large text-accent-black">
@@ -71,6 +81,7 @@ function AssistantMessage({
             key={`${message.key}-${part.type}-${index}`}
             part={part}
             streaming={message.status === 'streaming'}
+            threadId={threadId}
           />
         ))
       )}
@@ -81,9 +92,11 @@ function AssistantMessage({
 function AssistantPart({
   part,
   streaming,
+  threadId,
 }: {
   readonly part: FoundUIMessage['parts'][number]
   readonly streaming: boolean
+  readonly threadId: string
 }) {
   switch (part.type) {
     case 'text':
@@ -93,7 +106,7 @@ function AssistantPart({
     case 'tool-readPage':
       return <ResearchToolStep kind="read" state={part.state} />
     case 'tool-showCandidates':
-      return <CandidateToolPart part={part} />
+      return <CandidateToolPart part={part} threadId={threadId} />
     default:
       return null
   }
@@ -127,11 +140,13 @@ function ResearchToolStep({
 
 function CandidateToolPart({
   part,
+  threadId,
 }: {
   readonly part: Extract<
     FoundUIMessage['parts'][number],
     { type: 'tool-showCandidates' }
   >
+  readonly threadId: string
 }) {
   if (part.state !== 'output-available') {
     return (
@@ -151,7 +166,13 @@ function CandidateToolPart({
   if (!parsed.success) {
     return <ToolStep error label="Candidate output could not be displayed" />
   }
-  return <CandidateResults candidates={parsed.data.candidates} />
+  return (
+    <CandidateResults
+      candidates={parsed.data.candidates}
+      threadId={threadId}
+      toolCallId={part.toolCallId}
+    />
+  )
 }
 
 function MessageText({

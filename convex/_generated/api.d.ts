@@ -10,7 +10,9 @@
 
 import type * as agent from "../agent.js";
 import type * as agentInstructions from "../agentInstructions.js";
+import type * as shortlist from "../shortlist.js";
 import type * as thread from "../thread.js";
+import type * as threadAccess from "../threadAccess.js";
 import type * as tools_firecrawlAdapter from "../tools/firecrawlAdapter.js";
 import type * as tools_presentation from "../tools/presentation.js";
 import type * as tools_research from "../tools/research.js";
@@ -24,7 +26,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   agentInstructions: typeof agentInstructions;
+  shortlist: typeof shortlist;
   thread: typeof thread;
+  threadAccess: typeof threadAccess;
   "tools/firecrawlAdapter": typeof tools_firecrawlAdapter;
   "tools/presentation": typeof tools_presentation;
   "tools/research": typeof tools_research;

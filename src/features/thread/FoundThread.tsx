@@ -115,7 +115,7 @@ export function FoundThread() {
           <div className="grid flex-1 place-items-center">
             <ThinkingStep label="Opening thread" />
           </div>
-        ) : messages.length === 0 ? (
+        ) : !threadId || messages.length === 0 ? (
           <EmptyThread
             disabled={submitting}
             onSelect={(prompt) => void submit(prompt)}
@@ -124,7 +124,11 @@ export function FoundThread() {
           <ThreadConversation>
             <div className="flex flex-col gap-32">
               {messages.map((message) => (
-                <ThreadMessage key={message.key} message={message} />
+                <ThreadMessage
+                  key={message.key}
+                  message={message}
+                  threadId={threadId}
+                />
               ))}
               {submitting && !runActive ? <ThinkingStep /> : null}
             </div>

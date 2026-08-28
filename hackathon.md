@@ -12,7 +12,7 @@
 - **Auth:** temporary anonymous session ownership; Convex Auth v2 not connected
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T13:31:32Z
+- **Last updated:** 2026-08-28T14:01:02Z
 
 ## Log
 
@@ -128,6 +128,17 @@ stable while the details change.
 A live browser run verified OpenAI clarification, persisted streaming,
 Firecrawl web search and page reads, structured candidate output, card tabs,
 interrupted thread following, and the jump-to-latest path. Shortlist interaction
-is currently local UI state, and its live card control still needs to be aligned
-with the proven static component. Google Maps, durable bookmarks, comparison,
+was initially local UI state. Google Maps, the Bookmarks view, comparison,
 outreach, final auth, and production deployment remain unconnected.
+
+### 2026-08-28 - durable shortlist references
+
+Made shortlist state durable without introducing a second candidate model.
+Each save stores only the anonymous session owner and the thread, tool-call, and
+candidate references; the Agent component's historical `showCandidates` part
+remains the sole candidate snapshot. The live Card and Fold renderers now read
+that relationship reactively and update it optimistically.
+
+A browser run saved a real researched candidate and confirmed the state after a
+full reload. The repository checks, Convex deployment validation, and all 15
+browser tests pass.

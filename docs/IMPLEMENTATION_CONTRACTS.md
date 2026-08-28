@@ -301,6 +301,12 @@ row.
 - map focus uses the message-local candidate ref when a spatial part appears in
   the same response.
 
-Saving, bookmarking, comparing, and contacting a candidate are separate user
-actions with their own durability contracts. They do not mutate the historical
-tool part.
+Saving a candidate creates one application-owned relationship containing the
+session owner, thread ID, tool-call ID, and candidate ref. It does not copy the
+candidate payload out of the historical tool part. The thread tray reads those
+relationships within one thread; Bookmarks reads the same relationships across
+the user's threads.
+
+Compare and outreach remain separate user actions. They may act on a candidate
+from a historical tool part without requiring that candidate to be saved, and
+none of these actions mutates the original message.

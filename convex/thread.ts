@@ -1,6 +1,5 @@
 import {
   createThread,
-  getThreadMetadata,
   listUIMessages,
   saveMessage,
   syncStreams,
@@ -13,19 +12,16 @@ import type { SessionId } from 'convex-helpers/server/sessions'
 
 import { components, internal } from './_generated/api'
 import {
-  type ActionCtx,
   type MutationCtx,
-  type QueryCtx,
   internalAction,
   mutation,
   query,
 } from './_generated/server'
 import { foundAgent } from './agent'
 import { buildFoundRunInstructions } from './agentInstructions'
+import { assertThreadOwner } from './threadAccess'
 
 const MAX_PROMPT_LENGTH = 8_000
-
-type ThreadAccessCtx = QueryCtx | MutationCtx | ActionCtx
 
 function normalizePrompt(prompt: string): string {
   const normalized = prompt.trim()
@@ -44,21 +40,6 @@ function normalizePrompt(prompt: string): string {
 function titleFromPrompt(prompt: string): string {
   const firstLine = prompt.split('\n', 1)[0] ?? prompt
   return firstLine.length <= 72 ? firstLine : `${firstLine.slice(0, 69)}...`
-}
-
-async function assertThreadOwner(
-  ctx: ThreadAccessCtx,
-  threadId: string,
-  sessionId: SessionId,
-): Promise<void> {
-  const thread = await getThreadMetadata(ctx, components.agent, {
-    threadId,
-  }).catch(() => {
-    throw new ConvexError({ code: 'THREAD_NOT_FOUND' })
-  })
-  if (thread.userId !== sessionId) {
-    throw new ConvexError({ code: 'THREAD_NOT_FOUND' })
-  }
 }
 
 async function saveAndScheduleResponse(

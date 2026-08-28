@@ -1,4 +1,17 @@
-import { defineSchema } from 'convex/server'
+import { defineSchema, defineTable } from 'convex/server'
+import { v } from 'convex/values'
+import { vSessionId } from 'convex-helpers/server/sessions'
 
-// Intentionally empty until the object model is designed with the user.
-export default defineSchema({})
+export default defineSchema({
+  shortlistEntries: defineTable({
+    sessionId: vSessionId,
+    threadId: v.string(),
+    toolCallId: v.string(),
+    candidateRef: v.string(),
+  }).index('by_session_thread_tool_candidate', [
+    'sessionId',
+    'threadId',
+    'toolCallId',
+    'candidateRef',
+  ]),
+})

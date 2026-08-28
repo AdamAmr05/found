@@ -34,9 +34,7 @@ export function CandidateCard({
           type="button"
           onClick={onToggleSave}
         >
-          <span className="grid size-24 place-items-center text-[24px] leading-none">
-            {saved ? '✓' : '+'}
-          </span>
+          {saved ? <CheckIcon /> : <PlusIcon />}
         </button>
       </div>
       <div className="p-18 md:p-20">
@@ -70,5 +68,34 @@ export function CandidateCard({
         </div>
       </div>
     </article>
+  )
+}
+
+function PlusIcon() {
+  return (
+    <svg aria-hidden className="size-20" viewBox="0 0 20 20">
+      <path
+        d="M10 4v12M4 10h12"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.75"
+      />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg aria-hidden className="size-20" viewBox="0 0 20 20">
+      <path
+        d="m5 10 3 3 7-7"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.75"
+      />
+    </svg>
   )
 }

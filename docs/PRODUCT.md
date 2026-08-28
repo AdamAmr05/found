@@ -137,6 +137,11 @@ conversation that found them. The thread tray and Bookmarks may query the same
 underlying save relationship differently; they do not require duplicate
 candidate records and they are not the same interface.
 
+That relationship points back to the candidate in its historical message part
+using the thread, tool call, and candidate ref. The candidate itself stays in
+the message exactly as it was shown. Later research appears in a later message;
+it does not refresh or rewrite earlier candidates.
+
 Compare is independent. It is an intentional, temporary decision interaction,
 not another name for the thread tray and not a responsibility of Bookmarks.
 
