@@ -6,13 +6,13 @@
 - **Live app:** not deployed
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
-- **Convex deployment:** not deployed
+- **Convex deployment:** development project provisioned; production not deployed
 - **Components:** Agent
 - **Convex features:** schema, components, queries, mutations, internal actions, scheduler, realtime subscriptions
 - **Auth:** temporary anonymous session ownership; Convex Auth v2 not connected
-- **AI models:** OpenAI `gpt-5-mini` (integration wired; deployment key pending)
+- **AI models:** OpenAI `gpt-5.6-luna` (integration wired; deployment key pending)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T12:15:47Z
+- **Last updated:** 2026-08-28T12:26:30Z
 
 ## Log
 
@@ -72,14 +72,30 @@ slice. Found now creates durable, session-owned Agent threads, stores user and
 assistant messages through the component, schedules model work in an internal
 action, persists stream deltas, and renders live UI messages in the real
 composer. The agent calls OpenAI directly through the official AI SDK provider
-with a server-owned `gpt-5-mini` model choice.
+with a server-owned `gpt-5.6-luna` model choice.
 
 Added ownership checks around every public thread read and write, a durable
 failure path when provider configuration is missing, and browser coverage for
 the new conversation entry point. Local OpenAI generation still needs a key in
 the Convex deployment environment; no key is exposed to the browser.
 
+### 2026-08-28 - 7441ad8
+
+Created the real `adamamr05/found` Convex cloud project with a development
+deployment in Europe. Refreshed the generated Convex repository guidance and
+removed its superseded duplicate Cursor rule.
+
+### 2026-08-28 - ec6ee41
+
+Moved the agent to OpenAI `gpt-5.6-luna`, separated stable agent identity from
+per-run capability instructions, bounded the tool loop, and throttled persisted
+stream deltas. Replaced a dependency-only Effect smoke test with a browser test
+that sends a real message through Convex and proves the Agent thread survives a
+reload. Added repository guidance requiring behavior-focused, refactor-resilient
+tests and narrow fakes at true external boundaries.
+
 The interactive product still runs on representative fixtures. Convex
 persistence and the Agent message stream are connected. Live OpenAI generation
 is wired but not yet verified with a configured key. Firecrawl acquisition,
-Google Maps, AgentMail, final auth, and deployment are not connected yet.
+Google Maps, AgentMail, final auth, and production deployment are not connected
+yet.
