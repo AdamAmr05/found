@@ -7,12 +7,12 @@
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
 - **Convex deployment:** development project provisioned; production not deployed
-- **Components:** Agent
+- **Components:** Agent, Firecrawl
 - **Convex features:** schema, components, queries, mutations, internal actions, scheduler, realtime subscriptions
 - **Auth:** temporary anonymous session ownership; Convex Auth v2 not connected
-- **AI models:** OpenAI `gpt-5.6-luna` (integration wired; deployment key pending)
+- **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T12:26:30Z
+- **Last updated:** 2026-08-28T12:34:01Z
 
 ## Log
 
@@ -95,7 +95,16 @@ reload. Added repository guidance requiring behavior-focused, refactor-resilient
 tests and narrow fakes at true external boundaries.
 
 The interactive product still runs on representative fixtures. Convex
-persistence and the Agent message stream are connected. Live OpenAI generation
-is wired but not yet verified with a configured key. Firecrawl acquisition,
+persistence and the Agent message stream are connected. Firecrawl acquisition,
 Google Maps, AgentMail, final auth, and production deployment are not connected
 yet.
+
+### 2026-08-28 - 036662e
+
+Mounted the Firecrawl Convex component with typed deployment environment
+variables and made the OpenAI key an explicit backend requirement. Verified
+both integrations against the development deployment: Firecrawl returned a
+live official Berlin housing result through the component, and OpenAI
+`gpt-5.6-luna` produced and persisted an assistant reply through the Agent
+component. The agent-facing Firecrawl research tools remain the next
+implementation step.
