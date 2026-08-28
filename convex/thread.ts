@@ -20,6 +20,7 @@ import {
 import { foundAgent } from './agent'
 import { buildFoundRunInstructions } from './agentInstructions'
 import { assertThreadOwner } from './threadAccess'
+import { truncateText } from '../shared/text'
 
 const MAX_PROMPT_LENGTH = 8_000
 
@@ -39,7 +40,9 @@ function normalizePrompt(prompt: string): string {
 
 function titleFromPrompt(prompt: string): string {
   const firstLine = prompt.split('\n', 1)[0] ?? prompt
-  return firstLine.length <= 72 ? firstLine : `${firstLine.slice(0, 69)}...`
+  return firstLine.length <= 72
+    ? firstLine
+    : `${truncateText(firstLine, 69)}...`
 }
 
 async function saveAndScheduleResponse(

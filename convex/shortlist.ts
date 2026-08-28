@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { SessionIdArg } from 'convex-helpers/server/sessions'
 
+import { CANDIDATE_PRESENTATION_MAX_COUNT } from '../shared/foundTools'
 import { mutation, query } from './_generated/server'
 import { assertCandidatePartReference } from './candidateParts'
 import { assertThreadOwner } from './threadAccess'
@@ -41,7 +42,7 @@ export const listForToolPart = query({
           .eq('threadId', args.threadId)
           .eq('toolCallId', args.toolCallId),
       )
-      .take(12)
+      .take(CANDIDATE_PRESENTATION_MAX_COUNT)
 
     return entries.map((entry) => entry.candidateRef)
   },

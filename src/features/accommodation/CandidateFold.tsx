@@ -60,19 +60,21 @@ function FoldRow({
   const [section, setSection] = useState<CandidateSection>('glance')
   const reducedMotion = useReducedMotion()
   const tabsId = useId()
+  const detailsId = `${tabsId}-disclosure`
   const price = formatCandidatePrice(candidate.price)
 
   return (
     <article className="overflow-hidden rounded-12 bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.08),0_1px_2px_rgb(38_38_38/0.04)]">
       <FoldHeader
         candidate={candidate}
+        controlsId={detailsId}
         open={open}
         price={price?.amount}
         reducedMotion={reducedMotion}
         onOpen={onOpen}
       />
 
-      <AnimatedHeight open={open}>
+      <AnimatedHeight id={detailsId} open={open}>
         <AnimatePresence initial={false}>
           {open ? (
             <m.div
@@ -104,12 +106,14 @@ function FoldRow({
 
 function FoldHeader({
   candidate,
+  controlsId,
   open,
   price,
   reducedMotion,
   onOpen,
 }: {
   readonly candidate: CandidateSnapshot
+  readonly controlsId: string
   readonly open: boolean
   readonly price: string | undefined
   readonly reducedMotion: boolean | null
@@ -117,6 +121,7 @@ function FoldHeader({
 }) {
   return (
     <button
+      aria-controls={controlsId}
       aria-expanded={open}
       className="flex w-full items-center gap-13 px-14 py-12 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-heat-100"
       type="button"

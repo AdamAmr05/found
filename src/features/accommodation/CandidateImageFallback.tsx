@@ -6,7 +6,7 @@ export function CandidateImageFallback({
   compact?: boolean
 }) {
   return (
-    <div className="bg-background relative grid size-full place-items-center overflow-hidden">
+    <div className="relative grid size-full place-items-center overflow-hidden bg-background-base">
       <AsciiAtmosphere
         color="#FA5D19"
         density="rich"
@@ -17,7 +17,7 @@ export function CandidateImageFallback({
       {compact ? (
         <ImageIcon />
       ) : (
-        <div className="bg-background/92 relative z-10 rounded-10 px-13 py-9 text-center shadow-[0_0_0_1px_rgb(38_38_38/0.08)] backdrop-blur-sm">
+        <div className="relative z-10 rounded-10 bg-background-lighter/92 px-13 py-9 text-center shadow-[0_0_0_1px_rgb(38_38_38/0.08)] backdrop-blur-sm">
           <p className="text-label-small text-accent-black">No usable image</p>
           <p className="mt-2 font-mono text-mono-x-small text-foreground-muted">
             source preview unavailable
@@ -30,7 +30,7 @@ export function CandidateImageFallback({
 
 function ImageIcon() {
   return (
-    <span className="bg-background/90 relative z-10 grid size-24 place-items-center rounded-7 text-heat-100 shadow-[0_0_0_1px_rgb(38_38_38/0.08)]">
+    <span className="relative z-10 grid size-24 place-items-center rounded-7 bg-background-lighter/90 text-heat-100 shadow-[0_0_0_1px_rgb(38_38_38/0.08)]">
       <svg aria-hidden className="size-13" viewBox="0 0 14 14">
         <path
           d="M2.5 3.25h9v7.5h-9zM3.5 9l2.25-2.25 1.5 1.5 1-1 2.25 2.25M9.5 5.25h.01"

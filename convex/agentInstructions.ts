@@ -15,6 +15,7 @@ const RESEARCH_UNAVAILABLE_INSTRUCTIONS =
 export function buildFoundRunInstructions(args: {
   researchToolsAvailable: boolean
 }): string {
+  // Keep an explicit capability switch for runs where provider tools are disabled.
   if (args.researchToolsAvailable) {
     return FOUND_BASE_INSTRUCTIONS
   }

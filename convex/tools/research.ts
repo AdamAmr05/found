@@ -16,6 +16,7 @@ import {
   decodeSearchResponse,
   normalizePageResponse,
   normalizeSearchResponse,
+  runFirecrawlOperation,
 } from './firecrawlAdapter'
 
 const firecrawl = new FirecrawlClient(components.firecrawl)
@@ -36,8 +37,13 @@ export const searchWeb = createTool({
       sources: ['web'],
     }
     if (input.location) options.location = input.location
-    const response = await firecrawl.search(ctx, input.query, options)
-    const decoded = await Effect.runPromise(decodeSearchResponse(response))
+    const decoded = await runFirecrawlOperation(
+      'search',
+      Effect.tryPromise({
+        try: () => firecrawl.search(ctx, input.query, options),
+        catch: () => 'request_failed' as const,
+      }).pipe(Effect.flatMap(decodeSearchResponse)),
+    )
     return normalizeSearchResponse(decoded, limit)
   },
 })
@@ -58,15 +64,21 @@ export const readPage = createTool({
       removeBase64Images: true,
       blockAds: true,
       maxAge: 86_400_000,
-      formats: input.focus ? ['images'] : ['markdown', 'images'],
     }
     if (input.focus) {
       options.extra = {
         formats: [{ type: 'question', question: input.focus }, 'images'],
       }
+    } else {
+      options.formats = ['markdown', 'images']
     }
-    const document = await firecrawl.scrape(ctx, input.url, options)
-    const decoded = await Effect.runPromise(decodePageResponse(document))
+    const decoded = await runFirecrawlOperation(
+      'read',
+      Effect.tryPromise({
+        try: () => firecrawl.scrape(ctx, input.url, options),
+        catch: () => 'request_failed' as const,
+      }).pipe(Effect.flatMap(decodePageResponse)),
+    )
     return normalizePageResponse(decoded, input.url, mode)
   },
 })

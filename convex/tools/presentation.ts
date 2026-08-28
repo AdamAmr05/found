@@ -2,7 +2,10 @@ import { createTool } from '@convex-dev/agent'
 import { ConvexError } from 'convex/values'
 import type { SessionId } from 'convex-helpers/server/sessions'
 
-import { showCandidatesInputSchema } from '../../shared/foundTools'
+import {
+  showCandidatesInputSchema,
+  showCandidatesOutputSchema,
+} from '../../shared/foundTools'
 import { internal } from '../_generated/api'
 
 export const showCandidates = createTool({
@@ -13,7 +16,7 @@ export const showCandidates = createTool({
     'Do not invent missing facts. Omit unknown values or mark evidence unresolved.',
   ].join(' '),
   inputSchema: showCandidatesInputSchema,
-  outputSchema: showCandidatesInputSchema,
+  outputSchema: showCandidatesOutputSchema,
   execute: async (ctx, input, options) => {
     if (!ctx.threadId || !ctx.userId) {
       throw new ConvexError({ code: 'CANDIDATE_PART_CONTEXT_MISSING' })
@@ -28,6 +31,6 @@ export const showCandidates = createTool({
       toolCallId: options.toolCallId,
     })
 
-    return input
+    return { presented: input.candidates.length }
   },
 })

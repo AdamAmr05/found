@@ -4,12 +4,14 @@ import { useLayoutEffect, useRef, useState } from 'react'
 
 interface AnimatedHeightProps {
   readonly children: ReactNode
+  readonly id?: string
   readonly minimum?: number
   readonly open?: boolean
 }
 
 export function AnimatedHeight({
   children,
+  id,
   minimum = 0,
   open = true,
 }: AnimatedHeightProps) {
@@ -31,6 +33,7 @@ export function AnimatedHeight({
 
   return (
     <m.div
+      id={id}
       animate={{ height: open ? Math.max(minimum, contentHeight) : 0 }}
       className="overflow-hidden"
       initial={false}

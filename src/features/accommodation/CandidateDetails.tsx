@@ -39,11 +39,7 @@ export function CandidateDetails({
                   : { type: 'spring', bounce: 0, duration: 0.22 }
               }
             >
-              <SectionContent
-                candidate={candidate}
-                idBase={idBase}
-                section={section}
-              />
+              <SectionContent candidate={candidate} section={section} />
             </m.div>
           </AnimatePresence>
         </div>
@@ -52,7 +48,10 @@ export function CandidateDetails({
   )
 }
 
-function SectionContent({ candidate, section }: CandidateDetailsProps) {
+function SectionContent({
+  candidate,
+  section,
+}: Pick<CandidateDetailsProps, 'candidate' | 'section'>) {
   if (section === 'glance') {
     return (
       <div>

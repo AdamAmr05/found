@@ -3,7 +3,8 @@ import { useSmoothText } from '@convex-dev/agent/react'
 import { lazy, Suspense } from 'react'
 
 import type { FoundUITools } from '../../../shared/foundTools'
-import { isToolActive, ThinkingStep, ToolStep } from './ThreadToolStep'
+import { ThinkingStep, ToolStep } from './ThreadToolStep'
+import { type FoundToolState, isToolActive } from './toolState'
 
 const StreamingMarkdown = lazy(() =>
   import('streamdown').then(({ Streamdown }) => ({ default: Streamdown })),
@@ -123,10 +124,10 @@ function ResearchToolStep({
   state,
 }: {
   readonly kind: 'read' | 'search'
-  readonly state: string
+  readonly state: FoundToolState
 }) {
   const active = isToolActive(state)
-  const error = state === 'output-error'
+  const error = state === 'output-error' || state === 'output-denied'
   const labels =
     kind === 'search'
       ? {

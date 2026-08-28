@@ -2,11 +2,19 @@ import { z } from 'zod'
 
 import { isHttpUrl } from './httpUrl'
 
+export const HTTP_URL_MAX_LENGTH = 2_048
+export const PROVIDER_TITLE_MAX_LENGTH = 300
+export const PROVIDER_DESCRIPTION_MAX_LENGTH = 600
+export const PAGE_CONTENT_MAX_LENGTH = 16_000
+export const PAGE_IMAGE_MAX_COUNT = 12
+export const PAGE_WARNING_MAX_LENGTH = 500
+export const CANDIDATE_PRESENTATION_MAX_COUNT = 12
+
 const httpUrl = z
   .string()
   .trim()
   .min(1)
-  .max(2_048)
+  .max(HTTP_URL_MAX_LENGTH)
   .refine(isHttpUrl, { message: 'Expected an HTTP or HTTPS URL' })
 
 const emailAddress = z
@@ -44,8 +52,18 @@ export const searchWebOutputSchema = z.object({
     .array(
       z.object({
         url: httpUrl,
-        title: z.string().trim().min(1).max(300).optional(),
-        description: z.string().trim().min(1).max(600).optional(),
+        title: z
+          .string()
+          .trim()
+          .min(1)
+          .max(PROVIDER_TITLE_MAX_LENGTH)
+          .optional(),
+        description: z
+          .string()
+          .trim()
+          .min(1)
+          .max(PROVIDER_DESCRIPTION_MAX_LENGTH)
+          .optional(),
       }),
     )
     .max(8),
@@ -66,12 +84,17 @@ export const readPageInputSchema = z.object({
 
 export const readPageOutputSchema = z.object({
   url: httpUrl,
-  title: z.string().trim().min(1).max(300).optional(),
-  description: z.string().trim().min(1).max(600).optional(),
+  title: z.string().trim().min(1).max(PROVIDER_TITLE_MAX_LENGTH).optional(),
+  description: z
+    .string()
+    .trim()
+    .min(1)
+    .max(PROVIDER_DESCRIPTION_MAX_LENGTH)
+    .optional(),
   mode: z.enum(['focused', 'full']),
-  content: z.string().max(16_000),
-  images: z.array(httpUrl).max(12),
-  warning: z.string().trim().min(1).max(500).optional(),
+  content: z.string().max(PAGE_CONTENT_MAX_LENGTH),
+  images: z.array(httpUrl).max(PAGE_IMAGE_MAX_COUNT),
+  warning: z.string().trim().min(1).max(PAGE_WARNING_MAX_LENGTH).optional(),
   truncated: z.boolean(),
 })
 
@@ -155,7 +178,10 @@ const candidateSnapshotSchema = z.object({
 function createCandidatesSchema(requireSourceBackedEvidence: boolean) {
   return z
     .object({
-      candidates: z.array(candidateSnapshotSchema).min(1).max(12),
+      candidates: z
+        .array(candidateSnapshotSchema)
+        .min(1)
+        .max(CANDIDATE_PRESENTATION_MAX_COUNT),
     })
     .superRefine(({ candidates }, context) => {
       const candidateRefs = new Set<string>()
@@ -246,6 +272,9 @@ function createCandidatesSchema(requireSourceBackedEvidence: boolean) {
 
 export const historicalCandidatesInputSchema = createCandidatesSchema(false)
 export const showCandidatesInputSchema = createCandidatesSchema(true)
+export const showCandidatesOutputSchema = z.object({
+  presented: z.number().int().min(1).max(CANDIDATE_PRESENTATION_MAX_COUNT),
+})
 
 export type CandidateSnapshot = z.infer<typeof candidateSnapshotSchema>
 type ReadPageInput = z.infer<typeof readPageInputSchema>
@@ -253,9 +282,10 @@ export type ReadPageOutput = z.infer<typeof readPageOutputSchema>
 type SearchWebInput = z.infer<typeof searchWebInputSchema>
 export type SearchWebOutput = z.infer<typeof searchWebOutputSchema>
 export type ShowCandidatesInput = z.infer<typeof showCandidatesInputSchema>
+export type ShowCandidatesOutput = z.infer<typeof showCandidatesOutputSchema>
 
 export type FoundUITools = {
   searchWeb: { input: SearchWebInput; output: SearchWebOutput }
   readPage: { input: ReadPageInput; output: ReadPageOutput }
-  showCandidates: { input: ShowCandidatesInput; output: ShowCandidatesInput }
+  showCandidates: { input: ShowCandidatesInput; output: ShowCandidatesOutput }
 }

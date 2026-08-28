@@ -41,7 +41,8 @@ export function CandidateMedia({
 
   const handleImageError = (): void => {
     setFailedUrls((current) => new Set([...current, image.url]))
-    setActiveIndex(0)
+    const finalSurvivorIndex = Math.max(0, usableImages.length - 2)
+    setActiveIndex(Math.min(safeIndex, finalSurvivorIndex))
   }
 
   const source = image.sourceRef

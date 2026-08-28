@@ -4,6 +4,7 @@ import { vSessionId } from 'convex-helpers/server/sessions'
 import type { SessionId } from 'convex-helpers/server/sessions'
 
 import {
+  CANDIDATE_PRESENTATION_MAX_COUNT,
   historicalCandidatesInputSchema,
   type FoundUITools,
 } from '../shared/foundTools'
@@ -12,12 +13,10 @@ import { internalMutation } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
 import { assertThreadOwner } from './threadAccess'
 
-const MAX_CANDIDATES_PER_PART = 12
-
 function assertCandidateRefs(candidateRefs: readonly string[]): void {
   if (
     candidateRefs.length === 0 ||
-    candidateRefs.length > MAX_CANDIDATES_PER_PART ||
+    candidateRefs.length > CANDIDATE_PRESENTATION_MAX_COUNT ||
     new Set(candidateRefs).size !== candidateRefs.length
   ) {
     throw new ConvexError({ code: 'INVALID_CANDIDATE_PART' })
@@ -82,7 +81,7 @@ async function findHistoricalCandidateRefs(
       ) {
         continue
       }
-      const parsed = historicalCandidatesInputSchema.safeParse(part.output)
+      const parsed = historicalCandidatesInputSchema.safeParse(part.input)
       if (parsed.success) {
         return parsed.data.candidates.map((candidate) => candidate.ref)
       }

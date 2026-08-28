@@ -2,11 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { Effect } from 'effect'
 
 import {
-  MAX_PAGE_CONTENT_LENGTH,
+  HTTP_URL_MAX_LENGTH,
+  PAGE_CONTENT_MAX_LENGTH,
+  PROVIDER_TITLE_MAX_LENGTH,
+} from '../../shared/foundTools'
+import {
   decodePageResponse,
   decodeSearchResponse,
   normalizePageResponse,
   normalizeSearchResponse,
+  runFirecrawlOperation,
 } from './firecrawlAdapter'
 
 describe('Firecrawl result normalization', () => {
@@ -75,7 +80,7 @@ describe('Firecrawl result normalization', () => {
     const emptyDocument = await Effect.runPromise(decodePageResponse({}))
     const longDocument = await Effect.runPromise(
       decodePageResponse({
-        markdown: 'x'.repeat(MAX_PAGE_CONTENT_LENGTH + 10),
+        markdown: 'x'.repeat(PAGE_CONTENT_MAX_LENGTH + 10),
       }),
     )
     const empty = normalizePageResponse(
@@ -90,8 +95,54 @@ describe('Firecrawl result normalization', () => {
     )
 
     expect(empty.warning).toBe('The page returned no readable content.')
-    expect(long.content).toHaveLength(MAX_PAGE_CONTENT_LENGTH)
+    expect(long.content).toHaveLength(PAGE_CONTENT_MAX_LENGTH)
     expect(long.truncated).toBe(true)
+  })
+
+  it('drops provider URLs that exceed the public tool contract', async () => {
+    const oversizedUrl = `https://example.com/${'a'.repeat(HTTP_URL_MAX_LENGTH)}`
+    const response = await Effect.runPromise(
+      decodeSearchResponse({ web: [{ url: oversizedUrl }] }),
+    )
+    const document = await Effect.runPromise(
+      decodePageResponse({
+        images: [oversizedUrl],
+        metadata: { sourceURL: oversizedUrl },
+      }),
+    )
+
+    expect(normalizeSearchResponse(response, 5)).toEqual({ results: [] })
+    expect(
+      normalizePageResponse(document, 'https://example.com/requested', 'full'),
+    ).toMatchObject({
+      images: [],
+      url: 'https://example.com/requested',
+    })
+  })
+
+  it('does not split a surrogate pair while clamping provider text', async () => {
+    const title = `${'x'.repeat(PROVIDER_TITLE_MAX_LENGTH - 1)}😀trailing`
+    const response = await Effect.runPromise(
+      decodeSearchResponse({ web: [{ title, url: 'https://example.com' }] }),
+    )
+
+    expect(normalizeSearchResponse(response, 5).results[0]?.title).toBe(
+      'x'.repeat(PROVIDER_TITLE_MAX_LENGTH - 1),
+    )
+  })
+
+  it('replaces provider and decode failures with one compact error', async () => {
+    await expect(
+      runFirecrawlOperation(
+        'read',
+        Effect.fail({ raw: 'private provider payload' }),
+      ),
+    ).rejects.toMatchObject({
+      data: {
+        code: 'FIRECRAWL_OPERATION_FAILED',
+        operation: 'read',
+      },
+    })
   })
 
   it('rejects malformed provider payloads before normalization', async () => {

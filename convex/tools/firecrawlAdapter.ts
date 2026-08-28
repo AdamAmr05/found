@@ -1,10 +1,22 @@
-import { Schema } from 'effect'
+import { ConvexError } from 'convex/values'
+import { Effect, Schema } from 'effect'
 
-import type { ReadPageOutput, SearchWebOutput } from '../../shared/foundTools'
+import {
+  HTTP_URL_MAX_LENGTH,
+  PAGE_CONTENT_MAX_LENGTH,
+  PAGE_IMAGE_MAX_COUNT,
+  PAGE_WARNING_MAX_LENGTH,
+  PROVIDER_DESCRIPTION_MAX_LENGTH,
+  PROVIDER_TITLE_MAX_LENGTH,
+  type ReadPageOutput,
+  type SearchWebOutput,
+} from '../../shared/foundTools'
 import { isHttpUrl } from '../../shared/httpUrl'
+import { truncateText } from '../../shared/text'
 
 export const DEFAULT_SEARCH_LIMIT = 5
-export const MAX_PAGE_CONTENT_LENGTH = 16_000
+
+type FirecrawlOperation = 'read' | 'search'
 
 const providerMetadataSchema = Schema.Struct({
   description: Schema.optionalKey(Schema.String),
@@ -45,9 +57,29 @@ export const decodeSearchResponse = Schema.decodeUnknownEffect(
   providerSearchResponseSchema,
 )
 
+export function runFirecrawlOperation<A, E>(
+  operation: FirecrawlOperation,
+  effect: Effect.Effect<A, E>,
+): Promise<A> {
+  return Effect.runPromise(
+    Effect.mapError(
+      effect,
+      () =>
+        new ConvexError({
+          code: 'FIRECRAWL_OPERATION_FAILED',
+          operation,
+        }),
+    ),
+  )
+}
+
 function nonEmpty(value: string | undefined): string | undefined {
   const normalized = value?.trim()
   return normalized ? normalized : undefined
+}
+
+function isContractUrl(value: string): boolean {
+  return value.length <= HTTP_URL_MAX_LENGTH && isHttpUrl(value)
 }
 
 export function normalizeSearchResponse(
@@ -60,14 +92,21 @@ export function normalizeSearchResponse(
   for (const result of response.web ?? []) {
     const metadata = result.metadata
     const url = nonEmpty(result.url ?? metadata?.sourceURL)
-    if (!url || !isHttpUrl(url) || seen.has(url)) continue
+    if (!url || !isContractUrl(url) || seen.has(url)) continue
 
     seen.add(url)
     const title = nonEmpty(result.title ?? metadata?.title)
     const description = nonEmpty(result.description ?? metadata?.description)
     const normalized: SearchWebOutput['results'][number] = { url }
-    if (title) normalized.title = title.slice(0, 300)
-    if (description) normalized.description = description.slice(0, 600)
+    if (title) {
+      normalized.title = truncateText(title, PROVIDER_TITLE_MAX_LENGTH)
+    }
+    if (description) {
+      normalized.description = truncateText(
+        description,
+        PROVIDER_DESCRIPTION_MAX_LENGTH,
+      )
+    }
     results.push(normalized)
     if (results.length === limit) break
   }
@@ -86,18 +125,18 @@ export function normalizePageResponse(
     nonEmpty(document.markdown) ??
     nonEmpty(document.summary) ??
     ''
-  const truncated = rawContent.length > MAX_PAGE_CONTENT_LENGTH
+  const truncated = rawContent.length > PAGE_CONTENT_MAX_LENGTH
   const sourceUrl = nonEmpty(
     document.metadata?.sourceURL ?? document.metadata?.url,
   )
-  const url = sourceUrl && isHttpUrl(sourceUrl) ? sourceUrl : requestedUrl
+  const url = sourceUrl && isContractUrl(sourceUrl) ? sourceUrl : requestedUrl
   const images = Array.from(
     new Set(
       (document.images ?? []).filter(
-        (image) => !image.startsWith('data:') && isHttpUrl(image),
+        (image) => !image.startsWith('data:') && isContractUrl(image),
       ),
     ),
-  ).slice(0, 12)
+  ).slice(0, PAGE_IMAGE_MAX_COUNT)
   const title = nonEmpty(document.metadata?.title)
   const description = nonEmpty(document.metadata?.description)
   const providerWarning = nonEmpty(document.warning)
@@ -109,12 +148,19 @@ export function normalizePageResponse(
   const output: ReadPageOutput = {
     url,
     mode,
-    content: rawContent.slice(0, MAX_PAGE_CONTENT_LENGTH),
+    content: truncateText(rawContent, PAGE_CONTENT_MAX_LENGTH),
     images,
     truncated,
   }
-  if (title) output.title = title.slice(0, 300)
-  if (description) output.description = description.slice(0, 600)
-  if (warning) output.warning = warning.slice(0, 500)
+  if (title) output.title = truncateText(title, PROVIDER_TITLE_MAX_LENGTH)
+  if (description) {
+    output.description = truncateText(
+      description,
+      PROVIDER_DESCRIPTION_MAX_LENGTH,
+    )
+  }
+  if (warning) {
+    output.warning = truncateText(warning, PAGE_WARNING_MAX_LENGTH)
+  }
   return output
 }

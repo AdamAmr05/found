@@ -1,4 +1,3 @@
-import { getThreadMetadata } from '@convex-dev/agent'
 import { ConvexError } from 'convex/values'
 import type { SessionId } from 'convex-helpers/server/sessions'
 
@@ -12,12 +11,10 @@ export async function assertThreadOwner(
   threadId: string,
   sessionId: SessionId,
 ): Promise<void> {
-  const thread = await getThreadMetadata(ctx, components.agent, {
+  const thread = await ctx.runQuery(components.agent.threads.getThread, {
     threadId,
-  }).catch(() => {
-    throw new ConvexError({ code: 'THREAD_NOT_FOUND' })
   })
-  if (thread.userId !== sessionId) {
+  if (!thread || thread.userId !== sessionId) {
     throw new ConvexError({ code: 'THREAD_NOT_FOUND' })
   }
 }

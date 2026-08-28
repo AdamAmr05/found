@@ -1,12 +1,3 @@
-export function isToolActive(state: string): boolean {
-  return (
-    state === 'input-streaming' ||
-    state === 'input-available' ||
-    state === 'approval-requested' ||
-    state === 'approval-responded'
-  )
-}
-
 export function ThinkingStep({ label = 'Thinking' }: { label?: string }) {
   return <ToolStep active label={label} />
 }
@@ -21,11 +12,12 @@ export function ToolStep({
   readonly label: string
 }) {
   return (
-    <div
+    <output
+      aria-atomic="true"
+      aria-live="polite"
       className={`flex items-center gap-10 text-body-medium ${
         error ? 'text-accent-crimson' : 'text-foreground-muted'
       }`}
-      aria-live={active ? 'polite' : undefined}
     >
       <span className="relative grid size-18 place-items-center" aria-hidden>
         {active ? (
@@ -42,6 +34,6 @@ export function ToolStep({
         />
       </span>
       {label}
-    </div>
+    </output>
   )
 }

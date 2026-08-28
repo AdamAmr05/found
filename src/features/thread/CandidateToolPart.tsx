@@ -1,27 +1,38 @@
 import { domAnimation, LazyMotion } from 'motion/react'
+import { useMemo } from 'react'
 
 import { historicalCandidatesInputSchema } from '../../../shared/foundTools'
 import { CandidateResults } from '../accommodation/CandidateResults'
 import type { FoundUIMessage } from './ThreadMessage'
-import { isToolActive, ToolStep } from './ThreadToolStep'
+import { ToolStep } from './ThreadToolStep'
+import { isToolActive } from './toolState'
+
+type CandidatePart = Extract<
+  FoundUIMessage['parts'][number],
+  { type: 'tool-showCandidates' }
+>
+
+type CompletedCandidatePart = Extract<
+  CandidatePart,
+  { state: 'output-available' }
+>
 
 export default function CandidateToolPart({
   part,
   threadId,
 }: {
-  readonly part: Extract<
-    FoundUIMessage['parts'][number],
-    { type: 'tool-showCandidates' }
-  >
+  readonly part: CandidatePart
   readonly threadId: string
 }) {
   if (part.state !== 'output-available') {
+    const failed =
+      part.state === 'output-error' || part.state === 'output-denied'
     return (
       <ToolStep
         active={isToolActive(part.state)}
-        error={part.state === 'output-error'}
+        error={failed}
         label={
-          part.state === 'output-error'
+          failed
             ? 'Couldn’t prepare the options'
             : 'Preparing the useful options'
         }
@@ -29,7 +40,20 @@ export default function CandidateToolPart({
     )
   }
 
-  const parsed = historicalCandidatesInputSchema.safeParse(part.output)
+  return <CompletedCandidateToolPart part={part} threadId={threadId} />
+}
+
+function CompletedCandidateToolPart({
+  part,
+  threadId,
+}: {
+  readonly part: CompletedCandidatePart
+  readonly threadId: string
+}) {
+  const parsed = useMemo(
+    () => historicalCandidatesInputSchema.safeParse(part.input),
+    [part.input],
+  )
   if (!parsed.success) {
     return <ToolStep error label="Candidate output could not be displayed" />
   }
