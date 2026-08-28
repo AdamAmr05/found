@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { SessionIdArg } from 'convex-helpers/server/sessions'
 
 import { mutation, query } from './_generated/server'
+import { assertCandidatePartReference } from './candidateParts'
 import { assertThreadOwner } from './threadAccess'
 
 const MAX_CANDIDATE_REF_LENGTH = 48
@@ -59,6 +60,9 @@ export const setSaved = mutation({
     assertToolCallId(args.toolCallId)
     assertCandidateRef(args.candidateRef)
     await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    if (args.saved) {
+      await assertCandidatePartReference(ctx, args)
+    }
     const existing = await ctx.db
       .query('shortlistEntries')
       .withIndex('by_session_thread_tool_candidate', (index) =>

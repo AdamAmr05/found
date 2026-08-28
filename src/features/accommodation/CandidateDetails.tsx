@@ -1,6 +1,7 @@
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
+import { AnimatedHeight } from '../../components/motion/AnimatedHeight'
 import type { CandidateSection } from './candidatePresentation'
 import { evidenceStatusClass, factSignalClass } from './candidatePresentation'
 
@@ -18,39 +19,36 @@ export function CandidateDetails({
   const reducedMotion = useReducedMotion()
 
   return (
-    <m.div
+    <div
       aria-labelledby={`${idBase}-tab-${section}`}
-      className="relative min-h-176 overflow-hidden"
       id={`${idBase}-panel`}
-      layout="size"
       role="tabpanel"
       tabIndex={0}
-      transition={
-        reducedMotion
-          ? { duration: 0 }
-          : { type: 'spring', bounce: 0, duration: 0.32 }
-      }
     >
-      <AnimatePresence initial={false} mode="popLayout">
-        <m.div
-          key={section}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: reducedMotion ? 0 : -3 }}
-          initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
-          transition={
-            reducedMotion
-              ? { duration: 0 }
-              : { type: 'spring', bounce: 0, duration: 0.22 }
-          }
-        >
-          <SectionContent
-            candidate={candidate}
-            idBase={idBase}
-            section={section}
-          />
-        </m.div>
-      </AnimatePresence>
-    </m.div>
+      <AnimatedHeight minimum={176}>
+        <div className="relative">
+          <AnimatePresence initial={false} mode="popLayout">
+            <m.div
+              key={section}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reducedMotion ? 0 : -3 }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', bounce: 0, duration: 0.22 }
+              }
+            >
+              <SectionContent
+                candidate={candidate}
+                idBase={idBase}
+                section={section}
+              />
+            </m.div>
+          </AnimatePresence>
+        </div>
+      </AnimatedHeight>
+    </div>
   )
 }
 
@@ -85,6 +83,10 @@ function SectionContent({ candidate, section }: CandidateDetailsProps) {
   }
 
   if (section === 'evidence') {
+    const sourceNumberByRef = new Map(
+      candidate.sources.map((source, index) => [source.ref, index + 1]),
+    )
+
     return (
       <div>
         <div className="flex items-center justify-between rounded-8 bg-heat-8 px-12 py-10">
@@ -96,11 +98,27 @@ function SectionContent({ candidate, section }: CandidateDetailsProps) {
             claim-level evidence
           </span>
         </div>
+        <div className="mt-7 flex flex-wrap gap-x-12 gap-y-5">
+          {candidate.sources.map((source, index) => (
+            <a
+              key={source.ref}
+              className="inline-flex min-h-24 items-center gap-5 font-mono text-mono-x-small text-heat-100 underline decoration-heat-100/30 underline-offset-3 hover:decoration-heat-100"
+              href={source.url}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <span aria-hidden="true">[{index + 1}]</span>
+              {source.label}
+              <ExternalLinkIcon />
+            </a>
+          ))}
+        </div>
         <div className="mt-8 divide-y-1 divide-border-faint">
           {candidate.evidence.map((finding) => {
-            const sources = candidate.sources.filter((source) =>
-              finding.sourceRefs.includes(source.ref),
-            )
+            const sourceNumbers = finding.sourceRefs.flatMap((sourceRef) => {
+              const sourceNumber = sourceNumberByRef.get(sourceRef)
+              return sourceNumber === undefined ? [] : [sourceNumber]
+            })
 
             return (
               <div
@@ -119,21 +137,11 @@ function SectionContent({ candidate, section }: CandidateDetailsProps) {
                   <p className="text-body-small text-pretty text-foreground-muted">
                     {finding.finding}
                   </p>
-                  {sources.length > 0 ? (
-                    <div className="mt-7 flex flex-wrap gap-x-10 gap-y-5">
-                      {sources.map((source) => (
-                        <a
-                          key={source.ref}
-                          className="inline-flex min-h-24 items-center gap-4 font-mono text-mono-x-small text-heat-100 underline decoration-heat-100/30 underline-offset-3 hover:decoration-heat-100"
-                          href={source.url}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          {source.label}
-                          <ExternalLinkIcon />
-                        </a>
-                      ))}
-                    </div>
+                  {sourceNumbers.length > 0 ? (
+                    <p className="mt-6 font-mono text-mono-x-small text-foreground-muted">
+                      source{' '}
+                      {sourceNumbers.map((number) => `[${number}]`).join(', ')}
+                    </p>
                   ) : null}
                 </div>
               </div>

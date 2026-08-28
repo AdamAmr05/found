@@ -29,7 +29,7 @@ export function CandidateMedia({
   if (!image) {
     return (
       <div className={compact ? 'h-180 rounded-12' : 'h-248 md:h-292'}>
-        <CandidateImageFallback />
+        <CandidateImageFallback compact={compact} />
       </div>
     )
   }

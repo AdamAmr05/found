@@ -10,6 +10,7 @@
 
 import type * as agent from "../agent.js";
 import type * as agentInstructions from "../agentInstructions.js";
+import type * as candidateParts from "../candidateParts.js";
 import type * as shortlist from "../shortlist.js";
 import type * as thread from "../thread.js";
 import type * as threadAccess from "../threadAccess.js";
@@ -26,6 +27,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   agentInstructions: typeof agentInstructions;
+  candidateParts: typeof candidateParts;
   shortlist: typeof shortlist;
   thread: typeof thread;
   threadAccess: typeof threadAccess;

@@ -50,7 +50,7 @@ export function CandidateResults({
       saved: !savedRefs.has(candidateRef),
       threadId,
       toolCallId,
-    })
+    }).catch(() => undefined)
   }
 
   if (candidates.length >= 3) {

@@ -290,7 +290,10 @@ agent's conclusions.
 
 The validated tool output is stored as a historical tool part in the assistant
 message. `showCandidates` does not create or update an application candidate
-row.
+row. It records only a small server-owned provenance index containing the
+session, thread, tool-call ID, and bounded candidate refs. This lets later
+mutations reject fabricated references without copying the candidate payload
+out of the Agent message.
 
 - 1–2 candidates render as Cards;
 - 3–12 candidates render as Fold;
@@ -303,9 +306,12 @@ row.
 
 Saving a candidate creates one application-owned relationship containing the
 session owner, thread ID, tool-call ID, and candidate ref. It does not copy the
-candidate payload out of the historical tool part. The thread tray reads those
-relationships within one thread; Bookmarks reads the same relationships across
-the user's threads.
+candidate payload out of the historical tool part. The mutation verifies the
+relationship against the server-owned provenance index before inserting it.
+Historical parts created before that index existed are verified once against
+the Agent message and indexed lazily. The thread tray reads those relationships
+within one thread; Bookmarks reads the same relationships across the user's
+threads.
 
 Compare and outreach remain separate user actions. They may act on a candidate
 from a historical tool part without requiring that candidate to be saved, and

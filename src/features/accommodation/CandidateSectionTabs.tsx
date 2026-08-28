@@ -16,6 +16,7 @@ export function CandidateSectionTabs({
   onChange,
 }: CandidateSectionTabsProps) {
   const reducedMotion = useReducedMotion()
+  const activeIndex = candidateSections.findIndex((item) => item.id === section)
 
   function handleKeyDown(
     event: KeyboardEvent<HTMLButtonElement>,
@@ -48,9 +49,20 @@ export function CandidateSectionTabs({
   return (
     <div
       aria-label="Candidate information"
-      className="grid grid-cols-3 rounded-8 bg-black/4 p-3"
+      className="relative grid grid-cols-3 rounded-8 bg-black/4 p-3"
       role="tablist"
     >
+      <m.span
+        aria-hidden
+        animate={{ x: `${activeIndex * 100}%` }}
+        className="absolute inset-y-3 left-3 w-[calc((100%-6px)/3)] rounded-6 bg-white shadow-[0_1px_3px_rgb(38_38_38/0.1)]"
+        initial={false}
+        transition={
+          reducedMotion
+            ? { duration: 0 }
+            : { type: 'spring', stiffness: 500, damping: 40 }
+        }
+      />
       {candidateSections.map((item, index) => {
         const active = section === item.id
         return (
@@ -66,17 +78,6 @@ export function CandidateSectionTabs({
             onKeyDown={(event) => handleKeyDown(event, index)}
             onClick={() => onChange(item.id)}
           >
-            {active ? (
-              <m.span
-                className="absolute inset-0 rounded-6 bg-white shadow-[0_1px_3px_rgb(38_38_38/0.1)]"
-                layoutId={`${idBase}-active-tab`}
-                transition={
-                  reducedMotion
-                    ? { duration: 0 }
-                    : { type: 'spring', stiffness: 500, damping: 40 }
-                }
-              />
-            ) : null}
             <span
               className={`relative z-10 ${
                 active ? 'text-accent-black' : 'text-foreground-muted'

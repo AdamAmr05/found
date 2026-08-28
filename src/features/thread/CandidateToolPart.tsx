@@ -1,3 +1,5 @@
+import { domAnimation, LazyMotion } from 'motion/react'
+
 import { historicalCandidatesInputSchema } from '../../../shared/foundTools'
 import { CandidateResults } from '../accommodation/CandidateResults'
 import type { FoundUIMessage } from './ThreadMessage'
@@ -42,4 +44,3 @@ export default function CandidateToolPart({
     </LazyMotion>
   )
 }
-import { domAnimation, LazyMotion } from 'motion/react'

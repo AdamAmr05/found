@@ -39,12 +39,13 @@ export function evidenceStatusClass(
 
 export function formatCandidatePrice(
   price: CandidateSnapshot['price'],
+  locales?: Intl.LocalesArgument,
 ): { amount: string; detail: string } | undefined {
   if (!price) return undefined
 
   let amount: string
   try {
-    amount = new Intl.NumberFormat(undefined, {
+    amount = new Intl.NumberFormat(locales, {
       style: 'currency',
       currency: price.currency,
     }).format(price.amount)

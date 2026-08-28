@@ -2,6 +2,7 @@ import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { useId, useState } from 'react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
+import { AnimatedHeight } from '../../components/motion/AnimatedHeight'
 import { CandidateDetails } from './CandidateDetails'
 import { CandidateImageFallback } from './CandidateImageFallback'
 import { CandidateMedia } from './CandidateMedia'
@@ -25,7 +26,7 @@ export function CandidateFold({
   return (
     <ul className="flex flex-col gap-8">
       {candidates.map((candidate) => (
-        <m.li key={candidate.ref} layout="position">
+        <li key={candidate.ref}>
           <FoldRow
             candidate={candidate}
             open={candidate.ref === openRef}
@@ -37,7 +38,7 @@ export function CandidateFold({
             }
             onToggleSave={() => onToggleSave(candidate.ref)}
           />
-        </m.li>
+        </li>
       ))}
     </ul>
   )
@@ -62,15 +63,7 @@ function FoldRow({
   const price = formatCandidatePrice(candidate.price)
 
   return (
-    <m.article
-      className="overflow-hidden rounded-12 bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.08),0_1px_2px_rgb(38_38_38/0.04)]"
-      layout
-      transition={
-        reducedMotion
-          ? { duration: 0 }
-          : { type: 'spring', stiffness: 360, damping: 38 }
-      }
-    >
+    <article className="overflow-hidden rounded-12 bg-background-lighter shadow-[0_0_0_1px_rgb(38_38_38/0.08),0_1px_2px_rgb(38_38_38/0.04)]">
       <FoldHeader
         candidate={candidate}
         open={open}
@@ -79,32 +72,33 @@ function FoldRow({
         onOpen={onOpen}
       />
 
-      <AnimatePresence initial={false}>
-        {open ? (
-          <m.div
-            key="details"
-            animate={{ opacity: 1, y: 0 }}
-            className="overflow-hidden"
-            exit={{ opacity: 0, y: reducedMotion ? 0 : -4 }}
-            initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
-            transition={
-              reducedMotion
-                ? { duration: 0 }
-                : { type: 'spring', stiffness: 360, damping: 38 }
-            }
-          >
-            <FoldExpandedDetails
-              candidate={candidate}
-              saved={saved}
-              section={section}
-              tabsId={tabsId}
-              onSectionChange={setSection}
-              onToggleSave={onToggleSave}
-            />
-          </m.div>
-        ) : null}
-      </AnimatePresence>
-    </m.article>
+      <AnimatedHeight open={open}>
+        <AnimatePresence initial={false}>
+          {open ? (
+            <m.div
+              key="details"
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reducedMotion ? 0 : -4 }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', stiffness: 360, damping: 38 }
+              }
+            >
+              <FoldExpandedDetails
+                candidate={candidate}
+                saved={saved}
+                section={section}
+                tabsId={tabsId}
+                onSectionChange={setSection}
+                onToggleSave={onToggleSave}
+              />
+            </m.div>
+          ) : null}
+        </AnimatePresence>
+      </AnimatedHeight>
+    </article>
   )
 }
 

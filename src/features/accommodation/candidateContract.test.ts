@@ -159,13 +159,16 @@ describe('showCandidates contract', () => {
   })
 
   it('preserves price precision and exposes non-stated confidence', () => {
-    const formatted = formatCandidatePrice({
-      amount: 1149.5,
-      basis: 'all_in',
-      confidence: 'estimated',
-      currency: 'EUR',
-      period: 'month',
-    })
+    const formatted = formatCandidatePrice(
+      {
+        amount: 1149.5,
+        basis: 'all_in',
+        confidence: 'estimated',
+        currency: 'EUR',
+        period: 'month',
+      },
+      'en-US',
+    )
 
     expect(formatted?.amount).toContain('1,149.50')
     expect(formatted?.detail).toBe('all in / month · estimated')
