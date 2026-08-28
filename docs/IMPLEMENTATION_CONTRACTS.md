@@ -3,6 +3,178 @@
 This document starts with the contracts that are settled enough to implement.
 It does not define the application database schema.
 
+## Agent and message boundary
+
+Found uses AI SDK 7 with the Convex Agent component. `ai` is a direct
+dependency even when the Agent component already brings it in transitively.
+The application should not inherit a different AI SDK version by accident.
+
+One Agent component thread backs one Found workspace. The component owns the
+stored messages, tool calls, tool results, model metadata, and stream deltas.
+Found does not recreate those tables or maintain a second message history.
+
+An agent run uses the Agent component's AI SDK integration:
+
+- tools are defined with the installed `createTool` API and keep their inferred
+  input and output types;
+- the thread runs `streamText` with persisted deltas;
+- the tool set stays stable for the duration of the run;
+- a bounded step count protects cost and execution time without defining a
+  product workflow;
+- the client reads completed messages with `listUIMessages` and live deltas
+  with `syncStreams` through `useUIMessages`;
+- tool states are translated into concise steps at the UI boundary. Provider
+  names, raw arguments, and raw results are not user-facing progress copy.
+
+The message query authorizes thread access, applies bounded pagination, calls
+`listUIMessages` and `syncStreams`, and returns their result. It does not
+sanitize the full message history, rebuild every tool part, or parse the same
+stream repeatedly on each reactive update.
+
+The Agent component's UI message representation is component-owned. Its
+current public API does not include one complete Convex return validator for
+`listUIMessages` plus streams. Found will not maintain a parallel copy of that
+large message union. Found-owned tool payloads are validated when they are
+created, and the renderer narrows only the tool part it handles. Client message
+types are derived from the generated query return rather than handwritten.
+
+## Convex AI Gateway
+
+The Found agent uses an OpenAI model through the Convex AI Gateway. It does not
+call OpenAI directly or manage an OpenAI API key.
+
+The implementation installs `@convex-dev/ai-sdk-provider` alongside direct
+AI SDK 7 and passes `convexGateway(...)` as the Agent component's
+`languageModel`. The provider obtains a short-lived deployment-scoped service
+token inside the action. Found never reads, stores, returns, or forwards that
+token.
+
+Model selection is server-owned. The client cannot supply a model ID. The
+initial OpenAI model is chosen with a small tool-calling evaluation that checks
+streaming, parallel `readPage` calls, `showCandidates` schema adherence,
+latency, and cost. The selected `provider/model` identifier is explicit in the
+agent module and is changed deliberately rather than using a moving alias.
+
+The Gateway's chat, streaming, and tool-calling support covers the Found agent.
+Gateway failures remain visible agent-run failures; Found does not silently
+switch to a direct OpenAI integration or another model provider.
+
+## Tool type ownership
+
+An agent tool is an API. Its name, description, input, output, and failure
+shape should remain small enough to understand together.
+
+- Define each tool directly with `createTool`. Do not route known schemas
+  through a generic factory that widens them to `unknown`.
+- Zod 4 owns model-facing tool schemas because AI SDK consumes those schemas
+  directly. TypeScript types are inferred from the schemas.
+- Convex `v` validators own registered Convex function arguments, return
+  values, persisted product records, and generated data-model types.
+- A shape that crosses both boundaries is derived or adapted deliberately. It
+  is not copied into two independently maintained contracts.
+- A provider response may be untyped only inside its adapter. The adapter
+  validates it once and returns a narrow Found-owned result or a typed failure.
+- Research tools return compact source material. Presentation tools retain the
+  complete validated output required by their renderer.
+
+Effect is not required around the Agent loop or every Firecrawl call. The
+Firecrawl component already retries transient failures and returns structured
+`ConvexError` data. Effect belongs here only if composition, cancellation,
+additional timeout policy, concurrency, or a reusable typed service boundary
+earns it.
+
+## Firecrawl research tools
+
+The Firecrawl Convex component is the execution path. Its client provides
+`search`, `scrape`, `map`, and durable crawl operations, but it does not provide
+AI SDK tools. Its one-shot results deliberately pass through the current
+Firecrawl response, so Found validates them before returning them to the
+agent.
+
+Firecrawl also publishes `firecrawl-aisdk`. Found does not install that package
+as its runtime because it calls Firecrawl directly and would bypass the Convex
+component. Its implementation is still an upstream source for our tools. We
+will copy and adapt its useful work rather than replacing it with vague tool
+descriptions:
+
+- the search-first selection guidance;
+- the search and scrape schema constraints that belong in Found's smaller
+  interface;
+- focused `query` scraping before full markdown;
+- main-content, image, cache, and base64-image defaults;
+- bounded result handling and response truncation;
+- the conversion of tool input, running state, output, and failure into short
+  progress labels;
+- tests for defaults, malformed responses, empty content, and tool failures.
+
+We do not copy its direct Firecrawl SDK client, environment loading, full
+provider option surface, async Agent tool, Interact tool, or generic bundled
+tool factory. The adapted implementation runs through `FirecrawlClient` from
+`@firecrawl/firecrawl-convex` and keeps the upstream MIT attribution with any
+copied source.
+
+The initial agent-facing surface has two research tools.
+
+```ts
+type SearchWebInput = {
+  query: string
+  location?: string
+  limit?: number
+}
+
+type SearchWebOutput = {
+  results: readonly {
+    url: string
+    title?: string
+    description?: string
+  }[]
+}
+```
+
+`searchWeb` discovers sources. It searches the web without scraping the full
+content of every result. The default limit is small, and the agent may run
+another search when the first query is weak. Search operators remain available
+inside `query`; provider-specific source arrays, categories, timeouts, proxy
+settings, and scrape options do not enter the tool contract.
+
+```ts
+type ReadPageInput = {
+  url: string
+  focus?: string
+}
+
+type ReadPageOutput = {
+  url: string
+  title?: string
+  description?: string
+  mode: 'focused' | 'full'
+  content: string
+  images: readonly string[]
+  warning?: string
+  truncated: boolean
+}
+```
+
+`readPage` extracts a known source. With `focus`, it uses Firecrawl's `query`
+format for a compact answer about the page and requests images in the same
+scrape. Without `focus`, it returns main-content markdown when the agent truly
+needs the complete page. The adapter normalizes both forms into `content`,
+validates source and image URLs, removes base64 images, and reports truncation
+instead of silently returning an oversized tool result.
+
+The agent may issue several independent `readPage` calls in one model step.
+Found does not need a second batch tool merely to express parallel reads.
+
+The research tools return source material. They do not return candidates,
+candidate sections, confidence labels, or UI instructions. The Found agent
+combines their output with the user's request and calls `showCandidates` when
+it has something useful to present.
+
+Firecrawl `map` discovers URLs within a website. It is unrelated to the Google
+Maps experience and is not an initial research tool. Durable crawl remains
+available for a later use case that genuinely needs multi-page progress.
+Interact stays outside the default path.
+
 ## Candidate presentation
 
 `showCandidates` is the agent's only candidate-presentation tool. It turns an
