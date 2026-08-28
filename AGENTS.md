@@ -21,6 +21,8 @@ and generated identifiers unless the name is genuinely part of a public surface.
 
 - Read `docs/ARCHITECTURE.md` before changing provider ownership, artifact
   flow, the thread/canvas relationship, or the map stack.
+- Read `docs/PRODUCT.md` and `docs/IMPLEMENTATION_CONTRACTS.md` before changing
+  agent tools, message parts, candidate renderers, or artifact durability.
 - Convex is the only backend and the source of durable truth.
 - The canvas and thread are projections of the same canonical artifacts. Never
   duplicate domain state into UI-specific tables.
