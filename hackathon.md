@@ -1,45 +1,70 @@
-# Found hackathon log
+# Hackathon log
 
-## August 26, 2026
+- **Project:** Found
+- **Event:** Convex All Gas Hackathon sponsored by OpenAI, Firecrawl, and AgentMail
+- **What it does:** A thread-based accommodation research workspace for finding, checking, comparing, and contacting candidates.
+- **Live app:** not deployed
+- **Repo:** https://github.com/AdamAmr05/found
+- **Frontend:** not deployed
+- **Convex deployment:** not deployed
+- **Components:** none
+- **Convex features:** schema
+- **Auth:** none
+- **AI models:** none
+- **Started:** 2026-08-26T13:05:15Z
+- **Last updated:** 2026-08-28T01:05:48Z
 
-- Started a new TanStack Start and Convex application.
-- Selected Convex as the only backend and real-time state layer.
-- Pinned Effect v4 for typed integration workflows and error handling.
-- Added the Convex Agent, Workflow, Firecrawl, AgentMail, and static-hosting
-  packages.
-- Added Oxlint with type-aware TypeScript rules and the Convex ESLint plugin.
-- Recorded the thread/canvas shared-artifact architecture and approval-gated
-  outbound email invariant.
+## Log
 
-The initial working title was temporary.
+### 2026-08-26 - 48a4bb5
 
-## August 27, 2026
+Set up TanStack Start with an intentionally empty Convex schema, Effect v4,
+Oxlint, the Convex ESLint plugin, and repository conventions. Added the Agent,
+Workflow, Workpool, Firecrawl, AgentMail, and static-hosting packages without
+registering their components yet.
 
-- Built a front-to-back interaction lab around six accommodation candidates,
-  with nine representations for scanning, source inspection, rapid triage,
-  total-cost comparison, focused review, pairwise comparison,
-  requirement-based ranking, trade-offs, and evidence freshness.
-- Kept focus, shortlist membership, and the active budget synchronized across
-  every representation.
-- Built one accommodation appearing multiple times in a conversation while
-  retaining the same open state and evidence view.
-- Added an inline map and accommodation inspector with synchronized selection,
-  media, requirements, evidence, comparison, and next actions.
-- Added an approval-gated outreach study. Editing the selected questions or
-  message wording invalidates the previous approval before anything can be sent.
-- Built an animated ASCII atmosphere material with orange and gray modes,
-  reduced-motion support, visibility pausing, and a dedicated flame form.
-- Made the visual system product-owned and documented the component grammar,
-  interaction rules, typography, sizing, radii, motion, and provider boundaries.
-- Added browser coverage for synchronized state, requirement ranking, evidence
-  rewind, approval invalidation, and mobile overflow.
-- Named the product Found: an outcome-led name for a search that continues into
-  verification, comparison, and approved outreach.
-- Unified the map, complete cards, Fold, and Merge around one provisional
-  accommodation artifact. One or two results stay richly composed, the third
-  condenses the same identities into Fold, and an explicit Compare action turns
-  the same claims into a divergence-first Merge view.
+### 2026-08-27 - b1d2a8b
 
-These interactions currently run on representative fixtures. Convex
-persistence, OpenAI generation, Firecrawl acquisition, Google Maps, and AgentMail
-delivery are not connected yet.
+Built a front-to-back accommodation interaction lab around six fixture
+candidates and nine representations for scanning, source inspection, triage,
+cost comparison, focused review, pairwise comparison, requirement ranking,
+trade-offs, and evidence freshness. Focus, shortlist membership, and budget
+stay synchronized across the representations. Added browser coverage for the
+main interactions and responsive overflow.
+
+The prototype suite also includes an inline map and accommodation inspector,
+approval-gated outreach, and an animated ASCII atmosphere with orange and gray
+modes, reduced-motion support, visibility pausing, and a dedicated flame form.
+
+### 2026-08-27 - fd8dea7
+
+Repaired the Fold and shortlist geometry so their borders, corners, content,
+and compact tray morph together cleanly. Renamed the product Found across the
+application and documentation.
+
+### 2026-08-27 - cd907fa
+
+Unified the map, complete cards, Fold, and Merge around one provisional
+accommodation artifact. One or two results stay richly composed, a third
+condenses the same identities into Fold, and an explicit Compare action turns
+the same claims into a divergence-first Merge view.
+
+### 2026-08-28 - 5ed4cfc
+
+Defined Found as one thread-backed accommodation research workspace. Documented
+historical generative UI parts, the stable `showCandidates` contract,
+Card-to-Fold rendering, bookmarks, comparison, and approval-gated outreach
+without inventing the application schema (`docs/PRODUCT.md`,
+`docs/IMPLEMENTATION_CONTRACTS.md`).
+
+### 2026-08-28 - 097d1f8
+
+Defined the Agent component and AI SDK message boundary, OpenAI access through
+the Convex AI Gateway, and clean ownership of Zod, Convex validators, and
+generated types. Designed the initial Firecrawl-facing `searchWeb` and
+`readPage` tools around the Firecrawl Convex component and kept research output
+separate from the agent-authored candidate presentation.
+
+The interactive product still runs on representative fixtures. Convex
+persistence, OpenAI generation, Firecrawl acquisition, Google Maps, AgentMail,
+auth, and deployment are not connected yet.
