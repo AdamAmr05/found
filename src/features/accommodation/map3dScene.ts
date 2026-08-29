@@ -93,7 +93,7 @@ export function cameraAtAltitude(
   return { ...camera, center: { ...camera.center, altitude: groundAltitude } }
 }
 
-export const DIVE_EYE_OFFSET = 15
+const DIVE_EYE_OFFSET = 15
 
 export function diveCamera(
   target: MapsCoordinates,

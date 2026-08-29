@@ -20,6 +20,9 @@ importers:
       '@convex-dev/agent':
         specifier: ^0.7.1
         version: 0.7.1(@ai-sdk/provider-utils@5.0.33(zod@4.4.3))(@ai-sdk/provider@4.0.8)(ai@7.0.79(zod@4.4.3))(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8)
+      '@convex-dev/rate-limiter':
+        specifier: ^0.3.2
+        version: 0.3.2(convex@1.45.0(react@19.2.8))(react@19.2.8)
       '@convex-dev/react-query':
         specifier: ^0.1.0
         version: 0.1.0(@tanstack/react-query@5.102.4(react@19.2.8))(convex@1.45.0(react@19.2.8))
@@ -344,6 +347,15 @@ packages:
     resolution: {integrity: sha512-7bYP8Fkk+19L7LWl3xIqUqq/0yIEZNoUQHOodZKIvupqmgaMisz8NKz6OkmMwBVLUQ0sh/9+iPK1OyASANiWyw==}
     peerDependencies:
       convex: ^1.43.0
+
+  '@convex-dev/rate-limiter@0.3.2':
+    resolution: {integrity: sha512-+oBPsBfFbzdxiF/9XaaTQmVnvDlvEfg/c69/v8LxTbw4VLuiflIKlfnPQL8OS0azXQQ11hcPWHmU8ytFmHKDXA==}
+    peerDependencies:
+      convex: ^1.24.8
+      react: ^18.2.0 || ^19.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@convex-dev/react-query@0.1.0':
     resolution: {integrity: sha512-ULmBZCtAQDUePdBhUv7hj1Yy4QiCelhi6uEIOtMpjW8db6W9CFKvQwLt9heLngccFyMFfAZdOfSrT+cP4AH0Jw==}
@@ -3521,6 +3533,12 @@ snapshots:
       - eslint
       - supports-color
       - typescript
+
+  '@convex-dev/rate-limiter@0.3.2(convex@1.45.0(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      convex: 1.45.0(react@19.2.8)
+    optionalDependencies:
+      react: 19.2.8
 
   '@convex-dev/react-query@0.1.0(@tanstack/react-query@5.102.4(react@19.2.8))(convex@1.45.0(react@19.2.8))':
     dependencies:

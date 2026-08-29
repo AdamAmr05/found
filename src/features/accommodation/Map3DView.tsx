@@ -33,16 +33,16 @@ export function Map3DView({
   })
   const initialCameraRef = useRef(camera)
 
-  // Each 3D map holds a WebGL context, so a scene only claims one once it has
-  // actually been scrolled near the viewport.
+  // Each 3D map holds a WebGL context, so a scene claims one only while it is
+  // near the viewport and releases it again when scrolled far away.
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) setVisible(true)
+        for (const entry of entries) setVisible(entry.isIntersecting)
       },
-      { rootMargin: '200px' },
+      { rootMargin: '600px' },
     )
     observer.observe(container)
     return () => observer.disconnect()

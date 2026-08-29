@@ -211,6 +211,17 @@ function WeatherStrip({
       ) : null}
       {glance.conditionLabel ? <span>{glance.conditionLabel}</span> : null}
       {glance.sunLabel ? <span>· {glance.sunLabel}</span> : null}
+      {glance.attribution ? (
+        <a
+          className="underline underline-offset-2 transition-colors duration-4 hover:text-accent-black"
+          href={glance.attribution.url}
+          rel="noreferrer"
+          target="_blank"
+          title={glance.attribution.title}
+        >
+          Google
+        </a>
+      ) : null}
     </p>
   )
 }

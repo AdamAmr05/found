@@ -32,10 +32,10 @@ export const searchPlaces = createTool({
   ].join(' '),
   inputSchema: searchPlacesInputSchema,
   outputSchema: searchPlacesOutputSchema,
-  execute: async (_ctx, input) => {
+  execute: async (_ctx, input, options) => {
     const decoded = await runMapsOperation(
       'search_places',
-      requestSearchPlaces(env.GOOGLE_MAPS_API_KEY, input),
+      requestSearchPlaces(env.GOOGLE_MAPS_API_KEY, input, options.abortSignal),
     )
     return normalizeSearchPlacesResponse(decoded)
   },
@@ -50,10 +50,10 @@ export const computeRoutes = createTool({
   ].join(' '),
   inputSchema: computeRoutesInputSchema,
   outputSchema: computeRoutesOutputSchema,
-  execute: async (_ctx, input) => {
+  execute: async (_ctx, input, options) => {
     const decoded = await runMapsOperation(
       'compute_routes',
-      requestComputeRoutes(env.GOOGLE_MAPS_API_KEY, input),
+      requestComputeRoutes(env.GOOGLE_MAPS_API_KEY, input, options.abortSignal),
     )
     return normalizeComputeRoutesResponse(decoded, input.travelMode)
   },
@@ -68,10 +68,10 @@ export const lookupWeather = createTool({
   ].join(' '),
   inputSchema: lookupWeatherInputSchema,
   outputSchema: lookupWeatherOutputSchema,
-  execute: async (_ctx, input) => {
+  execute: async (_ctx, input, options) => {
     const decoded = await runMapsOperation(
       'lookup_weather',
-      requestLookupWeather(env.GOOGLE_MAPS_API_KEY, input),
+      requestLookupWeather(env.GOOGLE_MAPS_API_KEY, input, options.abortSignal),
     )
     return normalizeLookupWeatherResponse(decoded)
   },
@@ -86,10 +86,10 @@ export const resolvePlaces = createTool({
   ].join(' '),
   inputSchema: resolvePlacesInputSchema,
   outputSchema: resolvePlacesOutputSchema,
-  execute: async (_ctx, input) => {
+  execute: async (_ctx, input, options) => {
     const decoded = await runMapsOperation(
       'resolve_names',
-      requestResolvePlaces(env.GOOGLE_MAPS_API_KEY, input),
+      requestResolvePlaces(env.GOOGLE_MAPS_API_KEY, input, options.abortSignal),
     )
     return normalizeResolveNamesResponse(decoded, input.queries)
   },

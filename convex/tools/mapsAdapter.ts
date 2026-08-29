@@ -78,12 +78,21 @@ export class MapsRequestError extends Schema.TaggedError<MapsRequestError>()(
   {
     cause: Schema.Defect(),
     tool: Schema.String,
+    reason: Schema.Literals(['transport', 'provider']),
   },
 ) {}
 
+// Marks failures the provider itself declared, which retrying cannot fix.
+class ProviderDeclaredError extends Error {}
+
 export function mapsRequestErrorFromCause(tool: MapsTool) {
   // oxlint-disable-next-line anti-slop/no-unknown-parameters -- A rejected provider Promise is untrusted here and is immediately reduced to safe diagnostics.
-  return (cause: unknown) => new MapsRequestError({ cause, tool })
+  return (cause: unknown) =>
+    new MapsRequestError({
+      cause,
+      tool,
+      reason: cause instanceof ProviderDeclaredError ? 'provider' : 'transport',
+    })
 }
 
 // oxlint-disable-next-line anti-slop/no-unknown-parameters -- MCP result content is untrusted here and is immediately reduced to a diagnostic string.
@@ -106,6 +115,7 @@ function groundingLiteRequest<
   tool: MapsTool
   input: MapsToolArguments
   responseSchema: S
+  signal?: AbortSignal | undefined
 }): Effect.Effect<S['Type'], MapsFailure> {
   return Effect.tryPromise({
     try: async () => {
@@ -120,16 +130,18 @@ function groundingLiteRequest<
         const result = await client.callTool({
           name: args.tool,
           arguments: args.input,
-          options: { timeout: MAPS_CALL_TIMEOUT_MS },
+          options: args.signal
+            ? { timeout: MAPS_CALL_TIMEOUT_MS, signal: args.signal }
+            : { timeout: MAPS_CALL_TIMEOUT_MS },
         })
         if (result.isError) {
-          throw new Error(
+          throw new ProviderDeclaredError(
             describeToolError(result.content) ??
               `Maps tool ${args.tool} reported an error`,
           )
         }
         if (result.structuredContent === undefined) {
-          throw new Error(
+          throw new ProviderDeclaredError(
             `Maps tool ${args.tool} returned no structured content`,
           )
         }
@@ -140,8 +152,9 @@ function groundingLiteRequest<
     },
     catch: mapsRequestErrorFromCause(args.tool),
   }).pipe(
-    // These are pure reads, so one retry absorbs transient provider failures.
-    Effect.retry({ times: 1 }),
+    // These are pure reads, so one retry absorbs transient transport
+    // failures. Provider-declared errors are deterministic and never retried.
+    Effect.retry({ times: 1, while: (error) => error.reason === 'transport' }),
     Effect.flatMap((content) =>
       Schema.decodeUnknownEffect(args.responseSchema)(content),
     ),
@@ -323,48 +336,59 @@ export function runMapsOperation<A>(
   )
 }
 
-export function requestSearchPlaces(apiKey: string, input: SearchPlacesInput) {
+export function requestSearchPlaces(
+  apiKey: string,
+  input: SearchPlacesInput,
+  signal?: AbortSignal,
+) {
   return groundingLiteRequest({
     apiKey,
     tool: 'search_places',
     input: toSearchPlacesArguments(input),
     responseSchema: providerSearchPlacesSchema,
+    signal,
   })
 }
 
 export function requestComputeRoutes(
   apiKey: string,
   input: ComputeRoutesInput,
+  signal?: AbortSignal,
 ) {
   return groundingLiteRequest({
     apiKey,
     tool: 'compute_routes',
     input: toComputeRoutesArguments(input),
     responseSchema: providerComputeRoutesSchema,
+    signal,
   })
 }
 
 export function requestLookupWeather(
   apiKey: string,
   input: LookupWeatherInput,
+  signal?: AbortSignal,
 ) {
   return groundingLiteRequest({
     apiKey,
     tool: 'lookup_weather',
     input: toLookupWeatherArguments(input),
     responseSchema: providerLookupWeatherSchema,
+    signal,
   })
 }
 
 export function requestResolvePlaces(
   apiKey: string,
   input: ResolvePlacesInput,
+  signal?: AbortSignal,
 ) {
   return groundingLiteRequest({
     apiKey,
     tool: 'resolve_names',
     input: toResolveNamesArguments(input),
     responseSchema: providerResolveNamesSchema,
+    signal,
   })
 }
 

@@ -18,12 +18,20 @@ import {
   query,
 } from './_generated/server'
 import { foundAgent } from './agent'
+import { HOUR, RateLimiter } from '@convex-dev/rate-limiter'
+
 import { buildFoundRunInstructions } from './agentInstructions'
 import { assertThreadOwner, hasThreadAccess } from './threadAccess'
 import { truncateText } from '../shared/text'
 import { candidateToolCalls } from './candidatePartMessages'
 
 const MAX_PROMPT_LENGTH = 8_000
+
+// Each run fans out into billed research and Maps calls, so message sends are
+// budgeted per session rather than left open on the public mutation.
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  sendMessage: { kind: 'token bucket', rate: 30, period: HOUR, capacity: 8 },
+})
 
 function normalizePrompt(prompt: string): string {
   const normalized = prompt.trim()
@@ -70,6 +78,10 @@ export const start = mutation({
   },
   returns: v.string(),
   handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, 'sendMessage', {
+      key: args.sessionId,
+      throws: true,
+    })
     const prompt = normalizePrompt(args.prompt)
     const threadId = await createThread(ctx, components.agent, {
       userId: args.sessionId,
@@ -94,6 +106,10 @@ export const send = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    await rateLimiter.limit(ctx, 'sendMessage', {
+      key: args.sessionId,
+      throws: true,
+    })
     await saveAndScheduleResponse(ctx, {
       threadId: args.threadId,
       sessionId: args.sessionId,

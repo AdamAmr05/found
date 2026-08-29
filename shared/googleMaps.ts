@@ -310,7 +310,6 @@ export type ResolvePlacesInput = z.infer<typeof resolvePlacesInputSchema>
 export type ResolvePlacesOutput = z.infer<typeof resolvePlacesOutputSchema>
 export type ShowMapInput = z.infer<typeof showMapInputSchema>
 type ShowMapOutput = z.infer<typeof showMapOutputSchema>
-export type MapScenePin = z.infer<typeof mapPinSchema>
 
 export type GoogleMapsUITools = {
   searchPlaces: { input: SearchPlacesInput; output: SearchPlacesOutput }

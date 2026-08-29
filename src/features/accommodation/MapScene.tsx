@@ -132,6 +132,17 @@ function InlineWeatherGlance({
       ) : null}
       {glance.temperatureLabel ? <span>{glance.temperatureLabel}</span> : null}
       {glance.conditionLabel ? <span>{glance.conditionLabel}</span> : null}
+      {glance.attribution ? (
+        <a
+          className="underline underline-offset-2 transition-colors duration-4 hover:text-accent-black"
+          href={glance.attribution.url}
+          rel="noreferrer"
+          target="_blank"
+          title={glance.attribution.title}
+        >
+          Google
+        </a>
+      ) : null}
     </span>
   )
 }

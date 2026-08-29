@@ -5,6 +5,7 @@ export type WeatherGlance = {
   conditionLabel?: string
   iconUrl?: string
   sunLabel?: string
+  attribution?: { title: string; url: string }
 }
 
 function formatTemperature(
@@ -68,5 +69,6 @@ export function weatherGlance(
   }
   const sunLabel = sunGlanceLabel(weather.sun, nowMs)
   if (sunLabel) glance.sunLabel = sunLabel
+  if (weather.attribution) glance.attribution = weather.attribution
   return Object.keys(glance).length > 0 ? glance : undefined
 }

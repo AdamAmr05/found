@@ -1,4 +1,9 @@
-import type { SearchPlacesOutput } from '../../../shared/googleMaps'
+import type {
+  ComputeRoutesOutput,
+  LookupWeatherOutput,
+  MapsAttribution,
+  SearchPlacesOutput,
+} from '../../../shared/googleMaps'
 import type { FoundUIMessage } from './ThreadMessage'
 import { ToolStep } from './ThreadToolStep'
 import { isToolActive } from './toolState'
@@ -16,14 +21,14 @@ type GroundingPart = Extract<
 
 const GROUNDING_LABELS = {
   'tool-searchPlaces': {
-    active: 'Grounding places on Google Maps',
-    error: 'Maps place search failed',
-    success: 'Grounded places on Google Maps',
+    active: 'Finding nearby places',
+    error: 'Couldn’t search nearby places',
+    success: 'Found nearby places',
   },
   'tool-computeRoutes': {
-    active: 'Measuring the real journey',
+    active: 'Measuring the journey',
     error: 'Couldn’t measure the journey',
-    success: 'Measured the real journey',
+    success: 'Measured the journey',
   },
   'tool-lookupWeather': {
     active: 'Checking the weather there',
@@ -31,9 +36,9 @@ const GROUNDING_LABELS = {
     success: 'Checked the weather there',
   },
   'tool-resolvePlaces': {
-    active: 'Anchoring places on Google Maps',
-    error: 'Couldn’t anchor the places',
-    success: 'Anchored places on Google Maps',
+    active: 'Locating the addresses',
+    error: 'Couldn’t locate the addresses',
+    success: 'Located the addresses',
   },
 } satisfies Record<
   GroundingPart['type'],
@@ -55,7 +60,32 @@ export function MapsGroundingPart({ part }: { readonly part: GroundingPart }) {
       part.state === 'output-available' ? (
         <MapsSourceLinks places={part.output.places} />
       ) : null}
+      {part.type === 'tool-computeRoutes' &&
+      part.state === 'output-available' ? (
+        <RouteOutcome routes={part.output.routes} />
+      ) : null}
+      {part.type === 'tool-lookupWeather' &&
+      part.state === 'output-available' ? (
+        <WeatherSource attribution={part.output.attribution} />
+      ) : null}
     </div>
+  )
+}
+
+function AttributionChip({
+  attribution,
+}: {
+  readonly attribution: MapsAttribution
+}) {
+  return (
+    <a
+      className="inline-block max-w-240 truncate rounded-full border-1 border-border-faint px-10 py-2 text-label-x-small text-foreground-muted transition-colors duration-4 hover:border-border-muted hover:text-accent-black"
+      href={attribution.url}
+      rel="noreferrer"
+      target="_blank"
+    >
+      {attribution.title}
+    </a>
   )
 }
 
@@ -71,16 +101,53 @@ function MapsSourceLinks({
     <ul className="flex flex-wrap gap-6 pl-28">
       {sources.map((place) => (
         <li className="min-w-0" key={place.placeId}>
-          <a
-            className="inline-block max-w-240 truncate rounded-full border-1 border-border-faint px-10 py-2 text-label-x-small text-foreground-muted transition-colors duration-4 hover:border-border-muted hover:text-accent-black"
-            href={place.links.place ?? place.attribution.url}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {place.attribution.title}
-          </a>
+          <AttributionChip
+            attribution={{
+              title: place.attribution.title,
+              url: place.links.place ?? place.attribution.url,
+            }}
+          />
         </li>
       ))}
     </ul>
+  )
+}
+
+function RouteOutcome({
+  routes,
+}: {
+  readonly routes: ComputeRoutesOutput['routes']
+}) {
+  const warning = routes.find((route) => route.warning)?.warning
+  if (routes.length === 0 && !warning) return null
+
+  return (
+    <div className="flex flex-col gap-4 pl-28">
+      {routes.length > 0 ? (
+        <ul className="flex flex-wrap gap-6">
+          {routes.slice(0, SOURCE_LINK_MAX_COUNT).map((route) => (
+            <li className="min-w-0" key={route.attribution.url}>
+              <AttributionChip attribution={route.attribution} />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {warning ? (
+        <p className="text-label-x-small text-foreground-muted">{warning}</p>
+      ) : null}
+    </div>
+  )
+}
+
+function WeatherSource({
+  attribution,
+}: {
+  readonly attribution: LookupWeatherOutput['attribution']
+}) {
+  if (!attribution) return null
+  return (
+    <div className="pl-28">
+      <AttributionChip attribution={attribution} />
+    </div>
   )
 }
