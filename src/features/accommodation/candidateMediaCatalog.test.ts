@@ -64,4 +64,18 @@ describe('candidate media catalog', () => {
 
     expect(result.images).toEqual([])
   })
+
+  it('skips unparseable source URLs instead of failing the whole gallery', () => {
+    const brokenSourceCandidate: CandidateSnapshot = {
+      ...candidate,
+      sources: [
+        { ref: 'broken', label: 'Broken source', url: 'https://' },
+        ...candidate.sources,
+      ],
+    }
+    const [result] = attachCandidateMedia([brokenSourceCandidate], [page])
+    if (!result) throw new Error('Expected one candidate')
+
+    expect(result.images).toHaveLength(2)
+  })
 })

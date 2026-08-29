@@ -22,8 +22,14 @@ function isUsablePropertyImage(value: string): boolean {
   }
 }
 
-function comparableUrl(value: string): string {
-  const url = new URL(value)
+function comparableUrl(value: string): string | undefined {
+  let url: URL
+  try {
+    url = new URL(value)
+  } catch {
+    // A source URL that fails to parse simply cannot match a read page.
+    return undefined
+  }
   url.hash = ''
   if (url.pathname !== '/') url.pathname = url.pathname.replace(/\/$/, '')
   return url.href
@@ -35,12 +41,16 @@ export function candidateSourceImages(
   limit = 6,
 ): CandidateSourceImage[] {
   const pagesByUrl = new Map<string, ReadPageOutput>()
-  for (const page of pages) pagesByUrl.set(comparableUrl(page.url), page)
+  for (const page of pages) {
+    const key = comparableUrl(page.url)
+    if (key) pagesByUrl.set(key, page)
+  }
 
   const seen = new Set<string>()
   const images: CandidateSourceImage[] = []
   for (const source of candidate.sources) {
-    const page = pagesByUrl.get(comparableUrl(source.url))
+    const key = comparableUrl(source.url)
+    const page = key ? pagesByUrl.get(key) : undefined
     if (!page) continue
 
     for (const url of page.images) {
