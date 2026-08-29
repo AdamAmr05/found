@@ -2,20 +2,31 @@ import type { UIMessage } from '@convex-dev/agent'
 import { useSmoothText } from '@convex-dev/agent/react'
 import { lazy, Suspense, useMemo } from 'react'
 
-import type { FoundUITools } from '../../../shared/foundTools'
 import type { ReadPageOutput } from '../../../shared/foundTools'
+import {
+  showMapInputSchema,
+  type LookupWeatherOutput,
+} from '../../../shared/googleMaps'
+import { sceneCandidateRefs } from '../accommodation/map3dScene'
+import { MapSceneBridgeProvider } from './mapSceneBridge'
+import { MapsGroundingPart } from './MapsGroundingPart'
 import { ThinkingStep, ToolStep } from './ThreadToolStep'
-import { type FoundToolState, isToolActive } from './toolState'
+import {
+  type FoundThreadTools,
+  type FoundToolState,
+  isToolActive,
+} from './toolState'
 
 const StreamingMarkdown = lazy(() =>
   import('streamdown').then(({ Streamdown }) => ({ default: Streamdown })),
 )
 const CandidateToolPart = lazy(() => import('./CandidateToolPart'))
+const MapToolPart = lazy(() => import('./MapToolPart'))
 
 export type FoundUIMessage = UIMessage<
   Record<string, never>,
   never,
-  FoundUITools
+  FoundThreadTools
 >
 
 export function ThreadMessage({
@@ -79,26 +90,52 @@ function AssistantMessage({
       ),
     [message.parts],
   )
+  const weather = useMemo(() => {
+    let latest: LookupWeatherOutput | undefined
+    for (const part of message.parts) {
+      if (
+        part.type === 'tool-lookupWeather' &&
+        part.state === 'output-available'
+      ) {
+        latest = part.output
+      }
+    }
+    return latest
+  }, [message.parts])
+  const mappedRefs = useMemo(() => {
+    const refs = new Set<string>()
+    for (const part of message.parts) {
+      if (part.type !== 'tool-showMap' || part.state !== 'output-available') {
+        continue
+      }
+      const parsed = showMapInputSchema.safeParse(part.input)
+      if (!parsed.success) continue
+      for (const ref of sceneCandidateRefs(parsed.data)) refs.add(ref)
+    }
+    return refs
+  }, [message.parts])
 
   return (
-    <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black">
-      {failed ? (
-        <p className="text-accent-crimson">
-          I couldn’t finish that response. Check the service configuration and
-          try again.
-        </p>
-      ) : (
-        message.parts.map((part, index) => (
-          <AssistantPart
-            key={`${message.key}-${part.type}-${index}`}
-            part={part}
-            readPages={readPages}
-            streaming={message.status === 'streaming'}
-            threadId={threadId}
-          />
-        ))
-      )}
-    </article>
+    <MapSceneBridgeProvider mappedRefs={mappedRefs} weather={weather}>
+      <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black">
+        {failed ? (
+          <p className="text-accent-crimson">
+            I couldn’t finish that response. Check the service configuration and
+            try again.
+          </p>
+        ) : (
+          message.parts.map((part, index) => (
+            <AssistantPart
+              key={`${message.key}-${part.type}-${index}`}
+              part={part}
+              readPages={readPages}
+              streaming={message.status === 'streaming'}
+              threadId={threadId}
+            />
+          ))
+        )}
+      </article>
+    </MapSceneBridgeProvider>
   )
 }
 
@@ -131,6 +168,19 @@ function AssistantPart({
             streaming={streaming}
             threadId={threadId}
           />
+        </Suspense>
+      )
+    case 'tool-searchPlaces':
+    case 'tool-computeRoutes':
+    case 'tool-lookupWeather':
+    case 'tool-resolvePlaces':
+      return <MapsGroundingPart part={part} />
+    case 'tool-showMap':
+      return (
+        <Suspense
+          fallback={<ToolStep active label="Composing the map scene" />}
+        >
+          <MapToolPart part={part} />
         </Suspense>
       )
     default:

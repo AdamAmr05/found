@@ -16,6 +16,8 @@ import type * as savedCandidates from "../savedCandidates.js";
 import type * as thread from "../thread.js";
 import type * as threadAccess from "../threadAccess.js";
 import type * as tools_firecrawlAdapter from "../tools/firecrawlAdapter.js";
+import type * as tools_maps from "../tools/maps.js";
+import type * as tools_mapsAdapter from "../tools/mapsAdapter.js";
 import type * as tools_presentation from "../tools/presentation.js";
 import type * as tools_research from "../tools/research.js";
 
@@ -34,6 +36,8 @@ declare const fullApi: ApiFromModules<{
   thread: typeof thread;
   threadAccess: typeof threadAccess;
   "tools/firecrawlAdapter": typeof tools_firecrawlAdapter;
+  "tools/maps": typeof tools_maps;
+  "tools/mapsAdapter": typeof tools_mapsAdapter;
   "tools/presentation": typeof tools_presentation;
   "tools/research": typeof tools_research;
 }>;

@@ -152,6 +152,7 @@ export const respond = internalAction({
         promptMessageId: args.promptMessageId,
         instructions: buildFoundRunInstructions({
           researchToolsAvailable: true,
+          todayIsoDate: new Date().toISOString().slice(0, 10),
         }),
       },
       { saveStreamDeltas: { throttleMs: 500 } },

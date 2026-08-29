@@ -16,6 +16,7 @@ import type {
 } from './candidateMediaCatalog'
 import type { CandidateSection } from './candidatePresentation'
 import { formatCandidatePrice } from './candidatePresentation'
+import type { CandidateMapBridge } from './CandidateResults'
 
 const foldSpring: Transition = {
   type: 'spring',
@@ -26,6 +27,7 @@ const foldSpring: Transition = {
 interface CandidateFoldProps {
   readonly candidates: readonly RenderableCandidate[]
   readonly layoutScope: string
+  readonly mapBridge?: CandidateMapBridge | undefined
   readonly saveErrorRef: string | undefined
   readonly saveDisabled: boolean
   readonly savedRefs: ReadonlySet<string>
@@ -35,6 +37,7 @@ interface CandidateFoldProps {
 export function CandidateFold({
   candidates,
   layoutScope,
+  mapBridge,
   saveErrorRef,
   saveDisabled,
   savedRefs,
@@ -49,6 +52,7 @@ export function CandidateFold({
           <FoldRow
             candidate={candidate}
             layoutScope={layoutScope}
+            mapHighlighted={mapBridge?.selectedRef === candidate.ref}
             open={candidate.ref === openRef}
             saveError={candidate.ref === saveErrorRef}
             saveDisabled={saveDisabled}
@@ -57,6 +61,11 @@ export function CandidateFold({
               setOpenRef((current) =>
                 current === candidate.ref ? undefined : candidate.ref,
               )
+            }
+            onOpenMap={
+              mapBridge?.mappedRefs.has(candidate.ref)
+                ? () => mapBridge.onOpenMap(candidate.ref)
+                : undefined
             }
             onToggleSave={() => onToggleSave(candidate.ref)}
           />
@@ -69,20 +78,24 @@ export function CandidateFold({
 function FoldRow({
   candidate,
   layoutScope,
+  mapHighlighted,
   open,
   saveError,
   saveDisabled,
   saved,
   onOpen,
+  onOpenMap,
   onToggleSave,
 }: {
   readonly candidate: RenderableCandidate
   readonly layoutScope: string
+  readonly mapHighlighted: boolean
   readonly open: boolean
   readonly saveError: boolean
   readonly saveDisabled: boolean
   readonly saved: boolean
   readonly onOpen: () => void
+  readonly onOpenMap: (() => void) | undefined
   readonly onToggleSave: () => void
 }) {
   const [section, setSection] = useState<CandidateSection>('glance')
@@ -99,7 +112,7 @@ function FoldRow({
       animate={{ borderRadius: open ? 16 : 12 }}
       className={`overflow-hidden rounded-12 bg-background-lighter transition-shadow duration-200 ${
         open ? 'shadow-surface-artifact' : 'shadow-surface-compact'
-      }`}
+      } ${mapHighlighted ? 'outline-2 outline-offset-2 outline-heat-100' : ''}`}
       data-testid={`fold-row-${candidate.ref}`}
       transition={reducedMotion ? { duration: 0 } : { duration: 0.2 }}
     >
@@ -130,6 +143,7 @@ function FoldRow({
             <FoldExpandedDetails
               candidate={candidate}
               mediaLayoutId={mediaLayoutId}
+              onOpenMap={onOpenMap}
               saveError={saveError}
               saveDisabled={saveDisabled}
               saved={saved}
@@ -217,6 +231,7 @@ function FoldHeader({
 function FoldExpandedDetails({
   candidate,
   mediaLayoutId,
+  onOpenMap,
   saveError,
   saveDisabled,
   saved,
@@ -227,6 +242,7 @@ function FoldExpandedDetails({
 }: {
   readonly candidate: RenderableCandidate
   readonly mediaLayoutId: string
+  readonly onOpenMap: (() => void) | undefined
   readonly saveError: boolean
   readonly saveDisabled: boolean
   readonly saved: boolean
@@ -254,21 +270,32 @@ function FoldExpandedDetails({
           section={section}
         />
       </div>
-      <button
-        aria-describedby={saveError ? saveErrorId : undefined}
-        aria-pressed={saved}
-        className={`mt-12 min-h-40 w-full rounded-10 px-14 text-label-small transition-opacity disabled:cursor-wait disabled:opacity-55 ${
-          saved ? 'bg-accent-black text-white' : 'bg-heat-100 text-white'
-        }`}
-        disabled={saveDisabled}
-        title={
-          saveDisabled ? 'Available when this response finishes' : undefined
-        }
-        type="button"
-        onClick={onToggleSave}
-      >
-        {saved ? 'On the shortlist' : 'Add to shortlist'}
-      </button>
+      <div className="mt-12 flex gap-8">
+        <button
+          aria-describedby={saveError ? saveErrorId : undefined}
+          aria-pressed={saved}
+          className={`min-h-40 flex-1 rounded-10 px-14 text-label-small transition-opacity disabled:cursor-wait disabled:opacity-55 ${
+            saved ? 'bg-accent-black text-white' : 'bg-heat-100 text-white'
+          }`}
+          disabled={saveDisabled}
+          title={
+            saveDisabled ? 'Available when this response finishes' : undefined
+          }
+          type="button"
+          onClick={onToggleSave}
+        >
+          {saved ? 'On the shortlist' : 'Add to shortlist'}
+        </button>
+        {onOpenMap ? (
+          <button
+            className="min-h-40 shrink-0 rounded-10 border-1 border-border-muted px-14 text-label-small text-accent-black transition-colors duration-4 hover:border-heat-100 hover:text-heat-100"
+            type="button"
+            onClick={onOpenMap}
+          >
+            Go there
+          </button>
+        ) : null}
+      </div>
       {saveError ? (
         <p
           className="mt-8 text-center text-label-x-small text-accent-crimson"

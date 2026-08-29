@@ -1,0 +1,64 @@
+{
+  "airPressure": {
+    "meanSeaLevelMillibars": 1011.86
+  },
+  "attribution": {
+    "title": "Weather for Prenzlauer Berg, Berlin-Pankow, Germany - Google",
+    "url": "https://www.google.com/search?q=Weather+for+Prenzlauer%20Berg%2C%20Berlin-Pankow%2C%20Germany"
+  },
+  "cloudCover": 33,
+  "feelsLikeTemperature": {
+    "degrees": 25.4,
+    "unit": "CELSIUS"
+  },
+  "heatIndex": {
+    "degrees": 25.4,
+    "unit": "CELSIUS"
+  },
+  "precipitation": {
+    "probability": {
+      "percent": 0,
+      "type": "RAIN"
+    },
+    "qpf": {
+      "quantity": 0,
+      "unit": "MILLIMETERS"
+    },
+    "snowQpf": {
+      "quantity": 0,
+      "unit": "MILLIMETERS"
+    }
+  },
+  "relativeHumidity": 49,
+  "returnedLocation": {
+    "address": "Prenzlauer Berg, Berlin-Pankow, Germany"
+  },
+  "temperature": {
+    "degrees": 24.5,
+    "unit": "CELSIUS"
+  },
+  "thunderstormProbability": 0,
+  "uvIndex": 1,
+  "weatherCondition": {
+    "description": {
+      "languageCode": "en",
+      "text": "Partly sunny"
+    },
+    "iconBaseUri": "https://maps.gstatic.com/weather/v1/partly_cloudy",
+    "type": "PARTLY_CLOUDY"
+  },
+  "wind": {
+    "direction": {
+      "cardinal": "WEST_SOUTHWEST",
+      "degrees": 253
+    },
+    "gust": {
+      "unit": "KILOMETERS_PER_HOUR",
+      "value": 29
+    },
+    "speed": {
+      "unit": "KILOMETERS_PER_HOUR",
+      "value": 16
+    }
+  }
+}

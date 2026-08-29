@@ -11,18 +11,22 @@ import { formatCandidatePrice } from './candidatePresentation'
 interface CandidateCardProps {
   readonly candidate: RenderableCandidate
   readonly layoutScope: string
+  readonly mapHighlighted?: boolean
   readonly saveError: boolean
   readonly saveDisabled: boolean
   readonly saved: boolean
+  readonly onOpenMap?: (() => void) | undefined
   readonly onToggleSave: () => void
 }
 
 export function CandidateCard({
   candidate,
   layoutScope,
+  mapHighlighted = false,
   saveError,
   saveDisabled,
   saved,
+  onOpenMap,
   onToggleSave,
 }: CandidateCardProps) {
   const [section, setSection] = useState<CandidateSection>('glance')
@@ -33,7 +37,11 @@ export function CandidateCard({
   const mediaLayoutId = `${layoutScope}-${candidate.ref}-media`
 
   return (
-    <article className="overflow-hidden rounded-16 bg-background-lighter shadow-surface-artifact">
+    <article
+      className={`overflow-hidden rounded-16 bg-background-lighter shadow-surface-artifact ${
+        mapHighlighted ? 'outline-2 outline-offset-2 outline-heat-100' : ''
+      }`}
+    >
       <div className="relative">
         <CandidateMedia candidate={candidate} layoutId={mediaLayoutId} />
         <button
@@ -104,8 +112,18 @@ export function CandidateCard({
         <div className="flex items-start justify-between gap-18">
           <div className="min-w-0">
             <h2 className="text-title-h5 text-balance">{candidate.title}</h2>
-            <p className="mt-3 text-body-small text-foreground-muted">
-              {candidate.location.label}
+            <p className="mt-3 flex items-center gap-8 text-body-small text-foreground-muted">
+              <span className="truncate">{candidate.location.label}</span>
+              {onOpenMap ? (
+                <button
+                  className="inline-flex shrink-0 items-center gap-5 rounded-full border-1 border-border-faint px-9 py-2 text-label-x-small transition-colors duration-4 hover:border-heat-100 hover:text-heat-100"
+                  onClick={onOpenMap}
+                  type="button"
+                >
+                  <MapPinIcon />
+                  Go there
+                </button>
+              ) : null}
             </p>
           </div>
           <div className="shrink-0 text-right">
@@ -135,6 +153,26 @@ export function CandidateCard({
         </div>
       </div>
     </article>
+  )
+}
+
+function MapPinIcon() {
+  return (
+    <svg aria-hidden className="size-12" fill="none" viewBox="0 0 12 12">
+      <path
+        d="M6 1.25a3.4 3.4 0 0 1 3.4 3.4c0 1.98-2.06 4.6-3.4 6.1-1.34-1.5-3.4-4.12-3.4-6.1A3.4 3.4 0 0 1 6 1.25Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="1.2"
+      />
+      <circle
+        cx="6"
+        cy="4.65"
+        r="1.15"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
+    </svg>
   )
 }
 

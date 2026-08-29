@@ -10,8 +10,15 @@ import { CandidateCard } from './CandidateCard'
 import { CandidateFold } from './CandidateFold'
 import type { RenderableCandidate } from './candidateMediaCatalog'
 
+export type CandidateMapBridge = {
+  readonly mappedRefs: ReadonlySet<string>
+  readonly selectedRef: string | undefined
+  readonly onOpenMap: (candidateRef: string) => void
+}
+
 interface CandidateResultsProps {
   readonly candidates: readonly RenderableCandidate[]
+  readonly mapBridge?: CandidateMapBridge | undefined
   readonly streaming: boolean
   readonly threadId: string
   readonly toolCallId: string
@@ -19,6 +26,7 @@ interface CandidateResultsProps {
 
 export function CandidateResults({
   candidates,
+  mapBridge,
   streaming,
   threadId,
   toolCallId,
@@ -77,6 +85,7 @@ export function CandidateResults({
         <CandidateFold
           candidates={candidates}
           layoutScope={toolCallId}
+          mapBridge={mapBridge}
           saveErrorRef={saveErrorRef}
           saveDisabled={saveDisabled}
           savedRefs={savedRefs}
@@ -94,9 +103,15 @@ export function CandidateResults({
             key={candidate.ref}
             candidate={candidate}
             layoutScope={toolCallId}
+            mapHighlighted={mapBridge?.selectedRef === candidate.ref}
             saveError={saveErrorRef === candidate.ref}
             saveDisabled={saveDisabled}
             saved={savedRefs.has(candidate.ref)}
+            onOpenMap={
+              mapBridge?.mappedRefs.has(candidate.ref)
+                ? () => mapBridge.onOpenMap(candidate.ref)
+                : undefined
+            }
             onToggleSave={() => toggleSave(candidate.ref)}
           />
         ))}

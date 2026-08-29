@@ -1,8 +1,11 @@
 import type { ToolUIPart } from 'ai'
 
 import type { FoundUITools } from '../../../shared/foundTools'
+import type { GoogleMapsUITools } from '../../../shared/googleMaps'
 
-export type FoundToolState = ToolUIPart<FoundUITools>['state']
+export type FoundThreadTools = FoundUITools & GoogleMapsUITools
+
+export type FoundToolState = ToolUIPart<FoundThreadTools>['state']
 
 export function isToolActive(state: FoundToolState): boolean {
   switch (state) {
