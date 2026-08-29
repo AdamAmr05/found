@@ -5,6 +5,12 @@ import { api } from '../../../convex/_generated/api'
 
 const THREAD_STORAGE_KEY = 'found-active-thread-id'
 
+interface ResumeState {
+  readonly storageLoaded: boolean
+  readonly storedThreadId?: string
+  readonly trustedThreadId?: string
+}
+
 function writeStoredThreadId(threadId: string | undefined): void {
   if (threadId) {
     window.sessionStorage.setItem(THREAD_STORAGE_KEY, threadId)
@@ -14,36 +20,58 @@ function writeStoredThreadId(threadId: string | undefined): void {
 }
 
 export function useResumableThread() {
-  const [storedThreadId, setStoredThreadId] = useState<string>()
+  const [resumeState, setResumeState] = useState<ResumeState>({
+    storageLoaded: false,
+  })
+  const { storageLoaded, storedThreadId, trustedThreadId } = resumeState
   const canResume = useSessionQuery(
     api.thread.canResume,
     storedThreadId ? { threadId: storedThreadId } : ('skip' as const),
   )
 
   useEffect(() => {
+    const threadId =
+      window.sessionStorage.getItem(THREAD_STORAGE_KEY) ?? undefined
     // oxlint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage is an external system unavailable during SSR.
-    setStoredThreadId(
-      window.sessionStorage.getItem(THREAD_STORAGE_KEY) ?? undefined,
+    setResumeState(
+      threadId
+        ? { storageLoaded: true, storedThreadId: threadId }
+        : { storageLoaded: true },
     )
   }, [])
 
   useEffect(() => {
-    if (storedThreadId && canResume === false) writeStoredThreadId(undefined)
+    if (!storedThreadId || canResume !== false) return
+    writeStoredThreadId(undefined)
+    // oxlint-disable-next-line react-hooks/set-state-in-effect -- access validation invalidates external sessionStorage state.
+    setResumeState({ storageLoaded: true })
   }, [canResume, storedThreadId])
 
   function rememberThread(threadId: string): void {
     writeStoredThreadId(threadId)
-    setStoredThreadId(threadId)
+    setResumeState({
+      storageLoaded: true,
+      storedThreadId: threadId,
+      trustedThreadId: threadId,
+    })
   }
 
   function forgetThread(): void {
     writeStoredThreadId(undefined)
-    setStoredThreadId(undefined)
+    setResumeState({ storageLoaded: true })
   }
+
+  const trusted =
+    storedThreadId !== undefined &&
+    (trustedThreadId === storedThreadId || canResume === true)
+  const restoring =
+    !storageLoaded ||
+    Boolean(storedThreadId && !trusted && canResume === undefined)
 
   return {
     forgetThread,
     rememberThread,
-    threadId: canResume ? storedThreadId : undefined,
+    restoring,
+    threadId: trusted ? storedThreadId : undefined,
   }
 }

@@ -13,6 +13,7 @@ export default defineSchema({
       v.array(
         v.object({
           candidateRef: v.string(),
+          sourceRef: v.optional(v.string()),
           url: v.string(),
         }),
       ),
@@ -24,6 +25,7 @@ export default defineSchema({
     messageId: v.string(),
     toolCallId: v.string(),
     candidateRef: v.string(),
+    imageSourceRef: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
   })
     .index('by_session', ['sessionId'])

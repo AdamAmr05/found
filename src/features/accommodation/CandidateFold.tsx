@@ -27,6 +27,7 @@ interface CandidateFoldProps {
   readonly candidates: readonly RenderableCandidate[]
   readonly layoutScope: string
   readonly saveErrorRef: string | undefined
+  readonly saveDisabled: boolean
   readonly savedRefs: ReadonlySet<string>
   readonly onToggleSave: (candidateRef: string) => void
 }
@@ -35,6 +36,7 @@ export function CandidateFold({
   candidates,
   layoutScope,
   saveErrorRef,
+  saveDisabled,
   savedRefs,
   onToggleSave,
 }: CandidateFoldProps) {
@@ -49,6 +51,7 @@ export function CandidateFold({
             layoutScope={layoutScope}
             open={candidate.ref === openRef}
             saveError={candidate.ref === saveErrorRef}
+            saveDisabled={saveDisabled}
             saved={savedRefs.has(candidate.ref)}
             onOpen={() =>
               setOpenRef((current) =>
@@ -68,6 +71,7 @@ function FoldRow({
   layoutScope,
   open,
   saveError,
+  saveDisabled,
   saved,
   onOpen,
   onToggleSave,
@@ -76,6 +80,7 @@ function FoldRow({
   readonly layoutScope: string
   readonly open: boolean
   readonly saveError: boolean
+  readonly saveDisabled: boolean
   readonly saved: boolean
   readonly onOpen: () => void
   readonly onToggleSave: () => void
@@ -126,6 +131,7 @@ function FoldRow({
               candidate={candidate}
               mediaLayoutId={mediaLayoutId}
               saveError={saveError}
+              saveDisabled={saveDisabled}
               saved={saved}
               section={section}
               tabsId={tabsId}
@@ -212,6 +218,7 @@ function FoldExpandedDetails({
   candidate,
   mediaLayoutId,
   saveError,
+  saveDisabled,
   saved,
   section,
   tabsId,
@@ -221,6 +228,7 @@ function FoldExpandedDetails({
   readonly candidate: RenderableCandidate
   readonly mediaLayoutId: string
   readonly saveError: boolean
+  readonly saveDisabled: boolean
   readonly saved: boolean
   readonly section: CandidateSection
   readonly tabsId: string
@@ -249,9 +257,13 @@ function FoldExpandedDetails({
       <button
         aria-describedby={saveError ? saveErrorId : undefined}
         aria-pressed={saved}
-        className={`mt-12 min-h-40 w-full rounded-10 px-14 text-label-small ${
+        className={`mt-12 min-h-40 w-full rounded-10 px-14 text-label-small transition-opacity disabled:cursor-wait disabled:opacity-55 ${
           saved ? 'bg-accent-black text-white' : 'bg-heat-100 text-white'
         }`}
+        disabled={saveDisabled}
+        title={
+          saveDisabled ? 'Available when this response finishes' : undefined
+        }
         type="button"
         onClick={onToggleSave}
       >

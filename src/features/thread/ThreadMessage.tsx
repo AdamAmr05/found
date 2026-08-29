@@ -128,6 +128,7 @@ function AssistantPart({
           <CandidateToolPart
             part={part}
             readPages={readPages}
+            streaming={streaming}
             threadId={threadId}
           />
         </Suspense>

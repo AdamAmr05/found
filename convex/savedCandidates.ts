@@ -37,7 +37,8 @@ const savedPrice = v.object({
   ),
 })
 
-const savedCandidateView = v.object({
+const availableSavedCandidateView = v.object({
+  state: v.literal('available'),
   candidateRef: v.string(),
   imageUrl: v.optional(v.string()),
   locationLabel: v.string(),
@@ -48,6 +49,24 @@ const savedCandidateView = v.object({
   threadId: v.string(),
   title: v.string(),
   toolCallId: v.string(),
+})
+
+const unavailableSavedCandidateView = v.object({
+  state: v.literal('unavailable'),
+  candidateRef: v.string(),
+  savedAt: v.number(),
+  threadId: v.string(),
+  toolCallId: v.string(),
+})
+
+const savedCandidateView = v.union(
+  availableSavedCandidateView,
+  unavailableSavedCandidateView,
+)
+
+const savedCandidatePartState = v.object({
+  ready: v.boolean(),
+  savedRefs: v.array(v.string()),
 })
 
 type SavedCandidateEntry = Doc<'savedCandidates'>
@@ -71,11 +90,15 @@ function presentSavedCandidate(
   entry: SavedCandidateEntry,
   candidate: CandidateSnapshot,
 ) {
-  const source = candidate.sources[0]
+  const imageSource = entry.imageSourceRef
+    ? candidate.sources.find((source) => source.ref === entry.imageSourceRef)
+    : undefined
+  const source = imageSource ?? candidate.sources[0]
   if (!source) {
     throw new ConvexError({ code: 'SAVED_CANDIDATE_CONTENT_NOT_FOUND' })
   }
   const presented = {
+    state: 'available' as const,
     candidateRef: entry.candidateRef,
     locationLabel: candidate.location.label,
     savedAt: entry._creationTime,
@@ -88,9 +111,10 @@ function presentSavedCandidate(
     title: candidate.title,
     toolCallId: entry.toolCallId,
   }
-  const withImage = entry.imageUrl
-    ? { ...presented, imageUrl: entry.imageUrl }
-    : presented
+  const withImage =
+    entry.imageUrl && imageSource
+      ? { ...presented, imageUrl: entry.imageUrl }
+      : presented
   return candidate.price ? { ...withImage, price: candidate.price } : withImage
 }
 
@@ -109,7 +133,13 @@ async function resolveSavedCandidates(
       message &&
       candidateFromToolMessage(message, entry.toolCallId, entry.candidateRef)
     if (!candidate) {
-      throw new ConvexError({ code: 'SAVED_CANDIDATE_CONTENT_NOT_FOUND' })
+      return {
+        state: 'unavailable' as const,
+        candidateRef: entry.candidateRef,
+        savedAt: entry._creationTime,
+        threadId: entry.threadId,
+        toolCallId: entry.toolCallId,
+      }
     }
     return presentSavedCandidate(entry, candidate)
   })
@@ -156,20 +186,34 @@ export const listForToolPart = query({
     threadId: v.string(),
     toolCallId: v.string(),
   },
-  returns: v.array(v.string()),
+  returns: savedCandidatePartState,
   handler: async (ctx, args) => {
     assertToolCallId(args.toolCallId)
-    const entries = await ctx.db
-      .query('savedCandidates')
-      .withIndex('by_session_and_thread_and_tool_and_candidate', (index) =>
-        index
-          .eq('sessionId', args.sessionId)
-          .eq('threadId', args.threadId)
-          .eq('toolCallId', args.toolCallId),
-      )
-      .take(CANDIDATE_PRESENTATION_MAX_COUNT)
+    const [part, entries] = await Promise.all([
+      ctx.db
+        .query('candidatePartRefs')
+        .withIndex('by_session_thread_tool', (index) =>
+          index
+            .eq('sessionId', args.sessionId)
+            .eq('threadId', args.threadId)
+            .eq('toolCallId', args.toolCallId),
+        )
+        .unique(),
+      ctx.db
+        .query('savedCandidates')
+        .withIndex('by_session_and_thread_and_tool_and_candidate', (index) =>
+          index
+            .eq('sessionId', args.sessionId)
+            .eq('threadId', args.threadId)
+            .eq('toolCallId', args.toolCallId),
+        )
+        .take(CANDIDATE_PRESENTATION_MAX_COUNT),
+    ])
 
-    return entries.map((entry) => entry.candidateRef)
+    return {
+      ready: part !== null,
+      savedRefs: entries.map((entry) => entry.candidateRef),
+    }
   },
 })
 
@@ -208,11 +252,14 @@ export const setSaved = mutation({
         toolCallId: args.toolCallId,
         candidateRef: args.candidateRef,
       }
+      const withImageSource = part.imageSourceRef
+        ? { ...savedCandidate, imageSourceRef: part.imageSourceRef }
+        : savedCandidate
       await ctx.db.insert(
         'savedCandidates',
         part.imageUrl
-          ? { ...savedCandidate, imageUrl: part.imageUrl }
-          : savedCandidate,
+          ? { ...withImageSource, imageUrl: part.imageUrl }
+          : withImageSource,
       )
     } else if (!args.saved && existing) {
       await ctx.db.delete('savedCandidates', existing._id)

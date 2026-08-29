@@ -51,6 +51,11 @@ async function recordCandidatePart(
         sources: [
           {
             ref: 'source-a',
+            url: 'https://example.com/overview',
+            label: 'Example overview',
+          },
+          {
+            ref: 'source-b',
             url: 'https://example.com/listing',
             label: 'Example listing',
           },
@@ -89,6 +94,7 @@ async function recordCandidatePart(
         previewImages: [
           {
             candidateRef: ref,
+            sourceRef: 'source-b',
             url: 'https://example.com/listing-photo.jpg',
           },
         ],
@@ -115,6 +121,11 @@ describe('saved candidate references', () => {
           sources: [
             {
               ref: 'source-a',
+              url: 'https://example.com/overview',
+              label: 'Example overview',
+            },
+            {
+              ref: 'source-b',
               url: 'https://example.com/listing',
               label: 'Example listing',
             },
@@ -185,6 +196,7 @@ describe('saved candidate references', () => {
         previewImages: [
           {
             candidateRef,
+            sourceRef: 'source-b',
             url: 'https://example.com/property.jpg',
           },
         ],
@@ -307,7 +319,41 @@ describe('saved candidate references', () => {
         threadId,
         toolCallId,
       }),
-    ).resolves.toEqual([candidateRef])
+    ).resolves.toEqual({ ready: true, savedRefs: [candidateRef] })
+  })
+
+  test('reports that saving is unavailable until provenance is recorded', async () => {
+    const t = setup()
+    const threadId = await createThread(t, ownerSession)
+
+    await expect(
+      t.query(api.savedCandidates.listForToolPart, {
+        sessionId: ownerSession,
+        threadId,
+        toolCallId,
+      }),
+    ).resolves.toEqual({ ready: false, savedRefs: [] })
+    await expect(
+      t.mutation(api.savedCandidates.setSaved, {
+        candidateRef,
+        saved: true,
+        sessionId: ownerSession,
+        threadId,
+        toolCallId,
+      }),
+    ).rejects.toMatchObject({
+      data: { code: 'CANDIDATE_PART_NOT_FOUND' },
+    })
+
+    await recordCandidatePart(t, threadId)
+
+    await expect(
+      t.query(api.savedCandidates.listForToolPart, {
+        sessionId: ownerSession,
+        threadId,
+        toolCallId,
+      }),
+    ).resolves.toEqual({ ready: true, savedRefs: [] })
   })
 
   test('projects one table as a thread shortlist and global bookmarks', async () => {
@@ -353,6 +399,11 @@ describe('saved candidate references', () => {
       {
         candidateRef,
         imageUrl: 'https://example.com/listing-photo.jpg',
+        source: {
+          label: 'Example listing',
+          url: 'https://example.com/listing',
+        },
+        state: 'available',
         threadId: firstThreadId,
         toolCallId,
       },
@@ -378,6 +429,67 @@ describe('saved candidate references', () => {
         expect.objectContaining({
           candidateRef: secondCandidateRef,
           threadId: secondThreadId,
+        }),
+      ]),
+    )
+  })
+
+  test('isolates a broken saved reference without failing the page', async () => {
+    const t = setup()
+    const threadId = await createThread(t, ownerSession)
+    await recordCandidatePart(t, threadId)
+    await recordCandidatePart(
+      t,
+      threadId,
+      'candidate-b',
+      'show-candidates-call-b',
+    )
+    await t.mutation(api.savedCandidates.setSaved, {
+      candidateRef,
+      saved: true,
+      sessionId: ownerSession,
+      threadId,
+      toolCallId,
+    })
+    await t.mutation(api.savedCandidates.setSaved, {
+      candidateRef: 'candidate-b',
+      saved: true,
+      sessionId: ownerSession,
+      threadId,
+      toolCallId: 'show-candidates-call-b',
+    })
+    const messageId = await t.run(async (ctx) => {
+      const entry = await ctx.db
+        .query('savedCandidates')
+        .withIndex('by_session_and_thread_and_tool_and_candidate', (index) =>
+          index
+            .eq('sessionId', ownerSession)
+            .eq('threadId', threadId)
+            .eq('toolCallId', toolCallId)
+            .eq('candidateRef', candidateRef),
+        )
+        .unique()
+      if (!entry) throw new Error('Expected saved candidate')
+      return entry.messageId
+    })
+    await t.mutation(components.agent.messages.deleteByIds, {
+      messageIds: [messageId],
+    })
+
+    const bookmarks = await t.query(api.savedCandidates.listBookmarks, {
+      sessionId: ownerSession,
+      paginationOpts: { cursor: null, numItems: 10 },
+    })
+
+    expect(bookmarks.page).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          candidateRef: 'candidate-b',
+          state: 'available',
+        }),
+        expect.objectContaining({
+          candidateRef,
+          state: 'unavailable',
         }),
       ]),
     )

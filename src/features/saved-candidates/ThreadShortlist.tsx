@@ -7,7 +7,10 @@ import { useState } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { formatCandidatePrice } from '../accommodation/candidatePresentation'
 import { ShortlistTray, type ShortlistTrayItem } from './ShortlistTray'
-import type { SavedCandidateView } from './SavedCandidateRow'
+import type {
+  AvailableSavedCandidateView,
+  SavedCandidateView,
+} from './SavedCandidateRow'
 
 const SHORTLIST_PAGE_SIZE = 5
 
@@ -76,7 +79,13 @@ function shortlistSummary(
 ): string | undefined {
   if (hasMore || candidates.length === 0) return undefined
 
-  const prices = candidates.map((candidate) => candidate.price)
+  const availableCandidates = candidates.filter(
+    (candidate): candidate is AvailableSavedCandidateView =>
+      candidate.state === 'available',
+  )
+  if (availableCandidates.length !== candidates.length) return undefined
+
+  const prices = availableCandidates.map((candidate) => candidate.price)
   const first = prices[0]
   if (
     !first ||
@@ -107,6 +116,14 @@ function candidateKey(candidate: SavedCandidateView): string {
 }
 
 function toTrayItem(candidate: SavedCandidateView): ShortlistTrayItem {
+  if (candidate.state === 'unavailable') {
+    return {
+      id: candidateKey(candidate),
+      subtitle: 'Original research could not be loaded',
+      title: 'Saved candidate unavailable',
+    }
+  }
+
   const price = formatCandidatePrice(candidate.price)
   const item: ShortlistTrayItem = {
     id: candidateKey(candidate),

@@ -1,8 +1,15 @@
 import { formatCandidatePrice } from '../accommodation/candidatePresentation'
 import { CandidateThumbnail } from './CandidateThumbnail'
 
-export interface SavedCandidateView {
+interface SavedCandidateIdentity {
   readonly candidateRef: string
+  readonly savedAt: number
+  readonly threadId: string
+  readonly toolCallId: string
+}
+
+export interface AvailableSavedCandidateView extends SavedCandidateIdentity {
+  readonly state: 'available'
   readonly imageUrl?: string
   readonly locationLabel: string
   readonly price?: {
@@ -12,13 +19,17 @@ export interface SavedCandidateView {
     readonly currency: string
     readonly period: 'night' | 'week' | 'month' | 'stay'
   }
-  readonly savedAt: number
   readonly source: { readonly label: string; readonly url: string }
   readonly summary: string
-  readonly threadId: string
   readonly title: string
-  readonly toolCallId: string
 }
+
+export interface UnavailableSavedCandidateView extends SavedCandidateIdentity {
+  readonly state: 'unavailable'
+}
+
+export type SavedCandidateView =
+  AvailableSavedCandidateView | UnavailableSavedCandidateView
 
 export function SavedCandidateRow({
   candidate,
@@ -27,6 +38,25 @@ export function SavedCandidateRow({
   readonly candidate: SavedCandidateView
   readonly compact?: boolean
 }) {
+  if (candidate.state === 'unavailable') {
+    return (
+      <article
+        className={
+          compact
+            ? 'rounded-12 bg-background-lighter p-12'
+            : 'rounded-16 border border-border-faint bg-background-lighter p-18 shadow-surface-compact'
+        }
+      >
+        <p className="text-label-medium text-accent-black">
+          Saved candidate unavailable
+        </p>
+        <p className="mt-3 text-body-small text-foreground-muted">
+          Its original research message could not be loaded.
+        </p>
+      </article>
+    )
+  }
+
   const price = formatCandidatePrice(candidate.price)
 
   return (

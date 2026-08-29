@@ -31,6 +31,7 @@ function assertPreviewImages(
   candidateRefs: readonly string[],
   previewImages: readonly {
     readonly candidateRef: string
+    readonly sourceRef: string
     readonly url: string
   }[],
 ): void {
@@ -44,6 +45,8 @@ function assertPreviewImages(
     previewImages.some(
       (preview) =>
         !refs.has(preview.candidateRef) ||
+        preview.sourceRef.length === 0 ||
+        preview.sourceRef.length > CANDIDATE_REF_MAX_LENGTH ||
         preview.url.length > HTTP_URL_MAX_LENGTH ||
         !isHttpUrl(preview.url),
     )
@@ -60,7 +63,11 @@ export async function assertCandidatePartReference(
     readonly toolCallId: string
     readonly candidateRef: string
   },
-): Promise<{ readonly imageUrl?: string; readonly messageId: string }> {
+): Promise<{
+  readonly imageSourceRef?: string
+  readonly imageUrl?: string
+  readonly messageId: string
+}> {
   const part = await ctx.db
     .query('candidatePartRefs')
     .withIndex('by_session_thread_tool', (index) =>
@@ -74,11 +81,15 @@ export async function assertCandidatePartReference(
   if (!part?.candidateRefs.includes(args.candidateRef)) {
     throw new ConvexError({ code: 'CANDIDATE_PART_NOT_FOUND' })
   }
-  const imageUrl = part.previewImages?.find(
+  const previewImage = part.previewImages?.find(
     (preview) => preview.candidateRef === args.candidateRef,
-  )?.url
-  return imageUrl
-    ? { imageUrl, messageId: part.messageId }
+  )
+  return previewImage?.sourceRef
+    ? {
+        imageSourceRef: previewImage.sourceRef,
+        imageUrl: previewImage.url,
+        messageId: part.messageId,
+      }
     : { messageId: part.messageId }
 }
 
@@ -92,7 +103,13 @@ export const recordBatch = internalMutation({
         toolCallId: v.string(),
         candidateRefs: v.array(v.string()),
         previewImages: v.optional(
-          v.array(v.object({ candidateRef: v.string(), url: v.string() })),
+          v.array(
+            v.object({
+              candidateRef: v.string(),
+              sourceRef: v.string(),
+              url: v.string(),
+            }),
+          ),
         ),
       }),
     ),
@@ -126,6 +143,7 @@ export const recordBatch = internalMutation({
             const existingPreview = existing.previewImages?.[index]
             return (
               existingPreview?.candidateRef === preview.candidateRef &&
+              existingPreview.sourceRef === preview.sourceRef &&
               existingPreview.url === preview.url
             )
           })

@@ -15,6 +15,7 @@ interface CandidateToolCall {
   readonly messageId: string
   readonly previewImages: {
     readonly candidateRef: string
+    readonly sourceRef: string
     readonly url: string
   }[]
   readonly toolCallId: string
@@ -57,7 +58,15 @@ function previewImages(
 ): CandidateToolCall['previewImages'] {
   return candidates.flatMap((candidate) => {
     const preview = candidateSourceImages(candidate, pages, 1)[0]
-    return preview ? [{ candidateRef: candidate.ref, url: preview.url }] : []
+    return preview
+      ? [
+          {
+            candidateRef: candidate.ref,
+            sourceRef: preview.sourceRef,
+            url: preview.url,
+          },
+        ]
+      : []
   })
 }
 

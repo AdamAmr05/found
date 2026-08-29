@@ -12,17 +12,19 @@ import type { RenderableCandidate } from './candidateMediaCatalog'
 
 interface CandidateResultsProps {
   readonly candidates: readonly RenderableCandidate[]
+  readonly streaming: boolean
   readonly threadId: string
   readonly toolCallId: string
 }
 
 export function CandidateResults({
   candidates,
+  streaming,
   threadId,
   toolCallId,
 }: CandidateResultsProps) {
   const [saveErrorRef, setSaveErrorRef] = useState<string>()
-  const savedCandidateRefs = useSessionQuery(
+  const savedCandidateState = useSessionQuery(
     api.savedCandidates.listForToolPart,
     {
       threadId,
@@ -43,17 +45,18 @@ export function CandidateResults({
     )
     if (!current) return
 
-    store.setQuery(
-      api.savedCandidates.listForToolPart,
-      queryArgs,
-      args.saved
-        ? [...new Set([...current, args.candidateRef])]
-        : current.filter((ref) => ref !== args.candidateRef),
-    )
+    store.setQuery(api.savedCandidates.listForToolPart, queryArgs, {
+      ...current,
+      savedRefs: args.saved
+        ? [...new Set([...current.savedRefs, args.candidateRef])]
+        : current.savedRefs.filter((ref) => ref !== args.candidateRef),
+    })
   })
-  const savedRefs = new Set(savedCandidateRefs ?? [])
+  const savedRefs = new Set(savedCandidateState?.savedRefs ?? [])
+  const saveDisabled = streaming || savedCandidateState?.ready !== true
 
   function toggleSave(candidateRef: string): void {
+    if (saveDisabled) return
     setSaveErrorRef((current) =>
       current === candidateRef ? undefined : current,
     )
@@ -75,6 +78,7 @@ export function CandidateResults({
           candidates={candidates}
           layoutScope={toolCallId}
           saveErrorRef={saveErrorRef}
+          saveDisabled={saveDisabled}
           savedRefs={savedRefs}
           onToggleSave={toggleSave}
         />
@@ -91,6 +95,7 @@ export function CandidateResults({
             candidate={candidate}
             layoutScope={toolCallId}
             saveError={saveErrorRef === candidate.ref}
+            saveDisabled={saveDisabled}
             saved={savedRefs.has(candidate.ref)}
             onToggleSave={() => toggleSave(candidate.ref)}
           />

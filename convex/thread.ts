@@ -158,6 +158,9 @@ export const respond = internalAction({
     )
     const parts = candidateToolCalls(result.savedMessages ?? [])
     if (parts.length > 0) {
+      // KNOWN LIMITATION: Agent messages are durable before this app-owned
+      // provenance index. If this write fails, the rendered candidates remain
+      // unavailable to save until an idempotent reconciliation path is added.
       await ctx.runMutation(internal.candidateParts.recordBatch, {
         parts,
         sessionId: args.sessionId,

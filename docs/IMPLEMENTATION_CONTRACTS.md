@@ -296,6 +296,12 @@ from that run's persisted page reads. This lets later mutations reject
 fabricated references and lets saved views resolve the exact historical part
 without copying the candidate payload.
 
+Candidate parts may become visible from live stream deltas before that index is
+ready. Their save controls remain unavailable while the message is streaming and
+until the provenance query confirms readiness; the candidate UI itself does not
+wait. This follows the Agent stream boundary without introducing a second
+candidate record or allowing a client-supplied reference to bypass validation.
+
 - 1–2 candidates render as Cards;
 - 3–12 candidates render as Fold;
 - the same tool part never changes after the turn;
@@ -308,14 +314,19 @@ without copying the candidate payload.
 Saving a candidate creates one application-owned `savedCandidates`
 relationship containing the session owner, thread ID, exact Agent message ID,
 tool-call ID, candidate ref, and at most one validated source-image URL for its
-thumbnail. The preview URL is derived from the persisted `readPage` output; the
-client does not supply it. The relationship does not copy the semantic
+thumbnail together with the exact source ref that produced it. The preview URL
+and source ref are derived from the persisted `readPage` output; the client does
+not supply them. The relationship does not copy the semantic
 candidate payload out of the historical tool part. The mutation verifies the
 relationship against the server-owned provenance index before inserting it.
 The thread tray paginates this table by owner and thread; Bookmarks paginates
 the same table by owner alone. Each page batch-resolves its exact Agent messages
 to build the visible projection. It never scans a thread or searches for a
 matching candidate.
+
+Saved views resolve entries independently. If one historical Agent message can
+no longer be read, that entry becomes an unavailable projection instead of
+failing the rest of the paginated shortlist or Bookmarks page.
 
 Compare and outreach remain separate user actions. They may act on a candidate
 from a historical tool part without requiring that candidate to be saved, and

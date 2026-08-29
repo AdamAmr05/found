@@ -12,6 +12,7 @@ interface CandidateCardProps {
   readonly candidate: RenderableCandidate
   readonly layoutScope: string
   readonly saveError: boolean
+  readonly saveDisabled: boolean
   readonly saved: boolean
   readonly onToggleSave: () => void
 }
@@ -20,6 +21,7 @@ export function CandidateCard({
   candidate,
   layoutScope,
   saveError,
+  saveDisabled,
   saved,
   onToggleSave,
 }: CandidateCardProps) {
@@ -35,12 +37,22 @@ export function CandidateCard({
       <div className="relative">
         <CandidateMedia candidate={candidate} layoutId={mediaLayoutId} />
         <button
-          aria-label={saved ? 'Remove from shortlist' : 'Add to shortlist'}
+          aria-label={
+            saveDisabled
+              ? 'Add to shortlist after this response finishes'
+              : saved
+                ? 'Remove from shortlist'
+                : 'Add to shortlist'
+          }
           aria-describedby={saveError ? saveErrorId : undefined}
           aria-pressed={saved}
-          className={`absolute top-12 right-12 grid size-44 place-items-center rounded-full shadow-[0_1px_3px_rgb(38_38_38/0.14)] transition-transform active:scale-[0.96] ${
+          className={`absolute top-12 right-12 grid size-44 place-items-center rounded-full shadow-[0_1px_3px_rgb(38_38_38/0.14)] transition-[opacity,transform] active:scale-[0.96] disabled:cursor-wait disabled:opacity-55 disabled:active:scale-100 ${
             saved ? 'bg-heat-100 text-white' : 'bg-white text-accent-black'
           }`}
+          disabled={saveDisabled}
+          title={
+            saveDisabled ? 'Available when this response finishes' : undefined
+          }
           type="button"
           onClick={onToggleSave}
         >

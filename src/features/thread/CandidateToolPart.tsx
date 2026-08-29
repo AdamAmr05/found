@@ -23,10 +23,12 @@ type CompletedCandidatePart = Extract<
 export default function CandidateToolPart({
   part,
   readPages,
+  streaming,
   threadId,
 }: {
   readonly part: CandidatePart
   readonly readPages: readonly ReadPageOutput[]
+  readonly streaming: boolean
   readonly threadId: string
 }) {
   if (part.state !== 'output-available') {
@@ -49,6 +51,7 @@ export default function CandidateToolPart({
     <CompletedCandidateToolPart
       part={part}
       readPages={readPages}
+      streaming={streaming}
       threadId={threadId}
     />
   )
@@ -57,10 +60,12 @@ export default function CandidateToolPart({
 function CompletedCandidateToolPart({
   part,
   readPages,
+  streaming,
   threadId,
 }: {
   readonly part: CompletedCandidatePart
   readonly readPages: readonly ReadPageOutput[]
+  readonly streaming: boolean
   readonly threadId: string
 }) {
   const parsed = useMemo(
@@ -81,6 +86,7 @@ function CompletedCandidateToolPart({
   return (
     <CandidateResults
       candidates={candidates}
+      streaming={streaming}
       threadId={threadId}
       toolCallId={part.toolCallId}
     />

@@ -24,7 +24,8 @@ const STARTERS = [
 ] as const
 
 export function FoundThread() {
-  const { forgetThread, rememberThread, threadId } = useResumableThread()
+  const { forgetThread, rememberThread, restoring, threadId } =
+    useResumableThread()
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
@@ -56,10 +57,13 @@ export function FoundThread() {
         (latestMessage.status === 'pending' ||
           latestMessage.status === 'streaming'))),
   )
+  const interactionBlocked = submitting || runActive || restoring
+  const openingThread =
+    restoring || (threadId && messageQuery.status === 'LoadingFirstPage')
 
   async function submit(promptOverride?: string): Promise<void> {
     const prompt = (promptOverride ?? draft).trim()
-    if (!prompt || submitting || runActive) return
+    if (!prompt || interactionBlocked) return
 
     setSubmitting(true)
     setSubmitError(undefined)
@@ -93,13 +97,13 @@ export function FoundThread() {
     <main className="fixed inset-0 flex flex-col overflow-hidden bg-background-base">
       <FoundHeader {...(threadId ? { onNewThread: startNewThread } : {})} />
       <section className="mx-auto flex min-h-0 w-full max-w-920 flex-1 flex-col overflow-hidden px-20 sm:px-32">
-        {threadId && messageQuery.status === 'LoadingFirstPage' ? (
+        {openingThread ? (
           <div className="grid flex-1 place-items-center">
             <ThinkingStep label="Opening thread" />
           </div>
         ) : !threadId || messages.length === 0 ? (
           <EmptyThread
-            disabled={submitting}
+            disabled={interactionBlocked}
             onSelect={(prompt) => void submit(prompt)}
           />
         ) : (
@@ -128,7 +132,7 @@ export function FoundThread() {
               </p>
             ) : null}
             <Composer
-              disabled={submitting || runActive}
+              disabled={interactionBlocked}
               value={draft}
               onChange={setDraft}
               onSubmit={() => void submit()}
