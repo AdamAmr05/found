@@ -9,12 +9,12 @@
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
 - **Convex deployment:** https://sensible-bee-189.eu-west-1.convex.cloud
-- **Components:** @convex-dev/agent, @firecrawl/firecrawl-convex
-- **Convex features:** schema, indexes, components, queries, paginated queries, mutations, internal actions, scheduler, realtime subscriptions
+- **Components:** @convex-dev/agent, @convex-dev/rate-limiter, @firecrawl/firecrawl-convex
+- **Convex features:** schema, indexes, components, queries, paginated queries, mutations, internal actions, scheduler, realtime subscriptions, rate limiting
 - **Auth:** none
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-29T12:11:36Z
+- **Last updated:** 2026-08-29T18:54:27Z
 
 ## Log
 
@@ -145,3 +145,21 @@ Hardened stream-time saving, thumbnail attribution, broken-reference isolation,
 thread restoration, and Card/Fold media continuity. Convex features: tables,
 indexes, paginated queries, mutations, and realtime subscriptions
 (`convex/schema.ts`, `convex/savedCandidates.ts`, `convex/candidateParts.ts`).
+
+### 2026-08-29 - fd09ade
+
+Turned the research thread into a place you can enter, not just a list of
+results. A candidate remains the same artifact as it moves from Card or Fold to
+its map pin: choosing it opens the scene, the terrain-aware camera dives from
+the overview and settles into an orbit, and the user can continue down to
+Street View. Weather, routes, and place cards keep that atmospheric movement
+tied to grounded details about what it may feel like to be there
+(`src/features/accommodation/MapScene.tsx`,
+`src/features/accommodation/ImmersiveMapOverlay.tsx`).
+
+The Agent grounds that scene through place search and resolution, routes, and
+weather, then persists one structured `showMap` part in its durable thread.
+Registered `@convex-dev/rate-limiter` and hardened the provider boundary with
+typed decoding, cancellation, selective retries, attribution, route warnings,
+offscreen WebGL cleanup, and contract tests (`convex/tools/maps.ts`,
+`convex/tools/mapsAdapter.ts`, `convex/thread.ts`).
