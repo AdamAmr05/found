@@ -10,11 +10,11 @@
 - **Frontend:** not deployed
 - **Convex deployment:** https://sensible-bee-189.eu-west-1.convex.cloud
 - **Components:** @convex-dev/agent, @firecrawl/firecrawl-convex
-- **Convex features:** schema, components, queries, mutations, internal actions, scheduler, realtime subscriptions
+- **Convex features:** schema, indexes, components, queries, paginated queries, mutations, internal actions, scheduler, realtime subscriptions
 - **Auth:** none
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-28T19:18:42Z
+- **Last updated:** 2026-08-29T12:11:36Z
 
 ## Log
 
@@ -135,3 +135,13 @@ Firecrawl page media, evidence, candidate previews, Card/Fold motion, and the
 thread composer now behave consistently from streamed response through
 saveable result views. Added focused contract tests and kept the full browser
 suite green.
+
+### 2026-08-29 - fc2c2ab
+
+Added durable saved-candidate views without copying Agent snapshots. One indexed
+relationship table powers the paginated thread shortlist and global Bookmarks,
+while provenance validates each save against its exact message and tool part.
+Hardened stream-time saving, thumbnail attribution, broken-reference isolation,
+thread restoration, and Card/Fold media continuity. Convex features: tables,
+indexes, paginated queries, mutations, and realtime subscriptions
+(`convex/schema.ts`, `convex/savedCandidates.ts`, `convex/candidateParts.ts`).
