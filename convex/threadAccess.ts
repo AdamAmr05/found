@@ -21,15 +21,23 @@ export async function assertThreadOwner(
   threadId: string,
   sessionId: SessionId,
 ): Promise<void> {
+  if (!(await hasThreadAccess(ctx, threadId, sessionId))) {
+    throw new ConvexError({ code: 'THREAD_NOT_FOUND' })
+  }
+}
+
+export async function hasThreadAccess(
+  ctx: ThreadAccessCtx,
+  threadId: string,
+  sessionId: SessionId,
+): Promise<boolean> {
   const thread = await ctx
     .runQuery(components.agent.threads.getThread, { threadId })
     .catch((error) => {
       if (error instanceof Error && isInvalidAgentThreadId(error)) {
-        throw new ConvexError({ code: 'THREAD_NOT_FOUND' })
+        return null
       }
       throw error
     })
-  if (!thread || thread.userId !== sessionId) {
-    throw new ConvexError({ code: 'THREAD_NOT_FOUND' })
-  }
+  return Boolean(thread && thread.userId === sessionId)
 }

@@ -19,8 +19,9 @@ import {
 } from './_generated/server'
 import { foundAgent } from './agent'
 import { buildFoundRunInstructions } from './agentInstructions'
-import { assertThreadOwner } from './threadAccess'
+import { assertThreadOwner, hasThreadAccess } from './threadAccess'
 import { truncateText } from '../shared/text'
+import { candidateToolCalls } from './candidatePartMessages'
 
 const MAX_PROMPT_LENGTH = 8_000
 
@@ -128,6 +129,13 @@ export const listMessages = query({
   },
 })
 
+export const canResume = query({
+  args: { ...SessionIdArg, threadId: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, args) =>
+    hasThreadAccess(ctx, args.threadId, args.sessionId),
+})
+
 export const respond = internalAction({
   args: {
     ...SessionIdArg,
@@ -137,7 +145,7 @@ export const respond = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     await assertThreadOwner(ctx, args.threadId, args.sessionId)
-    await foundAgent.streamText(
+    const result = await foundAgent.streamText(
       ctx,
       { threadId: args.threadId, userId: args.sessionId },
       {
@@ -148,6 +156,14 @@ export const respond = internalAction({
       },
       { saveStreamDeltas: { throttleMs: 500 } },
     )
+    const parts = candidateToolCalls(result.savedMessages ?? [])
+    if (parts.length > 0) {
+      await ctx.runMutation(internal.candidateParts.recordBatch, {
+        parts,
+        sessionId: args.sessionId,
+        threadId: args.threadId,
+      })
+    }
     return null
   },
 })

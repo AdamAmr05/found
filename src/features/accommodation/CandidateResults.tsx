@@ -22,23 +22,29 @@ export function CandidateResults({
   toolCallId,
 }: CandidateResultsProps) {
   const [saveErrorRef, setSaveErrorRef] = useState<string>()
-  const savedCandidateRefs = useSessionQuery(api.shortlist.listForToolPart, {
-    threadId,
-    toolCallId,
-  })
+  const savedCandidateRefs = useSessionQuery(
+    api.savedCandidates.listForToolPart,
+    {
+      threadId,
+      toolCallId,
+    },
+  )
   const setSaved = useSessionMutation(
-    api.shortlist.setSaved,
+    api.savedCandidates.setSaved,
   ).withOptimisticUpdate((store, args) => {
     const queryArgs = {
       sessionId: args.sessionId,
       threadId: args.threadId,
       toolCallId: args.toolCallId,
     }
-    const current = store.getQuery(api.shortlist.listForToolPart, queryArgs)
+    const current = store.getQuery(
+      api.savedCandidates.listForToolPart,
+      queryArgs,
+    )
     if (!current) return
 
     store.setQuery(
-      api.shortlist.listForToolPart,
+      api.savedCandidates.listForToolPart,
       queryArgs,
       args.saved
         ? [...new Set([...current, args.candidateRef])]

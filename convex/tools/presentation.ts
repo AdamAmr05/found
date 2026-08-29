@@ -1,12 +1,9 @@
 import { createTool } from '@convex-dev/agent'
-import { ConvexError } from 'convex/values'
-import type { SessionId } from 'convex-helpers/server/sessions'
 
 import {
   showCandidatesInputSchema,
   showCandidatesOutputSchema,
 } from '../../shared/foundTools'
-import { internal } from '../_generated/api'
 
 export const showCandidates = createTool({
   description: [
@@ -17,20 +14,5 @@ export const showCandidates = createTool({
   ].join(' '),
   inputSchema: showCandidatesInputSchema,
   outputSchema: showCandidatesOutputSchema,
-  execute: async (ctx, input, options) => {
-    if (!ctx.threadId || !ctx.userId) {
-      throw new ConvexError({ code: 'CANDIDATE_PART_CONTEXT_MISSING' })
-    }
-    // SAFETY: Found starts every agent run with its validated SessionId as userId.
-    const sessionId = ctx.userId as SessionId
-
-    await ctx.runMutation(internal.candidateParts.record, {
-      candidateRefs: input.candidates.map((candidate) => candidate.ref),
-      sessionId,
-      threadId: ctx.threadId,
-      toolCallId: options.toolCallId,
-    })
-
-    return { presented: input.candidates.length }
-  },
+  execute: async (_ctx, input) => ({ presented: input.candidates.length }),
 })
