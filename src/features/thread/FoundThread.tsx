@@ -1,11 +1,10 @@
 import { optimisticallySendMessage } from '@convex-dev/agent/react'
 import { useUIMessages } from '@convex-dev/agent/react'
-import { Link } from '@tanstack/react-router'
 import {
   useSessionIdArg,
   useSessionMutation,
 } from 'convex-helpers/react/sessions'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 
 import { api } from '../../../convex/_generated/api'
@@ -15,28 +14,17 @@ import {
   type FoundUIMessage,
 } from './ThreadMessage'
 import { ThreadConversation } from './ThreadConversation'
-
-const THREAD_STORAGE_KEY = 'found-active-thread-id'
+import { FoundHeader } from '../navigation/FoundHeader'
+import { ThreadShortlist } from '../saved-candidates/ThreadShortlist'
+import { useResumableThread } from './useResumableThread'
 
 const STARTERS = [
   'I need somewhere in Berlin from October for six months.',
   'Help me find a month-long stay in Lisbon near a metro line.',
 ] as const
 
-function readStoredThreadId(): string | undefined {
-  return window.sessionStorage.getItem(THREAD_STORAGE_KEY) ?? undefined
-}
-
-function writeStoredThreadId(threadId: string | undefined): void {
-  if (threadId) {
-    window.sessionStorage.setItem(THREAD_STORAGE_KEY, threadId)
-  } else {
-    window.sessionStorage.removeItem(THREAD_STORAGE_KEY)
-  }
-}
-
 export function FoundThread() {
-  const [threadId, setThreadId] = useState<string>()
+  const { forgetThread, rememberThread, threadId } = useResumableThread()
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
@@ -69,11 +57,6 @@ export function FoundThread() {
           latestMessage.status === 'streaming'))),
   )
 
-  useEffect(() => {
-    // oxlint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage is an external system unavailable during SSR.
-    setThreadId(readStoredThreadId())
-  }, [])
-
   async function submit(promptOverride?: string): Promise<void> {
     const prompt = (promptOverride ?? draft).trim()
     if (!prompt || submitting || runActive) return
@@ -86,8 +69,7 @@ export function FoundThread() {
         await sendMessage({ threadId, prompt })
       } else {
         const newThreadId = await startThread({ prompt })
-        writeStoredThreadId(newThreadId)
-        setThreadId(newThreadId)
+        rememberThread(newThreadId)
       }
     } catch (error) {
       setDraft(prompt)
@@ -102,15 +84,14 @@ export function FoundThread() {
   }
 
   function startNewThread(): void {
-    writeStoredThreadId(undefined)
-    setThreadId(undefined)
+    forgetThread()
     setDraft('')
     setSubmitError(undefined)
   }
 
   return (
     <main className="fixed inset-0 flex flex-col overflow-hidden bg-background-base">
-      <FoundHeader hasThread={Boolean(threadId)} onNewThread={startNewThread} />
+      <FoundHeader {...(threadId ? { onNewThread: startNewThread } : {})} />
       <section className="mx-auto flex min-h-0 w-full max-w-920 flex-1 flex-col overflow-hidden px-20 sm:px-32">
         {threadId && messageQuery.status === 'LoadingFirstPage' ? (
           <div className="grid flex-1 place-items-center">
@@ -137,6 +118,7 @@ export function FoundThread() {
         )}
         <div className="mt-auto shrink-0 bg-gradient-to-t from-background-base via-background-base to-transparent pt-16 pb-16 sm:pt-20 sm:pb-22">
           <div className="mx-auto max-w-720">
+            {threadId ? <ThreadShortlist threadId={threadId} /> : null}
             {submitError ? (
               <p
                 className="mb-10 text-body-small text-accent-crimson"
@@ -158,47 +140,6 @@ export function FoundThread() {
         </div>
       </section>
     </main>
-  )
-}
-
-function FoundHeader({
-  hasThread,
-  onNewThread,
-}: {
-  hasThread: boolean
-  onNewThread: () => void
-}) {
-  return (
-    <header className="z-20 shrink-0 border-b border-border-faint bg-background-base/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-64 max-w-1120 items-center justify-between px-20 sm:px-32">
-        <Link className="text-label-large text-accent-black" to="/">
-          found
-        </Link>
-        <nav className="flex items-center gap-6" aria-label="Prototype routes">
-          <Link
-            className="rounded-8 px-10 py-8 text-label-small text-foreground-muted transition-colors hover:bg-background-lighter hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"
-            to="/playground"
-          >
-            Playground
-          </Link>
-          <Link
-            className="hidden rounded-8 px-10 py-8 text-label-small text-foreground-muted transition-colors hover:bg-background-lighter hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100 sm:block"
-            to="/lab"
-          >
-            Lab
-          </Link>
-          {hasThread ? (
-            <button
-              className="rounded-8 border border-border-muted bg-background-lighter px-12 py-8 text-label-small text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"
-              type="button"
-              onClick={onNewThread}
-            >
-              New thread
-            </button>
-          ) : null}
-        </nav>
-      </div>
-    </header>
   )
 }
 

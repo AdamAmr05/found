@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BookmarksRouteImport } from './routes/bookmarks'
 import { Route as LabRouteImport } from './routes/lab'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as PlaygroundMaterialsAsciiRouteImport } from './routes/playground_.materials.ascii'
@@ -17,6 +18,11 @@ import { Route as PlaygroundMaterialsAsciiRouteImport } from './routes/playgroun
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookmarksRoute = BookmarksRouteImport.update({
+  id: '/bookmarks',
+  path: '/bookmarks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LabRoute = LabRouteImport.update({
@@ -38,12 +44,14 @@ const PlaygroundMaterialsAsciiRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bookmarks': typeof BookmarksRoute
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
   '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bookmarks': typeof BookmarksRoute
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
   '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
@@ -51,20 +59,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bookmarks': typeof BookmarksRoute
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
   '/playground_/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/lab' | '/playground' | '/playground/materials/ascii'
+  fullPaths:
+    '/' | '/bookmarks' | '/lab' | '/playground' | '/playground/materials/ascii'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/lab' | '/playground' | '/playground/materials/ascii'
-  id: '__root__' | '/' | '/lab' | '/playground' | '/playground_/materials/ascii'
+  to:
+    '/' | '/bookmarks' | '/lab' | '/playground' | '/playground/materials/ascii'
+  id:
+    | '__root__'
+    | '/'
+    | '/bookmarks'
+    | '/lab'
+    | '/playground'
+    | '/playground_/materials/ascii'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BookmarksRoute: typeof BookmarksRoute
   LabRoute: typeof LabRoute
   PlaygroundRoute: typeof PlaygroundRoute
   PlaygroundMaterialsAsciiRoute: typeof PlaygroundMaterialsAsciiRoute
@@ -77,6 +95,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookmarks': {
+      id: '/bookmarks'
+      path: '/bookmarks'
+      fullPath: '/bookmarks'
+      preLoaderRoute: typeof BookmarksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lab': {
@@ -105,6 +130,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BookmarksRoute: BookmarksRoute,
   LabRoute: LabRoute,
   PlaygroundRoute: PlaygroundRoute,
   PlaygroundMaterialsAsciiRoute: PlaygroundMaterialsAsciiRoute,
