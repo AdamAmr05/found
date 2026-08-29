@@ -1,4 +1,4 @@
-import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 
 import type { CandidateSnapshot } from '../../../shared/foundTools'
@@ -40,7 +40,7 @@ export function CandidateDetails({
       role="tabpanel"
       tabIndex={0}
     >
-      <m.div
+      <motion.div
         animate={{ height: contentHeight ?? 'auto' }}
         className="overflow-hidden"
         initial={false}
@@ -51,7 +51,7 @@ export function CandidateDetails({
         }
       >
         <AnimatePresence initial={false} mode="popLayout">
-          <m.div
+          <motion.div
             key={section}
             ref={contentRef}
             animate={{ opacity: 1, y: 0 }}
@@ -68,9 +68,9 @@ export function CandidateDetails({
             }}
           >
             <SectionContent candidate={candidate} section={section} />
-          </m.div>
+          </motion.div>
         </AnimatePresence>
-      </m.div>
+      </motion.div>
     </div>
   )
 }

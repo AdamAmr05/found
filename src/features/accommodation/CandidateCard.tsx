@@ -1,4 +1,4 @@
-import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useId, useState } from 'react'
 
 import { CandidateDetails } from './CandidateDetails'
@@ -46,7 +46,7 @@ export function CandidateCard({
         >
           <AnimatePresence initial={false} mode="popLayout">
             {saved ? (
-              <m.span
+              <motion.span
                 key="saved"
                 animate={{ opacity: 1, rotate: 0, scale: 1 }}
                 className="grid size-26 place-items-center rounded-full bg-heat-100 text-white"
@@ -59,9 +59,9 @@ export function CandidateCard({
                 }
               >
                 <CheckIcon />
-              </m.span>
+              </motion.span>
             ) : (
-              <m.span
+              <motion.span
                 key="add"
                 animate={{ opacity: 1, rotate: 0, scale: 1 }}
                 className="grid size-24 place-items-center"
@@ -74,7 +74,7 @@ export function CandidateCard({
                 }
               >
                 <PlusIcon />
-              </m.span>
+              </motion.span>
             )}
           </AnimatePresence>
         </button>

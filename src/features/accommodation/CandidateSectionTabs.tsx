@@ -1,4 +1,4 @@
-import { m, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import type { KeyboardEvent } from 'react'
 
 import type { CandidateSection } from './candidatePresentation'
@@ -54,7 +54,7 @@ export function CandidateSectionTabs({
       className="relative grid grid-cols-3 rounded-8 bg-black/4 p-3"
       role="tablist"
     >
-      <m.span
+      <motion.span
         aria-hidden
         animate={{ x: `${activeIndex * 100}%` }}
         className="absolute inset-y-3 left-3 w-[calc((100%-6px)/3)] rounded-6 bg-white shadow-[0_1px_3px_rgb(38_38_38/0.1)]"

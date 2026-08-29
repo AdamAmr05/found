@@ -1,4 +1,9 @@
-import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import {
+  AnimatePresence,
+  motion,
+  type Transition,
+  useReducedMotion,
+} from 'motion/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 
@@ -7,6 +12,12 @@ import type {
   CandidateImage,
   RenderableCandidate,
 } from './candidateMediaCatalog'
+
+const mediaSpring: Transition = {
+  type: 'spring',
+  stiffness: 340,
+  damping: 36,
+}
 
 interface CandidateMediaProps {
   readonly candidate: RenderableCandidate
@@ -33,14 +44,15 @@ export function CandidateMedia({
 
   if (!image) {
     return (
-      <m.div
+      <motion.div
         className={compact ? 'h-196 rounded-12' : 'h-248 md:h-292'}
         data-testid="candidate-media"
-        transition={{ duration: reducedMotion ? 0 : 0.34 }}
+        style={{ borderRadius: compact ? 12 : undefined }}
+        transition={reducedMotion ? { duration: 0 } : mediaSpring}
         {...(layoutId ? { layoutId } : {})}
       >
         <CandidateImageFallback compact={compact} />
-      </m.div>
+      </motion.div>
     )
   }
 
@@ -60,18 +72,15 @@ export function CandidateMedia({
     : undefined
 
   return (
-    <m.div
+    <motion.div
       className={`relative overflow-hidden bg-black/4 ${compact ? 'h-196 rounded-12' : 'h-248 md:h-292'}`}
       data-testid="candidate-media"
-      transition={
-        reducedMotion
-          ? { duration: 0 }
-          : { type: 'spring', bounce: 0, duration: 0.34 }
-      }
+      style={{ borderRadius: compact ? 12 : undefined }}
+      transition={reducedMotion ? { duration: 0 } : mediaSpring}
       {...(layoutId ? { layoutId } : {})}
     >
       <AnimatePresence initial={false} mode="popLayout">
-        <m.img
+        <motion.img
           key={image.url}
           alt={image.alt}
           animate={{ opacity: 1, scale: 1 }}
@@ -91,7 +100,7 @@ export function CandidateMedia({
         onMove={move}
         onSelect={setActiveIndex}
       />
-    </m.div>
+    </motion.div>
   )
 }
 

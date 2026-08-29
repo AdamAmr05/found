@@ -1,4 +1,3 @@
-import { domMax, LazyMotion } from 'motion/react'
 import { useMemo } from 'react'
 
 import {
@@ -80,12 +79,10 @@ function CompletedCandidateToolPart({
   }
 
   return (
-    <LazyMotion features={domMax} strict>
-      <CandidateResults
-        candidates={candidates}
-        threadId={threadId}
-        toolCallId={part.toolCallId}
-      />
-    </LazyMotion>
+    <CandidateResults
+      candidates={candidates}
+      threadId={threadId}
+      toolCallId={part.toolCallId}
+    />
   )
 }
