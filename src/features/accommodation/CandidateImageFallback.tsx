@@ -1,3 +1,5 @@
+import { Image } from '@phosphor-icons/react'
+
 import { AsciiAtmosphere } from '../materials/ascii/AsciiAtmosphere'
 
 export function CandidateImageFallback({
@@ -34,16 +36,5 @@ export function CandidateImageFallback({
 }
 
 function ImageIcon() {
-  return (
-    <svg aria-hidden className="size-14" viewBox="0 0 14 14">
-      <path
-        d="M2.5 3.25h9v7.5h-9zM3.5 9l2.25-2.25 1.5 1.5 1-1 2.25 2.25M9.5 5.25h.01"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1"
-      />
-    </svg>
-  )
+  return <Image aria-hidden className="size-14" weight="regular" />
 }

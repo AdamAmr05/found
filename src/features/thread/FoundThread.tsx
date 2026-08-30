@@ -1,4 +1,5 @@
 import { optimisticallySendMessage } from '@convex-dev/agent/react'
+import { ArrowRight } from '@phosphor-icons/react'
 import { useUIMessages } from '@convex-dev/agent/react'
 import {
   useSessionIdArg,
@@ -258,20 +259,7 @@ function Composer({
           disabled={disabled || value.trim().length === 0}
           type="submit"
         >
-          <svg
-            aria-hidden="true"
-            className="size-18"
-            viewBox="0 0 20 20"
-            fill="none"
-          >
-            <path
-              d="M4 10h11M11 5l5 5-5 5"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.7"
-            />
-          </svg>
+          <ArrowRight aria-hidden className="size-18" weight="regular" />
         </button>
       </div>
     </form>

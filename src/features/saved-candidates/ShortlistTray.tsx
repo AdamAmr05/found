@@ -1,6 +1,7 @@
+import { CaretRight, X, type IconProps } from '@phosphor-icons/react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import type { Transition } from 'motion/react'
-import type { RefObject, SVGProps } from 'react'
+import type { RefObject } from 'react'
 import { useRef, useState } from 'react'
 import { CandidateThumbnail } from './CandidateThumbnail'
 
@@ -380,38 +381,10 @@ function SavedRow({
   )
 }
 
-type IconProps = SVGProps<SVGSVGElement>
-
 function ChevronIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.7"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="m9 6 6 6-6 6" />
-    </svg>
-  )
+  return <CaretRight aria-hidden weight="regular" {...props} />
 }
 
 function CloseIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.7"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="M6 6l12 12M18 6 6 18" />
-    </svg>
-  )
+  return <X aria-hidden weight="regular" {...props} />
 }

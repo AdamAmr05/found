@@ -1,3 +1,4 @@
+import { Check, MapPin, Plus } from '@phosphor-icons/react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useId, useState } from 'react'
 
@@ -157,50 +158,13 @@ export function CandidateCard({
 }
 
 function MapPinIcon() {
-  return (
-    <svg aria-hidden className="size-12" fill="none" viewBox="0 0 12 12">
-      <path
-        d="M6 1.25a3.4 3.4 0 0 1 3.4 3.4c0 1.98-2.06 4.6-3.4 6.1-1.34-1.5-3.4-4.12-3.4-6.1A3.4 3.4 0 0 1 6 1.25Z"
-        stroke="currentColor"
-        strokeLinejoin="round"
-        strokeWidth="1.2"
-      />
-      <circle
-        cx="6"
-        cy="4.65"
-        r="1.15"
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-    </svg>
-  )
+  return <MapPin aria-hidden className="size-12" weight="regular" />
 }
 
 function PlusIcon() {
-  return (
-    <svg aria-hidden className="size-20" viewBox="0 0 20 20">
-      <path
-        d="M10 4v12M4 10h12"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.75"
-      />
-    </svg>
-  )
+  return <Plus aria-hidden className="size-20" weight="regular" />
 }
 
 function CheckIcon() {
-  return (
-    <svg aria-hidden className="size-20" viewBox="0 0 20 20">
-      <path
-        d="m5 10 3 3 7-7"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.75"
-      />
-    </svg>
-  )
+  return <Check aria-hidden className="size-20" weight="regular" />
 }

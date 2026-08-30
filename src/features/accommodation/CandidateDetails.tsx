@@ -1,3 +1,4 @@
+import { ArrowSquareOut } from '@phosphor-icons/react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 
@@ -176,16 +177,5 @@ function SectionContent({
 }
 
 function ExternalLinkIcon() {
-  return (
-    <svg aria-hidden className="size-11" viewBox="0 0 12 12">
-      <path
-        d="M4 2.5H2.5v7h7V8M6 2.5h3.5V6M9.25 2.75 5.5 6.5"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1"
-      />
-    </svg>
-  )
+  return <ArrowSquareOut aria-hidden className="size-11" weight="regular" />
 }

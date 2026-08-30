@@ -1,4 +1,5 @@
 import { A2UIRenderer } from '@googlemaps/a2ui/lit'
+import { ArrowsOut } from '@phosphor-icons/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type {
@@ -176,15 +177,5 @@ function PlaceCardsSurface({
 }
 
 function ExpandIcon() {
-  return (
-    <svg aria-hidden fill="none" height="16" viewBox="0 0 16 16" width="16">
-      <path
-        d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9.25 6.75M2.5 13.5 6.75 9.25"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.5"
-      />
-    </svg>
-  )
+  return <ArrowsOut aria-hidden size={16} weight="regular" />
 }

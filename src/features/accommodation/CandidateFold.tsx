@@ -1,3 +1,4 @@
+import { Plus } from '@phosphor-icons/react'
 import {
   AnimatePresence,
   motion,
@@ -310,17 +311,7 @@ function FoldExpandedDetails({
 }
 
 function PlusIcon() {
-  return (
-    <svg aria-hidden className="size-16" viewBox="0 0 16 16">
-      <path
-        d="M8 3v10M3 8h10"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.5"
-      />
-    </svg>
-  )
+  return <Plus aria-hidden className="size-16" weight="regular" />
 }
 
 function CandidateThumbnail({

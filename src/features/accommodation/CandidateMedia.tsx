@@ -1,3 +1,4 @@
+import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 import {
   AnimatePresence,
   motion,
@@ -204,20 +205,6 @@ function MediaButton({
 }
 
 function ArrowIcon({ direction }: { direction: 'left' | 'right' }) {
-  return (
-    <svg aria-hidden className="size-18" viewBox="0 0 18 18">
-      <path
-        d={
-          direction === 'left'
-            ? 'm10.75 4.5-4.5 4.5 4.5 4.5'
-            : 'm7.25 4.5 4.5 4.5-4.5 4.5'
-        }
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.5"
-      />
-    </svg>
-  )
+  const Icon = direction === 'left' ? CaretLeft : CaretRight
+  return <Icon aria-hidden className="size-18" weight="regular" />
 }

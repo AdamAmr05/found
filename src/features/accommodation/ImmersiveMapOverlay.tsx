@@ -1,3 +1,4 @@
+import { X } from '@phosphor-icons/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -227,14 +228,5 @@ function WeatherStrip({
 }
 
 function CloseIcon() {
-  return (
-    <svg aria-hidden fill="none" height="16" viewBox="0 0 16 16" width="16">
-      <path
-        d="m3.5 3.5 9 9m0-9-9 9"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.5"
-      />
-    </svg>
-  )
+  return <X aria-hidden size={16} weight="regular" />
 }

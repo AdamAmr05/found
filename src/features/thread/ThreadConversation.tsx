@@ -1,3 +1,4 @@
+import { CaretDown } from '@phosphor-icons/react'
 import type { ReactNode, UIEvent } from 'react'
 import { useCallback, useRef, useState } from 'react'
 import type { StickToBottomContext } from 'use-stick-to-bottom'
@@ -64,20 +65,7 @@ function ConversationScrollButton() {
       type="button"
       onClick={handleScrollToBottom}
     >
-      <svg
-        aria-hidden="true"
-        className="size-18"
-        fill="none"
-        viewBox="0 0 20 20"
-      >
-        <path
-          d="M4.5 7.5 10 13l5.5-5.5"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.7"
-        />
-      </svg>
+      <CaretDown aria-hidden className="size-18" weight="regular" />
     </button>
   )
 }
