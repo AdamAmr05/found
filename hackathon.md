@@ -176,11 +176,12 @@ when replies arrive (`convex/outreachDrafts.ts`, `convex/outreachDelivery.ts`,
 `src/features/outreach/OutreachDraft.tsx`, `src/features/outreach/InboxPage.tsx`).
 
 Registered the AgentMail component and webhook and gave the agent narrow tools
-for drafting and reading relevant replies. Seven follow-up commits hardened the
-same flow: delivery and resend states cannot regress, delayed sends can recover
-without polling forever, human and agent unread state stay separate, paid
-revisions cannot overlap, long or HTML-only mail is safely normalized, and a
-rare unknown delivery state offers a one-shot status check. Verified the full
-loop with a real AgentMail send and inbound replies in the browser
+for drafting and reading relevant replies. Seven outreach follow-ups, from
+`35eca60` through `70f08e9`, hardened the same flow: delivery and resend states
+cannot regress, delayed sends can recover without polling forever, human and
+agent unread state stay separate, paid revisions cannot overlap, long or
+HTML-only mail is safely normalized, and a rare unknown delivery state offers
+a one-shot status check. Verified the full loop with a real AgentMail send and
+inbound replies in the browser
 (`convex/convex.config.ts`, `convex/http.ts`, `convex/outreachMailbox.ts`,
 `convex/outreachRevision.ts`).
