@@ -18,6 +18,11 @@ import {
   validateOutreachContent,
 } from './outreachContent'
 import { ownedDraft } from './outreachDrafts'
+import {
+  agentReadThroughReplyRevision,
+  humanReadThroughReplyRevision,
+  replyRevision,
+} from './outreachReplyState'
 
 const agentmail = new AgentMail(components.agentmail)
 
@@ -44,6 +49,12 @@ type OutreachPatch = Partial<
 
 function isTerminalOutreachState(state: Doc<'outreachDrafts'>['state']) {
   return state === 'replied' || state === 'failed'
+}
+
+function reconciliationDelayMs(attempt: number): number {
+  if (attempt === 0) return 5_000
+  const exponent = Math.min(Math.max(0, attempt - 1), 4)
+  return Math.min(30_000 * 2 ** exponent, 300_000)
 }
 
 export const send = mutation({
@@ -166,9 +177,9 @@ export const applyOutboundStatus = internalMutation({
     }
     if (args.threadId) patch.agentmailThreadId = args.threadId
     await ctx.db.patch('outreachDrafts', draft._id, patch)
-    if (args.status === 'pending' && args.attempt < 6) {
+    if (args.status === 'pending') {
       await ctx.scheduler.runAfter(
-        1_000 * 2 ** args.attempt,
+        reconciliationDelayMs(args.attempt),
         internal.outreachDelivery.syncOutbound,
         {
           draftId: draft._id,
@@ -210,10 +221,17 @@ export const onMessageReceived = internalMutation({
             .unique()
         : null)
     if (!draft) return null
+    const currentReplyRevision = replyRevision(draft)
+    const nextReplyRevision = currentReplyRevision + 1
+    const humanReadThrough = humanReadThroughReplyRevision(draft)
+    const agentReadThrough = agentReadThroughReplyRevision(draft)
     await ctx.db.patch('outreachDrafts', draft._id, {
       state: 'replied',
-      agentHasUnreadReply: true,
-      unreadReplyCount: draft.unreadReplyCount + 1,
+      replyRevision: nextReplyRevision,
+      humanReadThroughReplyRevision: humanReadThrough,
+      agentReadThroughReplyRevision: agentReadThrough,
+      agentHasUnreadReply: nextReplyRevision > agentReadThrough,
+      unreadReplyCount: nextReplyRevision - humanReadThrough,
       latestActivityAt: Date.now(),
     })
     return null

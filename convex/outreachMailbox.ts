@@ -19,6 +19,12 @@ import {
   internalQuery,
 } from './_generated/server'
 import { ownedDraft } from './outreachDrafts'
+import {
+  agentHasUnreadReply,
+  agentReadThroughReplyRevision,
+  observedReplyRevision,
+  replyRevision,
+} from './outreachReplyState'
 import { assertThreadOwner } from './threadAccess'
 
 const agentmail = new AgentMail(components.agentmail)
@@ -27,6 +33,7 @@ type ThreadDetails = {
   candidateTitle: string
   subject: string
   agentmailThreadId: string
+  observedReplyRevision: number
 }
 
 type ReadThreadArgs = {
@@ -47,7 +54,11 @@ const getThreadDetails = makeFunctionReference<
 
 const markThreadSeenByAgent = makeFunctionReference<
   'mutation',
-  { sessionId: SessionId; outreachId: Id<'outreachDrafts'> },
+  {
+    sessionId: SessionId
+    outreachId: Id<'outreachDrafts'>
+    observedReplyRevision: number
+  },
   null
 >('outreachMailbox:markReadForAgent')
 
@@ -71,6 +82,7 @@ const vMailThread = v.object({
   outreachId: v.string(),
   candidateTitle: v.string(),
   subject: v.string(),
+  observedReplyRevision: v.number(),
   omittedMessageCount: v.number(),
   messages: v.array(
     v.object({
@@ -127,7 +139,7 @@ export const listForAgent = internalQuery({
       outreachId: draft._id,
       candidateTitle: draft.candidateTitle,
       state: draft.state,
-      hasUnreadReply: draft.agentHasUnreadReply ?? draft.unreadReplyCount > 0,
+      hasUnreadReply: agentHasUnreadReply(draft),
       latestActivityAt: draft.latestActivityAt,
     }))
   },
@@ -169,7 +181,7 @@ export const contextForRun = internalQuery({
           : [],
       ),
       unreadReplies: drafts.flatMap((draft) =>
-        (draft.agentHasUnreadReply ?? draft.unreadReplyCount > 0)
+        agentHasUnreadReply(draft)
           ? [
               {
                 outreachId: draft._id,
@@ -225,6 +237,7 @@ export const detailsForAgent = internalQuery({
       candidateTitle: v.string(),
       subject: v.string(),
       agentmailThreadId: v.string(),
+      observedReplyRevision: v.number(),
     }),
   ),
   handler: async (ctx, args) => {
@@ -236,6 +249,7 @@ export const detailsForAgent = internalQuery({
       candidateTitle: draft.candidateTitle,
       subject: draft.subject,
       agentmailThreadId: draft.agentmailThreadId,
+      observedReplyRevision: replyRevision(draft),
     }
   },
 })
@@ -263,6 +277,7 @@ async function loadThreadData(
     outreachId: args.outreachId,
     candidateTitle: details.candidateTitle,
     subject: details.subject,
+    observedReplyRevision: details.observedReplyRevision,
     omittedMessageCount,
     messages: messages.map((message) => {
       const from = Array.isArray(message.from)
@@ -299,6 +314,7 @@ export const readThreadForAgent = internalAction({
     await ctx.runMutation(markThreadSeenByAgent, {
       sessionId: args.sessionId,
       outreachId: args.outreachId,
+      observedReplyRevision: thread.observedReplyRevision,
     })
     return thread
   },
@@ -311,13 +327,30 @@ export const readThread = internalAction({
 })
 
 export const markReadForAgent = internalMutation({
-  args: { sessionId: vSessionId, outreachId: v.id('outreachDrafts') },
+  args: {
+    sessionId: vSessionId,
+    outreachId: v.id('outreachDrafts'),
+    observedReplyRevision: v.number(),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.outreachId, args.sessionId)
-    if (draft.agentHasUnreadReply !== false) {
+    const currentRevision = replyRevision(draft)
+    const currentReadThrough = agentReadThroughReplyRevision(draft)
+    const observedRevision = observedReplyRevision(
+      args.observedReplyRevision,
+      currentRevision,
+    )
+    const nextReadThrough = Math.max(currentReadThrough, observedRevision)
+    const hasUnreadReply = currentRevision > nextReadThrough
+    if (
+      nextReadThrough !== draft.agentReadThroughReplyRevision ||
+      hasUnreadReply !== draft.agentHasUnreadReply
+    ) {
       await ctx.db.patch('outreachDrafts', draft._id, {
-        agentHasUnreadReply: false,
+        replyRevision: currentRevision,
+        agentReadThroughReplyRevision: nextReadThrough,
+        agentHasUnreadReply: hasUnreadReply,
       })
     }
     return null

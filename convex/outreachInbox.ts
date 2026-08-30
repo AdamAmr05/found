@@ -6,11 +6,18 @@ import type { SessionId } from 'convex-helpers/server/sessions'
 import type { Id } from './_generated/dataModel'
 import { action, mutation, query } from './_generated/server'
 import { ownedDraft } from './outreachDrafts'
+import {
+  humanReadThroughReplyRevision,
+  humanUnreadReplyCount,
+  observedReplyRevision,
+  replyRevision,
+} from './outreachReplyState'
 
 type MailThread = {
   outreachId: string
   candidateTitle: string
   subject: string
+  observedReplyRevision: number
   omittedMessageCount: number
   messages: {
     messageId: string
@@ -70,7 +77,7 @@ export const list = query({
       recipient: draft.recipient,
       subject: draft.subject,
       state: draft.state,
-      unreadReplyCount: draft.unreadReplyCount,
+      unreadReplyCount: humanUnreadReplyCount(draft),
       latestActivityAt: draft.latestActivityAt,
       canReadThread: Boolean(draft.agentmailThreadId),
     }))
@@ -87,6 +94,7 @@ export const read = action({
     outreachId: v.string(),
     candidateTitle: v.string(),
     subject: v.string(),
+    observedReplyRevision: v.number(),
     omittedMessageCount: v.number(),
     messages: v.array(
       v.object({
@@ -109,13 +117,30 @@ export const read = action({
 })
 
 export const markRead = mutation({
-  args: { ...SessionIdArg, outreachId: v.id('outreachDrafts') },
+  args: {
+    ...SessionIdArg,
+    outreachId: v.id('outreachDrafts'),
+    observedReplyRevision: v.number(),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.outreachId, args.sessionId)
-    if (draft.unreadReplyCount > 0) {
+    const currentRevision = replyRevision(draft)
+    const currentReadThrough = humanReadThroughReplyRevision(draft)
+    const observedRevision = observedReplyRevision(
+      args.observedReplyRevision,
+      currentRevision,
+    )
+    const nextReadThrough = Math.max(currentReadThrough, observedRevision)
+    const unreadReplyCount = currentRevision - nextReadThrough
+    if (
+      nextReadThrough !== draft.humanReadThroughReplyRevision ||
+      unreadReplyCount !== draft.unreadReplyCount
+    ) {
       await ctx.db.patch('outreachDrafts', draft._id, {
-        unreadReplyCount: 0,
+        replyRevision: currentRevision,
+        humanReadThroughReplyRevision: nextReadThrough,
+        unreadReplyCount,
       })
     }
     return null

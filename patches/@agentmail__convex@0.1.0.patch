@@ -114,42 +114,15 @@ index d2104f0..0a57ea9 100644
  component.use(workpool, { name: "sendPool" });
  component.use(workpool, { name: "callbackPool" });
  
-diff --git a/dist/component/shared.d.ts b/dist/component/shared.d.ts
---- a/dist/component/shared.d.ts
-+++ b/dist/component/shared.d.ts
-@@ -1,5 +1,5 @@
- import { type Infer } from "convex/values";
--import { type GenericActionCtx, type GenericDataModel, type GenericMutationCtx, type GenericQueryCtx } from "convex/server";
-+import { type GenericActionCtx, type GenericDataModel, type GenericQueryCtx } from "convex/server";
- export declare const vOutboundStatus: import("convex/values").VUnion<"pending" | "sent" | "failed" | "delivered" | "bounced" | "complained" | "rejected", [import("convex/values").VLiteral<"pending", "required">, import("convex/values").VLiteral<"sent", "required">, import("convex/values").VLiteral<"failed", "required">, import("convex/values").VLiteral<"delivered", "required">, import("convex/values").VLiteral<"bounced", "required">, import("convex/values").VLiteral<"complained", "required">, import("convex/values").VLiteral<"rejected", "required">], "required", never>;
- export type OutboundStatus = Infer<typeof vOutboundStatus>;
- export declare const vSendKind: import("convex/values").VUnion<"send" | "reply" | "reply_all" | "forward", [import("convex/values").VLiteral<"send", "required">, import("convex/values").VLiteral<"reply", "required">, import("convex/values").VLiteral<"reply_all", "required">, import("convex/values").VLiteral<"forward", "required">], "required", never>;
-@@ -112,7 +112,7 @@ export type RunQueryCtx = {
-     runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
- };
- export type RunMutationCtx = {
--    runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
-+    runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
- };
- export type RunActionCtx = {
-     runAction: GenericActionCtx<GenericDataModel>["runAction"];
-diff --git a/src/component/shared.ts b/src/component/shared.ts
---- a/src/component/shared.ts
-+++ b/src/component/shared.ts
-@@ -2,7 +2,6 @@ import { type Infer, v } from "convex/values";
- import {
-   type GenericActionCtx,
-   type GenericDataModel,
--  type GenericMutationCtx,
-   type GenericQueryCtx,
- } from "convex/server";
- 
-@@ -90,7 +89,7 @@ export type RunQueryCtx = {
-   runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
- };
- export type RunMutationCtx = {
--  runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
-+  runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
- };
- export type RunActionCtx = {
-   runAction: GenericActionCtx<GenericDataModel>["runAction"];
+diff --git a/dist/client/index.d.ts b/dist/client/index.d.ts
+--- a/dist/client/index.d.ts
++++ b/dist/client/index.d.ts
+@@ -80,7 +80,7 @@ export declare class AgentMail {
+     /**
+      * Verify and dispatch an AgentMail webhook. Mount this in `convex/http.ts`.
+      */
+-    handleWebhook(ctx: RunMutationCtx, req: Request): Promise<Response>;
++    handleWebhook(ctx: RunActionCtx, req: Request): Promise<Response>;
+     private runtimeConfig;
+     private assertConfigured;
+ }

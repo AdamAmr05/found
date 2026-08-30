@@ -47,7 +47,10 @@ export function InboxPage() {
       })
       if (request === requestSequence.current) {
         setThread(nextThread)
-        void markRead({ outreachId }).catch(globalThis.reportError)
+        void markRead({
+          outreachId,
+          observedReplyRevision: nextThread.observedReplyRevision,
+        }).catch(globalThis.reportError)
       }
     } catch (cause) {
       globalThis.reportError(cause)

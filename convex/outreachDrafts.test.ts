@@ -233,6 +233,58 @@ describe('outreach drafts', () => {
     })
   })
 
+  test('keeps reconciling beyond the old one-minute horizon', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, {
+        outboundId: 'outbound-current',
+        state: 'queued',
+      })
+    })
+
+    const scheduledAfter = Date.now() + 299_000
+    await t.mutation(internal.outreachDelivery.applyOutboundStatus, {
+      draftId,
+      outboundId: 'outbound-current',
+      attempt: 6,
+      status: 'pending',
+      agentmailMessageId: null,
+      threadId: null,
+      errorMessage: null,
+    })
+    const scheduled = await t.run(
+      async (ctx) =>
+        await ctx.db.system
+          .query('_scheduled_functions')
+          .order('desc')
+          .take(10),
+    )
+    const reconciliation = scheduled.find(
+      (scheduledFunction) =>
+        scheduledFunction.name === 'outreachDelivery:syncOutbound',
+    )
+    expect(reconciliation?.scheduledTime).toBeGreaterThan(scheduledAfter)
+    expect(reconciliation?.state).toEqual({ kind: 'pending' })
+
+    await t.mutation(internal.outreachDelivery.applyOutboundStatus, {
+      draftId,
+      outboundId: 'outbound-current',
+      attempt: 7,
+      status: 'sent',
+      agentmailMessageId: 'message-current',
+      threadId: 'thread-current',
+      errorMessage: null,
+    })
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({
+      state: 'sent',
+      agentmailMessageId: 'message-current',
+      agentmailThreadId: 'thread-current',
+    })
+  })
+
   test('does not move replied or failed drafts backward on late events', async () => {
     const t = setup()
     const { draftId } = await createDraft(t)
@@ -275,34 +327,65 @@ describe('outreach drafts', () => {
     ).resolves.toMatchObject({ state: 'failed' })
   })
 
-  test('tracks agent-seen and human-read replies independently', async () => {
+  test('marks only the reply revision observed by the human and agent', async () => {
     const t = setup()
     const { draftId } = await createDraft(t)
     await t.run(async (ctx) => {
       await ctx.db.patch('outreachDrafts', draftId, {
+        agentmailThreadId: 'thread-current',
+        replyRevision: 1,
+        humanReadThroughReplyRevision: 0,
+        agentReadThroughReplyRevision: 0,
         agentHasUnreadReply: true,
-        unreadReplyCount: 2,
+        unreadReplyCount: 1,
       })
+    })
+
+    await t.mutation(internal.outreachDelivery.onMessageReceived, {
+      eventId: 'reply-2',
+      message: {
+        inbox_id: 'found-d@agentmail.to',
+        message_id: 'message-reply-2',
+        thread_id: 'thread-current',
+      },
+      thread: {},
     })
 
     await t.mutation(internal.outreachMailbox.markReadForAgent, {
       outreachId: draftId,
       sessionId: ownerSession,
+      observedReplyRevision: 1,
     })
-    await expect(
-      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
-    ).resolves.toMatchObject({
-      agentHasUnreadReply: false,
-      unreadReplyCount: 2,
-    })
-
     await t.mutation(api.outreachInbox.markRead, {
       outreachId: draftId,
       sessionId: ownerSession,
+      observedReplyRevision: 1,
     })
     await expect(
       t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
     ).resolves.toMatchObject({
+      replyRevision: 2,
+      humanReadThroughReplyRevision: 1,
+      agentReadThroughReplyRevision: 1,
+      agentHasUnreadReply: true,
+      unreadReplyCount: 1,
+    })
+
+    await t.mutation(internal.outreachMailbox.markReadForAgent, {
+      outreachId: draftId,
+      sessionId: ownerSession,
+      observedReplyRevision: 2,
+    })
+    await t.mutation(api.outreachInbox.markRead, {
+      outreachId: draftId,
+      sessionId: ownerSession,
+      observedReplyRevision: 2,
+    })
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({
+      humanReadThroughReplyRevision: 2,
+      agentReadThroughReplyRevision: 2,
       agentHasUnreadReply: false,
       unreadReplyCount: 0,
     })

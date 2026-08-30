@@ -163,6 +163,9 @@ export const createFromAgent = internalMutation({
       state: 'draft',
       updatedAt: now,
       latestActivityAt: now,
+      replyRevision: 0,
+      humanReadThroughReplyRevision: 0,
+      agentReadThroughReplyRevision: 0,
       unreadReplyCount: 0,
       agentHasUnreadReply: false,
     }
