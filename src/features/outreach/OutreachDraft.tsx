@@ -1,5 +1,6 @@
 import {
   ArrowCounterClockwise,
+  ArrowClockwise,
   ArrowUp,
   Check,
   Copy,
@@ -22,7 +23,7 @@ import { OUTREACH_BODY_MAX_LENGTH } from '../../../shared/foundTools'
 import { changedSpan } from './outreachDiff'
 
 type Draft = NonNullable<FunctionReturnType<typeof api.outreachDrafts.get>>
-type BusyState = 'copy' | 'revise' | 'send'
+type BusyState = 'copy' | 'revise' | 'send' | 'status'
 type DraftFields = { recipient: string; subject: string; body: string }
 
 function outreachDraftId(value: string): Id<'outreachDrafts'> {
@@ -51,6 +52,7 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
   const [asking, setAsking] = useState(false)
   const [busy, setBusy] = useState<BusyState>()
   const [error, setError] = useState<string>()
+  const [statusNote, setStatusNote] = useState<string>()
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const instructionRef = useRef<HTMLInputElement>(null)
   const { saveCurrent } = useDraftPersistence({
@@ -67,6 +69,7 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
   const discardProposal = useSessionMutation(api.outreachDrafts.discardProposal)
   const approveDraft = useSessionMutation(api.outreachDrafts.approve)
   const sendDraft = useSessionMutation(api.outreachDelivery.send)
+  const recheckDelivery = useSessionMutation(api.outreachDelivery.recheck)
   const requestRevision = useSessionAction(api.outreachRevision.request)
 
   useLayoutEffect(() => {
@@ -117,6 +120,24 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
     }
   }
 
+  async function checkStatus(): Promise<void> {
+    if (busy || draft.state !== 'uncertain') return
+    setBusy('status')
+    setError(undefined)
+    setStatusNote(undefined)
+    try {
+      const state = await recheckDelivery({ draftId: draft._id })
+      if (state === 'uncertain') {
+        setStatusNote('AgentMail still reports this email as pending.')
+      }
+    } catch (cause) {
+      globalThis.reportError(cause)
+      setError('The delivery status could not be checked. Try again.')
+    } finally {
+      setBusy(undefined)
+    }
+  }
+
   async function copyBody(): Promise<void> {
     setBusy('copy')
     try {
@@ -149,6 +170,7 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
         state={draft.state}
         locked={locked}
         onCopy={() => void copyBody()}
+        onCheckStatus={() => void checkStatus()}
         onInstructionChange={setInstruction}
         onRevise={() => void revise()}
         onSend={() => void send()}
@@ -235,6 +257,11 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
           <p className="mt-10 text-body-small text-accent-crimson" role="alert">
             {error}
           </p>
+        ) : null}
+        {draft.state === 'uncertain' && statusNote ? (
+          <output className="mt-10 block text-body-small text-foreground-muted">
+            {statusNote}
+          </output>
         ) : null}
       </div>
     </section>
@@ -372,7 +399,7 @@ function deliveryButtonLabel(state: Draft['state']): string {
     case 'replied':
       return 'Replied'
     case 'uncertain':
-      return 'Status unknown'
+      return 'Check status'
     default:
       return 'Send'
   }
@@ -387,6 +414,7 @@ function DraftHeader({
   sendDisabled,
   state,
   onCopy,
+  onCheckStatus,
   onInstructionChange,
   onRevise,
   onSend,
@@ -400,13 +428,16 @@ function DraftHeader({
   readonly sendDisabled: boolean
   readonly state: Draft['state']
   readonly onCopy: () => void
+  readonly onCheckStatus: () => void
   readonly onInstructionChange: (value: string) => void
   readonly onRevise: () => void
   readonly onSend: () => void
   readonly onToggleAsking: () => void
 }) {
+  const checking = busy === 'status'
   const sending = busy === 'send' || state === 'queued'
   const completed = state === 'sent' || state === 'replied'
+  const statusUnknown = state === 'uncertain'
   const sendLabel = deliveryButtonLabel(state)
   return (
     <header className="flex min-h-58 flex-wrap items-center justify-between gap-10 border-b border-border-faint px-14 py-10 sm:px-16">
@@ -481,14 +512,16 @@ function DraftHeader({
         </IconButton>
         <button
           className="flex h-38 items-center gap-7 rounded-10 bg-accent-black px-13 text-label-medium text-white transition-opacity disabled:opacity-35"
-          disabled={sendDisabled}
+          disabled={statusUnknown ? Boolean(busy) : sendDisabled}
           type="button"
-          onClick={onSend}
+          onClick={statusUnknown ? onCheckStatus : onSend}
         >
-          {sending ? (
+          {sending || checking ? (
             <SpinnerGap aria-hidden className="animate-spin" size={16} />
           ) : completed ? (
             <Check aria-hidden size={16} />
+          ) : statusUnknown ? (
+            <ArrowClockwise aria-hidden size={16} />
           ) : (
             <PaperPlaneTilt aria-hidden size={16} />
           )}

@@ -14,6 +14,18 @@ const ENTITY_VALUE = {
   quot: '"',
 } as const
 
+type EmailBodyParts = {
+  extractedText?: string | undefined
+  text?: string | undefined
+  extractedHtml?: string | undefined
+  html?: string | undefined
+  preview?: string | undefined
+}
+
+function firstNonEmpty(...values: readonly (string | undefined)[]): string {
+  return values.find((value) => value?.trim()) ?? ''
+}
+
 export function emailHtmlToPlainText(html: string): string {
   return html
     .replace(HTML_SCRIPT_OR_STYLE, '')
@@ -29,4 +41,14 @@ export function emailHtmlToPlainText(html: string): string {
     .replace(/\n[ \t]+/gu, '\n')
     .replace(/\n{3,}/gu, '\n\n')
     .trim()
+}
+
+export function emailBodyToPlainText(parts: EmailBodyParts): string {
+  const html = firstNonEmpty(parts.extractedHtml, parts.html)
+  return firstNonEmpty(
+    parts.extractedText,
+    parts.text,
+    html ? emailHtmlToPlainText(html) : undefined,
+    parts.preview,
+  )
 }

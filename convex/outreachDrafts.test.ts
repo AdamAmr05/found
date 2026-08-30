@@ -395,6 +395,34 @@ describe('outreach drafts', () => {
     ).toBe(false)
   })
 
+  test('recovers an uncertain draft when component status later resolves', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, {
+        outboundId: 'outbound-current',
+        state: 'uncertain',
+      })
+    })
+
+    await t.mutation(internal.outreachDelivery.applyOutboundStatus, {
+      draftId,
+      outboundId: 'outbound-current',
+      attempt: 0,
+      status: 'sent',
+      agentmailMessageId: 'message-current',
+      threadId: 'thread-current',
+      errorMessage: null,
+    })
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({
+      state: 'sent',
+      agentmailMessageId: 'message-current',
+      agentmailThreadId: 'thread-current',
+    })
+  })
+
   test('does not move replied or failed drafts backward on late events', async () => {
     const t = setup()
     const { draftId } = await createDraft(t)

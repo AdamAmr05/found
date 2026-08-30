@@ -95,15 +95,17 @@ latest 20 messages, each with at most 4,000 characters of plain text. The
 projection reports how many older messages were omitted and whether an
 individual body was shortened. AgentMail remains the durable source for the
 complete mailbox thread. The installed component's documented `getThread`
-client currently targets an internal component action and fails at runtime, so
-Found performs this one owner-checked remote read directly from its Convex
-action. The API key remains server-only; sending, retries, webhook ingestion,
-and mirrored inbound state still belong to the component.
+client is used from an owner-checked Convex action. The installed package is
+patched so its advertised remote methods are public component actions; they are
+callable by the parent app but are not direct browser APIs. The API key remains
+server-only, and sending, retries, webhook ingestion, and mirrored inbound
+state all stay component-owned.
 
-Thread normalization prefers extracted plain text, then plain text or preview.
-When a sender provides HTML only—as iPhone Mail may—it converts AgentMail's
-extracted HTML to inert plain text before applying the same body bound. Raw
-email HTML is never rendered or passed to the agent.
+Thread normalization selects the first non-empty complete body: extracted plain
+text, plain text, converted extracted HTML, or converted HTML. AgentMail's
+shortened preview is only a final fallback. HTML-only mail—as iPhone Mail may
+produce—is converted to inert plain text before applying the same body bound.
+Raw email HTML is never rendered or passed to the agent.
 
 AI-powered draft revision has a generous per-session token bucket of 200
 requests per hour with capacity for 20 immediate requests. Manual editing and
@@ -117,7 +119,9 @@ bridges the component's temporary outbound ID to the eventual provider message
 and thread IDs that webhook correlation needs. It covers 30 minutes—well past
 the component's normal retry budget—then stops and marks a still-pending draft
 `uncertain` rather than claiming delivery or failure. An uncertain draft stays
-locked to prevent an accidental duplicate send.
+locked to prevent an accidental duplicate send. Its existing primary action
+becomes a one-shot status check; the owner can apply a later component success
+or failure without restarting polling.
 
 Reply revisions are the durable unread source of truth. The human Inbox and
 agent each store only their own read-through revision; unread counts and flags

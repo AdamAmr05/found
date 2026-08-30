@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@agentmail/convex@0.1.0':
-    hash: f11d9bd07693fe99225e2d8ca0d844f60f53deef1958c5e84466b8db52b4539f
+    hash: 77a41991cfea9acfb07b071b56a763f08873ec6b98c691b21232b2269347901f
     path: patches/@agentmail__convex@0.1.0.patch
 
 importers:
@@ -15,7 +15,7 @@ importers:
     dependencies:
       '@agentmail/convex':
         specifier: ^0.1.0
-        version: 0.1.0(patch_hash=f11d9bd07693fe99225e2d8ca0d844f60f53deef1958c5e84466b8db52b4539f)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))
+        version: 0.1.0(patch_hash=77a41991cfea9acfb07b071b56a763f08873ec6b98c691b21232b2269347901f)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))
       '@ai-sdk/mcp':
         specifier: ^2.0.40
         version: 2.0.40(zod@4.4.3)
@@ -3356,7 +3356,7 @@ snapshots:
       zod: 3.25.76
       zod-to-json-schema: 3.25.2(zod@3.25.76)
 
-  '@agentmail/convex@0.1.0(patch_hash=f11d9bd07693fe99225e2d8ca0d844f60f53deef1958c5e84466b8db52b4539f)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))':
+  '@agentmail/convex@0.1.0(patch_hash=77a41991cfea9acfb07b071b56a763f08873ec6b98c691b21232b2269347901f)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))':
     dependencies:
       '@convex-dev/workpool': 0.3.2(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))
       convex: 1.45.0(react@19.2.8)

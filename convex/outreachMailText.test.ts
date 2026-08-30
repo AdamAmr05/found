@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { emailHtmlToPlainText } from './outreachMailText'
+import { emailBodyToPlainText, emailHtmlToPlainText } from './outreachMailText'
 
 describe('emailHtmlToPlainText', () => {
   test('recovers the visible body from an HTML-only iPhone reply', () => {
@@ -9,5 +9,15 @@ describe('emailHtmlToPlainText', () => {
     expect(emailHtmlToPlainText(html)).toBe(
       'Hello hello codex, does this work?\nSent from my iPhone',
     )
+  })
+
+  test('uses a complete HTML body instead of its shortened preview', () => {
+    expect(
+      emailBodyToPlainText({
+        extractedText: '',
+        preview: 'The complete reply starts here…',
+        html: '<p>The complete reply starts here and includes the answer.</p>',
+      }),
+    ).toBe('The complete reply starts here and includes the answer.')
   })
 })

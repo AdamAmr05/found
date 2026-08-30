@@ -18,6 +18,7 @@ import {
   validateOutreachContent,
 } from './outreachContent'
 import { ownedDraft } from './outreachDrafts'
+import { vOutreachState } from './outreachModel'
 import { replyRevision } from './outreachReplyState'
 
 const agentmail = new AgentMail(components.agentmail)
@@ -122,6 +123,36 @@ export const status = query({
   },
 })
 
+export const recheck = mutation({
+  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  returns: vOutreachState,
+  handler: async (ctx, args): Promise<Doc<'outreachDrafts'>['state']> => {
+    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    if (draft.state !== 'uncertain') return draft.state
+    if (!draft.outboundId) {
+      throw new ConvexError({ code: 'OUTREACH_STATUS_NOT_AVAILABLE' })
+    }
+    const current = await agentmail.status(ctx, outboundId(draft.outboundId))
+    if (!current) {
+      throw new ConvexError({ code: 'OUTREACH_STATUS_NOT_AVAILABLE' })
+    }
+    if (current.status === 'pending') return 'uncertain'
+    const state: Doc<'outreachDrafts'>['state'] | null = await ctx.runMutation(
+      internal.outreachDelivery.applyOutboundStatus,
+      {
+        draftId: draft._id,
+        outboundId: draft.outboundId,
+        attempt: 0,
+        ...current,
+      },
+    )
+    if (!state) {
+      throw new ConvexError({ code: 'OUTREACH_STATUS_NOT_AVAILABLE' })
+    }
+    return state
+  },
+})
+
 export const syncOutbound = internalMutation({
   args: {
     draftId: v.id('outreachDrafts'),
@@ -152,7 +183,7 @@ export const applyOutboundStatus = internalMutation({
     threadId: v.union(v.string(), v.null()),
     errorMessage: v.union(v.string(), v.null()),
   },
-  returns: v.null(),
+  returns: v.union(vOutreachState, v.null()),
   handler: async (ctx, args) => {
     const draft = await ctx.db.get('outreachDrafts', args.draftId)
     if (
@@ -160,7 +191,7 @@ export const applyOutboundStatus = internalMutation({
       draft.outboundId !== args.outboundId ||
       isTerminalOutreachState(draft.state)
     ) {
-      return null
+      return draft?.state ?? null
     }
     const failed =
       args.status === 'failed' ||
@@ -199,7 +230,7 @@ export const applyOutboundStatus = internalMutation({
         },
       )
     }
-    return null
+    return patch.state ?? draft.state
   },
 })
 

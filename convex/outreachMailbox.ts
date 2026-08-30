@@ -1,3 +1,4 @@
+import { AgentMail } from '@agentmail/convex'
 import { makeFunctionReference } from 'convex/server'
 import { ConvexError, v } from 'convex/values'
 import { vSessionId } from 'convex-helpers/server/sessions'
@@ -9,6 +10,7 @@ import {
   OUTREACH_THREAD_MAX_MESSAGES,
 } from '../shared/foundTools'
 import type { Id } from './_generated/dataModel'
+import { components } from './_generated/api'
 import {
   type ActionCtx,
   env,
@@ -17,7 +19,7 @@ import {
   internalQuery,
 } from './_generated/server'
 import { ownedDraft } from './outreachDrafts'
-import { emailHtmlToPlainText } from './outreachMailText'
+import { emailBodyToPlainText } from './outreachMailText'
 import {
   type OutreachMailThread,
   vOutreachMailThread,
@@ -31,7 +33,7 @@ import {
 } from './outreachReplyState'
 import { assertThreadOwner } from './threadAccess'
 
-const DEFAULT_AGENTMAIL_BASE_URL = 'https://api.agentmail.to/v0'
+const agentmail = new AgentMail(components.agentmail)
 
 type ThreadDetails = {
   candidateTitle: string
@@ -86,30 +88,16 @@ const threadSchema = z.object({
 type AgentMailThreadPayload = z.infer<typeof threadSchema>
 
 async function fetchAgentMailThread(
+  ctx: ActionCtx,
   inboxId: string,
   threadId: string,
 ): Promise<AgentMailThreadPayload> {
-  const apiKey = env.AGENTMAIL_API_KEY
-  if (!apiKey) {
-    throw new ConvexError({ code: 'AGENTMAIL_NOT_CONFIGURED' })
-  }
-  let response: Response
   try {
-    response = await fetch(
-      `${DEFAULT_AGENTMAIL_BASE_URL}/inboxes/${encodeURIComponent(inboxId)}/threads/${encodeURIComponent(threadId)}`,
-      { headers: { Authorization: `Bearer ${apiKey}` } },
-    )
+    const payload: unknown = await agentmail.getThread(ctx, inboxId, threadId)
+    return threadSchema.parse(payload)
   } catch {
     throw new ConvexError({ code: 'OUTREACH_THREAD_READ_FAILED' })
   }
-  if (!response.ok) {
-    throw new ConvexError({
-      code: 'OUTREACH_THREAD_READ_FAILED',
-      status: response.status,
-    })
-  }
-  const payload: unknown = await response.json()
-  return threadSchema.parse(payload)
 }
 
 const vUpdate = v.object({
@@ -270,6 +258,7 @@ async function loadThreadData(
     throw new ConvexError({ code: 'OUTREACH_THREAD_NOT_AVAILABLE' })
   }
   const response = await fetchAgentMailThread(
+    ctx,
     inboxId,
     details.agentmailThreadId,
   )
@@ -290,11 +279,13 @@ async function loadThreadData(
       const from = Array.isArray(message.from)
         ? message.from.join(', ')
         : message.from
-      const fullBody =
-        message.extracted_text ??
-        message.text ??
-        message.preview ??
-        emailHtmlToPlainText(message.extracted_html ?? message.html ?? '')
+      const fullBody = emailBodyToPlainText({
+        extractedText: message.extracted_text,
+        text: message.text,
+        extractedHtml: message.extracted_html,
+        html: message.html,
+        preview: message.preview,
+      })
       return {
         messageId: message.message_id,
         direction: from.includes(inboxId)

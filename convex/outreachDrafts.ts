@@ -1,4 +1,4 @@
-import { ConvexError, v } from 'convex/values'
+import { ConvexError, type Infer, v } from 'convex/values'
 import { SessionIdArg, vSessionId } from 'convex-helpers/server/sessions'
 import type { SessionId } from 'convex-helpers/server/sessions'
 
@@ -43,20 +43,7 @@ const vDraftView = v.object({
   proposal: v.optional(vOutreachProposal),
 })
 
-type DraftView = {
-  _id: Id<'outreachDrafts'>
-  candidateRef?: string
-  candidateTitle: string
-  recipient: string
-  subject: string
-  body: string
-  revision: number
-  state: Doc<'outreachDrafts'>['state']
-  updatedAt: number
-  latestActivityAt: number
-  unreadReplyCount: number
-  proposal?: NonNullable<Doc<'outreachDrafts'>['proposal']>
-}
+type DraftView = Infer<typeof vDraftView>
 
 type NewOutreachDraft = Omit<Doc<'outreachDrafts'>, '_id' | '_creationTime'>
 
