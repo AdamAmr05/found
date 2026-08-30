@@ -2,9 +2,10 @@ import { ArrowLeft, EnvelopeSimple, SpinnerGap } from '@phosphor-icons/react'
 import type { FunctionReturnType } from 'convex/server'
 import {
   useSessionAction,
+  useSessionMutation,
   useSessionQuery,
 } from 'convex-helpers/react/sessions'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
@@ -24,31 +25,35 @@ function activityLabel(timestamp: number): string {
 export function InboxPage() {
   const items = useSessionQuery(api.outreachInbox.list, {})
   const readThread = useSessionAction(api.outreachInbox.read)
+  const markRead = useSessionMutation(api.outreachInbox.markRead)
   const [selectedId, setSelectedId] = useState<Id<'outreachDrafts'>>()
   const [thread, setThread] = useState<MailThread>()
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
+  const requestSequence = useRef(0)
+  const loading = selectedId !== undefined && thread === undefined && !error
 
   async function select(
     outreachId: Id<'outreachDrafts'>,
     foundThreadId: string,
   ): Promise<void> {
+    const request = ++requestSequence.current
     setSelectedId(outreachId)
     setThread(undefined)
     setError(undefined)
-    setLoading(true)
     try {
-      setThread(
-        await readThread({
-          outreachId,
-          threadId: foundThreadId,
-        }),
-      )
+      const nextThread = await readThread({
+        outreachId,
+        threadId: foundThreadId,
+      })
+      if (request === requestSequence.current) {
+        setThread(nextThread)
+        void markRead({ outreachId }).catch(globalThis.reportError)
+      }
     } catch (cause) {
       globalThis.reportError(cause)
-      setError('That email thread could not be loaded.')
-    } finally {
-      setLoading(false)
+      if (request === requestSequence.current) {
+        setError('That email thread could not be loaded.')
+      }
     }
   }
 
@@ -61,8 +66,10 @@ export function InboxPage() {
             className="mb-20 flex items-center gap-7 text-label-small text-foreground-muted hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100"
             type="button"
             onClick={() => {
+              requestSequence.current += 1
               setSelectedId(undefined)
               setThread(undefined)
+              setError(undefined)
             }}
           >
             <ArrowLeft aria-hidden size={15} />

@@ -138,4 +138,107 @@ describe('outreach drafts', () => {
       state: 'draft',
     })
   })
+
+  test('ignores delivery reconciliation from a superseded send attempt', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, {
+        outboundId: 'outbound-current',
+        state: 'queued',
+      })
+    })
+
+    await t.mutation(internal.outreachDelivery.applyOutboundStatus, {
+      draftId,
+      outboundId: 'outbound-old',
+      attempt: 0,
+      status: 'sent',
+      agentmailMessageId: 'message-old',
+      threadId: 'thread-old',
+      errorMessage: null,
+    })
+
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({
+      outboundId: 'outbound-current',
+      state: 'queued',
+    })
+  })
+
+  test('does not move replied or failed drafts backward on late events', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, {
+        agentmailMessageId: 'message-current',
+        outboundId: 'outbound-current',
+        state: 'replied',
+      })
+    })
+
+    await t.mutation(internal.outreachDelivery.onEvent, {
+      event: {
+        type: 'event',
+        event_type: 'message.sent',
+        event_id: 'late-sent',
+        send: { message_id: 'message-current', thread_id: 'thread-current' },
+      },
+    })
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({ state: 'replied' })
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, { state: 'failed' })
+    })
+    await t.mutation(internal.outreachDelivery.onEvent, {
+      event: {
+        type: 'event',
+        event_type: 'message.delivered',
+        event_id: 'late-delivered',
+        delivery: {
+          message_id: 'message-current',
+          thread_id: 'thread-current',
+        },
+      },
+    })
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({ state: 'failed' })
+  })
+
+  test('tracks agent-seen and human-read replies independently', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, {
+        agentHasUnreadReply: true,
+        unreadReplyCount: 2,
+      })
+    })
+
+    await t.mutation(internal.outreachMailbox.markReadForAgent, {
+      outreachId: draftId,
+      sessionId: ownerSession,
+    })
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({
+      agentHasUnreadReply: false,
+      unreadReplyCount: 2,
+    })
+
+    await t.mutation(api.outreachInbox.markRead, {
+      outreachId: draftId,
+      sessionId: ownerSession,
+    })
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({
+      agentHasUnreadReply: false,
+      unreadReplyCount: 0,
+    })
+  })
 })

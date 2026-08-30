@@ -1,6 +1,6 @@
 import { AgentMail } from '@agentmail/convex'
 import { makeFunctionReference } from 'convex/server'
-import { ConvexError, v } from 'convex/values'
+import { ConvexError, type Infer, v } from 'convex/values'
 import { vSessionId } from 'convex-helpers/server/sessions'
 import type { SessionId } from 'convex-helpers/server/sessions'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { components } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import {
+  type ActionCtx,
   env,
   internalAction,
   internalMutation,
@@ -24,6 +25,12 @@ type ThreadDetails = {
   agentmailThreadId: string
 }
 
+type ReadThreadArgs = {
+  sessionId: SessionId
+  foundThreadId: string
+  outreachId: Id<'outreachDrafts'>
+}
+
 const getThreadDetails = makeFunctionReference<
   'query',
   {
@@ -34,7 +41,7 @@ const getThreadDetails = makeFunctionReference<
   ThreadDetails | null
 >('outreachMailbox:detailsForAgent')
 
-const markThreadRead = makeFunctionReference<
+const markThreadSeenByAgent = makeFunctionReference<
   'mutation',
   { sessionId: SessionId; outreachId: Id<'outreachDrafts'> },
   null
@@ -53,6 +60,24 @@ const messageSchema = z.object({
 const threadSchema = z.object({
   messages: z.array(messageSchema).max(100),
 })
+
+const vMailThread = v.object({
+  outreachId: v.string(),
+  candidateTitle: v.string(),
+  subject: v.string(),
+  messages: v.array(
+    v.object({
+      messageId: v.string(),
+      direction: v.union(v.literal('outbound'), v.literal('inbound')),
+      from: v.string(),
+      to: v.array(v.string()),
+      timestamp: v.string(),
+      body: v.string(),
+    }),
+  ),
+})
+
+type MailThread = Infer<typeof vMailThread>
 
 const vUpdate = v.object({
   outreachId: v.string(),
@@ -94,7 +119,7 @@ export const listForAgent = internalQuery({
       outreachId: draft._id,
       candidateTitle: draft.candidateTitle,
       state: draft.state,
-      hasUnreadReply: draft.unreadReplyCount > 0,
+      hasUnreadReply: draft.agentHasUnreadReply ?? draft.unreadReplyCount > 0,
       latestActivityAt: draft.latestActivityAt,
     }))
   },
@@ -136,7 +161,7 @@ export const contextForRun = internalQuery({
           : [],
       ),
       unreadReplies: drafts.flatMap((draft) =>
-        draft.unreadReplyCount > 0
+        (draft.agentHasUnreadReply ?? draft.unreadReplyCount > 0)
           ? [
               {
                 outreachId: draft._id,
@@ -207,66 +232,68 @@ export const detailsForAgent = internalQuery({
   },
 })
 
-export const readThread = internalAction({
-  args: {
-    sessionId: vSessionId,
-    foundThreadId: v.string(),
-    outreachId: v.id('outreachDrafts'),
-  },
-  returns: v.object({
-    outreachId: v.string(),
-    candidateTitle: v.string(),
-    subject: v.string(),
-    messages: v.array(
-      v.object({
-        messageId: v.string(),
-        direction: v.union(v.literal('outbound'), v.literal('inbound')),
-        from: v.string(),
-        to: v.array(v.string()),
-        timestamp: v.string(),
-        body: v.string(),
-      }),
-    ),
-  }),
+async function loadThreadData(
+  ctx: ActionCtx,
+  args: ReadThreadArgs,
+): Promise<MailThread> {
+  const details = await ctx.runQuery(getThreadDetails, args)
+  const inboxId = env.AGENTMAIL_INBOX_ID
+  if (!details || !inboxId) {
+    throw new ConvexError({ code: 'OUTREACH_THREAD_NOT_AVAILABLE' })
+  }
+  const response = threadSchema.parse(
+    await agentmail.getThread(ctx, inboxId, details.agentmailThreadId),
+  )
+  return {
+    outreachId: args.outreachId,
+    candidateTitle: details.candidateTitle,
+    subject: details.subject,
+    messages: response.messages.map((message) => {
+      const from = Array.isArray(message.from)
+        ? message.from.join(', ')
+        : message.from
+      return {
+        messageId: message.message_id,
+        direction: from.includes(inboxId)
+          ? ('outbound' as const)
+          : ('inbound' as const),
+        from,
+        to: message.to,
+        timestamp: message.timestamp,
+        body: (
+          message.extracted_text ??
+          message.text ??
+          message.preview ??
+          ''
+        ).slice(0, 16_000),
+      }
+    }),
+  }
+}
+
+const readThreadArgs = {
+  sessionId: vSessionId,
+  foundThreadId: v.string(),
+  outreachId: v.id('outreachDrafts'),
+}
+
+export const readThreadForAgent = internalAction({
+  args: readThreadArgs,
+  returns: vMailThread,
   handler: async (ctx, args) => {
-    const details = await ctx.runQuery(getThreadDetails, args)
-    const inboxId = env.AGENTMAIL_INBOX_ID
-    if (!details || !inboxId) {
-      throw new ConvexError({ code: 'OUTREACH_THREAD_NOT_AVAILABLE' })
-    }
-    const response = threadSchema.parse(
-      await agentmail.getThread(ctx, inboxId, details.agentmailThreadId),
-    )
-    await ctx.runMutation(markThreadRead, {
+    const thread = await loadThreadData(ctx, args)
+    await ctx.runMutation(markThreadSeenByAgent, {
       sessionId: args.sessionId,
       outreachId: args.outreachId,
     })
-    return {
-      outreachId: args.outreachId,
-      candidateTitle: details.candidateTitle,
-      subject: details.subject,
-      messages: response.messages.map((message) => {
-        const from = Array.isArray(message.from)
-          ? message.from.join(', ')
-          : message.from
-        return {
-          messageId: message.message_id,
-          direction: from.includes(inboxId)
-            ? ('outbound' as const)
-            : ('inbound' as const),
-          from,
-          to: message.to,
-          timestamp: message.timestamp,
-          body: (
-            message.extracted_text ??
-            message.text ??
-            message.preview ??
-            ''
-          ).slice(0, 16_000),
-        }
-      }),
-    }
+    return thread
   },
+})
+
+export const readThread = internalAction({
+  args: readThreadArgs,
+  returns: vMailThread,
+  handler: loadThreadData,
 })
 
 export const markReadForAgent = internalMutation({
@@ -274,8 +301,10 @@ export const markReadForAgent = internalMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.outreachId, args.sessionId)
-    if (draft.unreadReplyCount > 0) {
-      await ctx.db.patch('outreachDrafts', draft._id, { unreadReplyCount: 0 })
+    if (draft.agentHasUnreadReply !== false) {
+      await ctx.db.patch('outreachDrafts', draft._id, {
+        agentHasUnreadReply: false,
+      })
     }
     return null
   },

@@ -42,6 +42,10 @@ type OutreachPatch = Partial<
   Omit<Doc<'outreachDrafts'>, '_id' | '_creationTime'>
 >
 
+function isTerminalOutreachState(state: Doc<'outreachDrafts'>['state']) {
+  return state === 'replied' || state === 'failed'
+}
+
 export const send = mutation({
   args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
   returns: v.string(),
@@ -76,6 +80,8 @@ export const send = mutation({
     })
     await ctx.db.patch('outreachDrafts', draft._id, {
       outboundId: outbound,
+      agentmailMessageId: undefined,
+      agentmailThreadId: undefined,
       state: 'queued',
       latestActivityAt: Date.now(),
     })
@@ -118,6 +124,7 @@ export const syncOutbound = internalMutation({
     if (!current) return null
     await ctx.runMutation(internal.outreachDelivery.applyOutboundStatus, {
       draftId: args.draftId,
+      outboundId: args.outboundId,
       attempt: args.attempt,
       ...current,
     })
@@ -128,6 +135,7 @@ export const syncOutbound = internalMutation({
 export const applyOutboundStatus = internalMutation({
   args: {
     draftId: v.id('outreachDrafts'),
+    outboundId: v.string(),
     attempt: v.number(),
     status: vOutboundStatus,
     agentmailMessageId: v.union(v.string(), v.null()),
@@ -137,7 +145,13 @@ export const applyOutboundStatus = internalMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const draft = await ctx.db.get('outreachDrafts', args.draftId)
-    if (!draft) return null
+    if (
+      !draft ||
+      draft.outboundId !== args.outboundId ||
+      isTerminalOutreachState(draft.state)
+    ) {
+      return null
+    }
     const failed =
       args.status === 'failed' ||
       args.status === 'bounced' ||
@@ -158,7 +172,7 @@ export const applyOutboundStatus = internalMutation({
         internal.outreachDelivery.syncOutbound,
         {
           draftId: draft._id,
-          outboundId: draft.outboundId ?? '',
+          outboundId: args.outboundId,
           attempt: args.attempt + 1,
         },
       )
@@ -198,6 +212,7 @@ export const onMessageReceived = internalMutation({
     if (!draft) return null
     await ctx.db.patch('outreachDrafts', draft._id, {
       state: 'replied',
+      agentHasUnreadReply: true,
       unreadReplyCount: draft.unreadReplyCount + 1,
       latestActivityAt: Date.now(),
     })
@@ -229,7 +244,7 @@ export const onEvent = internalMutation({
         index.eq('agentmailMessageId', parsed.data.message_id),
       )
       .unique()
-    if (!draft) return null
+    if (!draft || isTerminalOutreachState(draft.state)) return null
     const failed =
       args.event.event_type === 'message.bounced' ||
       args.event.event_type === 'message.complained' ||

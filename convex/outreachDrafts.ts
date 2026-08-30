@@ -151,6 +151,7 @@ export const createFromAgent = internalMutation({
       updatedAt: now,
       latestActivityAt: now,
       unreadReplyCount: 0,
+      agentHasUnreadReply: false,
     }
     if (args.candidateRef) newDraft.candidateRef = args.candidateRef
     return await ctx.db.insert('outreachDrafts', newDraft)
@@ -320,17 +321,5 @@ export const getForAction = internalQuery({
     if (!draft || draft.sessionId !== args.sessionId) return null
     await assertThreadOwner(ctx, draft.threadId, args.sessionId)
     return draftView(draft)
-  },
-})
-
-export const markRead = mutation({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
-    if (draft.unreadReplyCount > 0) {
-      await ctx.db.patch('outreachDrafts', draft._id, { unreadReplyCount: 0 })
-    }
-    return null
   },
 })

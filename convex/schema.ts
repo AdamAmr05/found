@@ -58,6 +58,7 @@ const schema = defineSchema({
     agentmailMessageId: v.optional(v.string()),
     agentmailThreadId: v.optional(v.string()),
     unreadReplyCount: v.number(),
+    agentHasUnreadReply: v.optional(v.boolean()),
     proposal: v.optional(vOutreachProposal),
   })
     .index('by_session_and_thread_and_latest_activity', [

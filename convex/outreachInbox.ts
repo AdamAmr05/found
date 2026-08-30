@@ -4,7 +4,8 @@ import { SessionIdArg } from 'convex-helpers/server/sessions'
 import type { SessionId } from 'convex-helpers/server/sessions'
 
 import type { Id } from './_generated/dataModel'
-import { action, query } from './_generated/server'
+import { action, mutation, query } from './_generated/server'
+import { ownedDraft } from './outreachDrafts'
 
 type MailThread = {
   outreachId: string
@@ -101,4 +102,18 @@ export const read = action({
       foundThreadId: args.threadId,
       outreachId: args.outreachId,
     }),
+})
+
+export const markRead = mutation({
+  args: { ...SessionIdArg, outreachId: v.id('outreachDrafts') },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const draft = await ownedDraft(ctx, args.outreachId, args.sessionId)
+    if (draft.unreadReplyCount > 0) {
+      await ctx.db.patch('outreachDrafts', draft._id, {
+        unreadReplyCount: 0,
+      })
+    }
+    return null
+  },
 })
