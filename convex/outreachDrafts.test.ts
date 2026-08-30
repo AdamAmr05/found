@@ -104,11 +104,19 @@ describe('outreach drafts', () => {
   test('keeps AI revisions pending until the user accepts them', async () => {
     const t = setup()
     const { draftId } = await createDraft(t)
+    const requestId = 'revision-request-1'
+
+    await t.mutation(internal.outreachDrafts.beginRevision, {
+      draftId,
+      sessionId: ownerSession,
+      requestId,
+    })
 
     await t.mutation(internal.outreachDrafts.setProposal, {
       draftId,
       sessionId: ownerSession,
       baseRevision: 1,
+      requestId,
       instruction: 'Make it warmer',
       recipient: 'host@example.com',
       subject: 'Availability',
@@ -175,16 +183,79 @@ describe('outreach drafts', () => {
       }),
     ).rejects.toMatchObject({ data: { code: 'OUTREACH_BODY_TOO_LONG' } })
     await expect(
+      t.mutation(internal.outreachDrafts.beginRevision, {
+        draftId,
+        sessionId: ownerSession,
+        requestId: 'oversized-request',
+      }),
+    ).resolves.toMatchObject({ revision: 2 })
+    await expect(
       t.mutation(internal.outreachDrafts.setProposal, {
         draftId,
         sessionId: ownerSession,
         baseRevision: 2,
+        requestId: 'oversized-request',
         instruction: 'Make it warmer',
         recipient: 'host@example.com',
         subject: 'Availability',
         body: oversizedBody,
       }),
     ).rejects.toMatchObject({ data: { code: 'OUTREACH_BODY_TOO_LONG' } })
+  })
+
+  test('allows only the current AI revision request to publish a proposal', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+
+    await t.mutation(internal.outreachDrafts.beginRevision, {
+      draftId,
+      sessionId: ownerSession,
+      requestId: 'request-a',
+    })
+    await expect(
+      t.mutation(internal.outreachDrafts.beginRevision, {
+        draftId,
+        sessionId: ownerSession,
+        requestId: 'request-b',
+      }),
+    ).rejects.toMatchObject({
+      data: { code: 'OUTREACH_REVISION_IN_PROGRESS' },
+    })
+
+    await t.mutation(internal.outreachDrafts.clearRevision, {
+      draftId,
+      sessionId: ownerSession,
+      requestId: 'request-a',
+    })
+    await t.mutation(internal.outreachDrafts.beginRevision, {
+      draftId,
+      sessionId: ownerSession,
+      requestId: 'request-b',
+    })
+    await expect(
+      t.mutation(internal.outreachDrafts.setProposal, {
+        draftId,
+        sessionId: ownerSession,
+        baseRevision: 1,
+        requestId: 'request-a',
+        instruction: 'Make it shorter',
+        recipient: 'host@example.com',
+        subject: 'Availability',
+        body: 'Still available?',
+      }),
+    ).resolves.toBe(false)
+    await expect(
+      t.mutation(internal.outreachDrafts.setProposal, {
+        draftId,
+        sessionId: ownerSession,
+        baseRevision: 1,
+        requestId: 'request-b',
+        instruction: 'Make it warmer',
+        recipient: 'host@example.com',
+        subject: 'Availability',
+        body: 'Hi, is this still available?',
+      }),
+    ).resolves.toBe(true)
   })
 
   test('rejects AI revisions for locked drafts before model work', async () => {
@@ -285,6 +356,45 @@ describe('outreach drafts', () => {
     })
   })
 
+  test('stops reconciling after the recovery horizon without claiming failure', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, {
+        outboundId: 'outbound-current',
+        state: 'queued',
+        deliveryStartedAt: Date.now() - 31 * 60 * 1_000,
+      })
+    })
+
+    await t.mutation(internal.outreachDelivery.applyOutboundStatus, {
+      draftId,
+      outboundId: 'outbound-current',
+      attempt: 12,
+      status: 'pending',
+      agentmailMessageId: null,
+      threadId: null,
+      errorMessage: null,
+    })
+
+    await expect(
+      t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
+    ).resolves.toMatchObject({ state: 'uncertain' })
+    const scheduled = await t.run(
+      async (ctx) =>
+        await ctx.db.system
+          .query('_scheduled_functions')
+          .order('desc')
+          .take(10),
+    )
+    expect(
+      scheduled.some(
+        (scheduledFunction) =>
+          scheduledFunction.name === 'outreachDelivery:syncOutbound',
+      ),
+    ).toBe(false)
+  })
+
   test('does not move replied or failed drafts backward on late events', async () => {
     const t = setup()
     const { draftId } = await createDraft(t)
@@ -329,15 +439,13 @@ describe('outreach drafts', () => {
 
   test('marks only the reply revision observed by the human and agent', async () => {
     const t = setup()
-    const { draftId } = await createDraft(t)
+    const { draftId, threadId } = await createDraft(t)
     await t.run(async (ctx) => {
       await ctx.db.patch('outreachDrafts', draftId, {
         agentmailThreadId: 'thread-current',
         replyRevision: 1,
         humanReadThroughReplyRevision: 0,
         agentReadThroughReplyRevision: 0,
-        agentHasUnreadReply: true,
-        unreadReplyCount: 1,
       })
     })
 
@@ -367,9 +475,20 @@ describe('outreach drafts', () => {
       replyRevision: 2,
       humanReadThroughReplyRevision: 1,
       agentReadThroughReplyRevision: 1,
-      agentHasUnreadReply: true,
-      unreadReplyCount: 1,
     })
+    await expect(
+      t.query(api.outreachInbox.list, { sessionId: ownerSession }),
+    ).resolves.toEqual([
+      expect.objectContaining({ outreachId: draftId, unreadReplyCount: 1 }),
+    ])
+    await expect(
+      t.query(internal.outreachMailbox.listForAgent, {
+        sessionId: ownerSession,
+        threadId,
+      }),
+    ).resolves.toEqual([
+      expect.objectContaining({ outreachId: draftId, hasUnreadReply: true }),
+    ])
 
     await t.mutation(internal.outreachMailbox.markReadForAgent, {
       outreachId: draftId,
@@ -386,8 +505,19 @@ describe('outreach drafts', () => {
     ).resolves.toMatchObject({
       humanReadThroughReplyRevision: 2,
       agentReadThroughReplyRevision: 2,
-      agentHasUnreadReply: false,
-      unreadReplyCount: 0,
     })
+    await expect(
+      t.query(api.outreachInbox.list, { sessionId: ownerSession }),
+    ).resolves.toEqual([
+      expect.objectContaining({ outreachId: draftId, unreadReplyCount: 0 }),
+    ])
+    await expect(
+      t.query(internal.outreachMailbox.listForAgent, {
+        sessionId: ownerSession,
+        threadId,
+      }),
+    ).resolves.toEqual([
+      expect.objectContaining({ outreachId: draftId, hasUnreadReply: false }),
+    ])
   })
 })

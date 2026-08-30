@@ -294,6 +294,7 @@ export const listOutreachUpdatesOutputSchema = z.object({
           'sent',
           'replied',
           'failed',
+          'uncertain',
         ]),
         hasUnreadReply: z.boolean(),
         latestActivityAt: z.number(),

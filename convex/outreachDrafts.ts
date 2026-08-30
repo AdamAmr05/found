@@ -13,7 +13,6 @@ import {
   type QueryCtx,
   env,
   internalMutation,
-  internalQuery,
   mutation,
   query,
 } from './_generated/server'
@@ -23,7 +22,11 @@ import {
   outreachContentHash,
   validateOutreachContent,
 } from './outreachContent'
+import { vOutreachProposal, vOutreachState } from './outreachModel'
+import { humanUnreadReplyCount } from './outreachReplyState'
 import { assertThreadOwner } from './threadAccess'
+
+const REVISION_LEASE_MS = 5 * 60 * 1_000
 
 const vDraftView = v.object({
   _id: v.id('outreachDrafts'),
@@ -33,27 +36,11 @@ const vDraftView = v.object({
   subject: v.string(),
   body: v.string(),
   revision: v.number(),
-  state: v.union(
-    v.literal('draft'),
-    v.literal('approved'),
-    v.literal('queued'),
-    v.literal('sent'),
-    v.literal('replied'),
-    v.literal('failed'),
-  ),
+  state: vOutreachState,
   updatedAt: v.number(),
   latestActivityAt: v.number(),
   unreadReplyCount: v.number(),
-  proposal: v.optional(
-    v.object({
-      recipient: v.string(),
-      subject: v.string(),
-      body: v.string(),
-      instruction: v.string(),
-      baseRevision: v.number(),
-      createdAt: v.number(),
-    }),
-  ),
+  proposal: v.optional(vOutreachProposal),
 })
 
 type DraftView = {
@@ -84,7 +71,7 @@ function draftView(draft: Doc<'outreachDrafts'>) {
     state: draft.state,
     updatedAt: draft.updatedAt,
     latestActivityAt: draft.latestActivityAt,
-    unreadReplyCount: draft.unreadReplyCount,
+    unreadReplyCount: humanUnreadReplyCount(draft),
   }
   if (draft.candidateRef) view.candidateRef = draft.candidateRef
   if (draft.proposal) view.proposal = draft.proposal
@@ -110,7 +97,8 @@ export function assertOutreachDraftEditable(
   if (
     draft.state === 'queued' ||
     draft.state === 'sent' ||
-    draft.state === 'replied'
+    draft.state === 'replied' ||
+    draft.state === 'uncertain'
   ) {
     throw new ConvexError({ code: 'OUTREACH_DRAFT_NOT_EDITABLE' })
   }
@@ -166,8 +154,6 @@ export const createFromAgent = internalMutation({
       replyRevision: 0,
       humanReadThroughReplyRevision: 0,
       agentReadThroughReplyRevision: 0,
-      unreadReplyCount: 0,
-      agentHasUnreadReply: false,
     }
     if (args.candidateRef) newDraft.candidateRef = args.candidateRef
     return await ctx.db.insert('outreachDrafts', newDraft)
@@ -220,6 +206,7 @@ export const update = mutation({
       approvedHash: undefined,
       approvedAt: undefined,
       proposal: undefined,
+      revisionRequest: undefined,
     })
     return revision
   },
@@ -248,8 +235,65 @@ export const approve = mutation({
       approvedAt: now,
       state: 'approved',
       latestActivityAt: now,
+      revisionRequest: undefined,
     })
     return approvedHash
+  },
+})
+
+export const beginRevision = internalMutation({
+  args: {
+    draftId: v.id('outreachDrafts'),
+    sessionId: vSessionId,
+    requestId: v.string(),
+  },
+  returns: v.object({
+    recipient: v.string(),
+    subject: v.string(),
+    body: v.string(),
+    revision: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    assertOutreachDraftEditable(draft)
+    const now = Date.now()
+    if (
+      draft.revisionRequest &&
+      now - draft.revisionRequest.startedAt < REVISION_LEASE_MS
+    ) {
+      throw new ConvexError({ code: 'OUTREACH_REVISION_IN_PROGRESS' })
+    }
+    await ctx.db.patch('outreachDrafts', draft._id, {
+      revisionRequest: {
+        requestId: args.requestId,
+        baseRevision: draft.revision,
+        startedAt: now,
+      },
+    })
+    return {
+      recipient: draft.recipient,
+      subject: draft.subject,
+      body: draft.body,
+      revision: draft.revision,
+    }
+  },
+})
+
+export const clearRevision = internalMutation({
+  args: {
+    draftId: v.id('outreachDrafts'),
+    sessionId: vSessionId,
+    requestId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    if (draft.revisionRequest?.requestId === args.requestId) {
+      await ctx.db.patch('outreachDrafts', draft._id, {
+        revisionRequest: undefined,
+      })
+    }
+    return null
   },
 })
 
@@ -258,6 +302,7 @@ export const setProposal = internalMutation({
     draftId: v.id('outreachDrafts'),
     sessionId: vSessionId,
     baseRevision: v.number(),
+    requestId: v.string(),
     instruction: v.string(),
     recipient: v.string(),
     subject: v.string(),
@@ -267,7 +312,13 @@ export const setProposal = internalMutation({
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
     assertOutreachDraftEditable(draft)
-    if (draft.revision !== args.baseRevision) return false
+    if (
+      draft.revision !== args.baseRevision ||
+      draft.revisionRequest?.requestId !== args.requestId ||
+      draft.revisionRequest.baseRevision !== args.baseRevision
+    ) {
+      return false
+    }
     if (args.instruction.length > OUTREACH_INSTRUCTION_MAX_LENGTH) {
       throw new ConvexError({ code: 'OUTREACH_INSTRUCTION_TOO_LONG' })
     }
@@ -282,6 +333,7 @@ export const setProposal = internalMutation({
         baseRevision: args.baseRevision,
         createdAt: Date.now(),
       },
+      revisionRequest: undefined,
     })
     return true
   },
@@ -311,6 +363,7 @@ export const acceptProposal = mutation({
       approvedHash: undefined,
       approvedAt: undefined,
       proposal: undefined,
+      revisionRequest: undefined,
     })
     return revision
   },
@@ -324,16 +377,5 @@ export const discardProposal = mutation({
     assertOutreachDraftEditable(draft)
     await ctx.db.patch('outreachDrafts', draft._id, { proposal: undefined })
     return null
-  },
-})
-
-export const getForAction = internalQuery({
-  args: { draftId: v.id('outreachDrafts'), sessionId: vSessionId },
-  returns: v.union(v.null(), vDraftView),
-  handler: async (ctx, args) => {
-    const draft = await ctx.db.get('outreachDrafts', args.draftId)
-    if (!draft || draft.sessionId !== args.sessionId) return null
-    await assertThreadOwner(ctx, draft.threadId, args.sessionId)
-    return draftView(draft)
   },
 })

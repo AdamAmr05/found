@@ -13,7 +13,6 @@ import {
 import { components, internal } from './_generated/api'
 import { action, env } from './_generated/server'
 import { FOUND_MODEL } from './aiModel'
-import { assertOutreachDraftEditable } from './outreachDrafts'
 
 const revisedDraftSchema = z.object({
   recipient: z.string().max(254),
@@ -26,10 +25,15 @@ Apply only the requested changes. Preserve accurate details, intent, and the
 author's voice. Do not invent recipient addresses or facts. Return the complete
 recipient, subject, and body, including unchanged content.`
 
-// This is an abuse ceiling, not a typing throttle: ordinary users can request
-// hundreds of AI revisions in an hour, and manual editing remains unlimited.
+// Normal use never approaches this burst. It prevents a malformed client from
+// launching the entire hourly paid-model allowance simultaneously.
 const rateLimiter = new RateLimiter(components.rateLimiter, {
-  reviseOutreachDraft: { kind: 'fixed window', rate: 200, period: HOUR },
+  reviseOutreachDraft: {
+    kind: 'token bucket',
+    rate: 200,
+    period: HOUR,
+    capacity: 20,
+  },
 })
 
 export const request = action({
@@ -48,43 +52,54 @@ export const request = action({
       throw new ConvexError({ code: 'OUTREACH_INSTRUCTION_INVALID' })
     }
 
-    const draft = await ctx.runQuery(internal.outreachDrafts.getForAction, {
+    const requestId = crypto.randomUUID()
+    const draft = await ctx.runMutation(internal.outreachDrafts.beginRevision, {
       sessionId: args.sessionId,
       draftId: args.draftId,
+      requestId,
     })
-    if (!draft) {
-      throw new ConvexError({ code: 'OUTREACH_DRAFT_NOT_FOUND' })
-    }
-    assertOutreachDraftEditable(draft)
-    await rateLimiter.limit(ctx, 'reviseOutreachDraft', {
-      key: args.sessionId,
-      throws: true,
-    })
+    try {
+      await rateLimiter.limit(ctx, 'reviseOutreachDraft', {
+        key: args.sessionId,
+        throws: true,
+      })
 
-    const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
-    const result = await generateObject({
-      model: openai(FOUND_MODEL),
-      schema: revisedDraftSchema,
-      system: REVISION_INSTRUCTIONS,
-      prompt: JSON.stringify({
-        currentDraft: {
-          recipient: draft.recipient,
-          subject: draft.subject,
-          body: draft.body,
+      const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
+      const result = await generateObject({
+        model: openai(FOUND_MODEL),
+        schema: revisedDraftSchema,
+        system: REVISION_INSTRUCTIONS,
+        prompt: JSON.stringify({
+          currentDraft: {
+            recipient: draft.recipient,
+            subject: draft.subject,
+            body: draft.body,
+          },
+          requestedChange: instruction,
+        }),
+      })
+
+      const stored = await ctx.runMutation(
+        internal.outreachDrafts.setProposal,
+        {
+          sessionId: args.sessionId,
+          draftId: args.draftId,
+          baseRevision: draft.revision,
+          requestId,
+          instruction,
+          ...result.object,
         },
-        requestedChange: instruction,
-      }),
-    })
-
-    const stored = await ctx.runMutation(internal.outreachDrafts.setProposal, {
-      sessionId: args.sessionId,
-      draftId: args.draftId,
-      baseRevision: draft.revision,
-      instruction,
-      ...result.object,
-    })
-    if (!stored) {
-      throw new ConvexError({ code: 'OUTREACH_DRAFT_CHANGED_DURING_REVISION' })
+      )
+      if (!stored) {
+        throw new ConvexError({ code: 'OUTREACH_REVISION_SUPERSEDED' })
+      }
+    } catch (cause) {
+      await ctx.runMutation(internal.outreachDrafts.clearRevision, {
+        sessionId: args.sessionId,
+        draftId: args.draftId,
+        requestId,
+      })
+      throw cause
     }
     return null
   },

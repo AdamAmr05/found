@@ -1,6 +1,6 @@
 import { AgentMail } from '@agentmail/convex'
 import { makeFunctionReference } from 'convex/server'
-import { ConvexError, type Infer, v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { vSessionId } from 'convex-helpers/server/sessions'
 import type { SessionId } from 'convex-helpers/server/sessions'
 import { z } from 'zod'
@@ -19,6 +19,11 @@ import {
   internalQuery,
 } from './_generated/server'
 import { ownedDraft } from './outreachDrafts'
+import {
+  type OutreachMailThread,
+  vOutreachMailThread,
+  vOutreachState,
+} from './outreachModel'
 import {
   agentHasUnreadReply,
   agentReadThroughReplyRevision,
@@ -78,38 +83,10 @@ const threadSchema = z.object({
   messages: z.array(z.unknown()),
 })
 
-const vMailThread = v.object({
-  outreachId: v.string(),
-  candidateTitle: v.string(),
-  subject: v.string(),
-  observedReplyRevision: v.number(),
-  omittedMessageCount: v.number(),
-  messages: v.array(
-    v.object({
-      messageId: v.string(),
-      direction: v.union(v.literal('outbound'), v.literal('inbound')),
-      from: v.string(),
-      to: v.array(v.string()),
-      timestamp: v.string(),
-      body: v.string(),
-      bodyTruncated: v.boolean(),
-    }),
-  ),
-})
-
-type MailThread = Infer<typeof vMailThread>
-
 const vUpdate = v.object({
   outreachId: v.string(),
   candidateTitle: v.string(),
-  state: v.union(
-    v.literal('draft'),
-    v.literal('approved'),
-    v.literal('queued'),
-    v.literal('sent'),
-    v.literal('replied'),
-    v.literal('failed'),
-  ),
+  state: vOutreachState,
   hasUnreadReply: v.boolean(),
   latestActivityAt: v.number(),
 })
@@ -257,7 +234,7 @@ export const detailsForAgent = internalQuery({
 async function loadThreadData(
   ctx: ActionCtx,
   args: ReadThreadArgs,
-): Promise<MailThread> {
+): Promise<OutreachMailThread> {
   const details = await ctx.runQuery(getThreadDetails, args)
   const inboxId = env.AGENTMAIL_INBOX_ID
   if (!details || !inboxId) {
@@ -308,7 +285,7 @@ const readThreadArgs = {
 
 export const readThreadForAgent = internalAction({
   args: readThreadArgs,
-  returns: vMailThread,
+  returns: vOutreachMailThread,
   handler: async (ctx, args) => {
     const thread = await loadThreadData(ctx, args)
     await ctx.runMutation(markThreadSeenByAgent, {
@@ -322,7 +299,7 @@ export const readThreadForAgent = internalAction({
 
 export const readThread = internalAction({
   args: readThreadArgs,
-  returns: vMailThread,
+  returns: vOutreachMailThread,
   handler: loadThreadData,
 })
 
@@ -342,15 +319,9 @@ export const markReadForAgent = internalMutation({
       currentRevision,
     )
     const nextReadThrough = Math.max(currentReadThrough, observedRevision)
-    const hasUnreadReply = currentRevision > nextReadThrough
-    if (
-      nextReadThrough !== draft.agentReadThroughReplyRevision ||
-      hasUnreadReply !== draft.agentHasUnreadReply
-    ) {
+    if (nextReadThrough !== draft.agentReadThroughReplyRevision) {
       await ctx.db.patch('outreachDrafts', draft._id, {
-        replyRevision: currentRevision,
         agentReadThroughReplyRevision: nextReadThrough,
-        agentHasUnreadReply: hasUnreadReply,
       })
     }
     return null

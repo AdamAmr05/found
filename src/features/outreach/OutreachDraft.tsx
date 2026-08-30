@@ -242,7 +242,12 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
 }
 
 function isLocked(state: Draft['state']): boolean {
-  return state === 'queued' || state === 'sent' || state === 'replied'
+  return (
+    state === 'queued' ||
+    state === 'sent' ||
+    state === 'replied' ||
+    state === 'uncertain'
+  )
 }
 
 function canSend(
@@ -358,6 +363,21 @@ function useDraftPersistence({
   return { changed, saveCurrent }
 }
 
+function deliveryButtonLabel(state: Draft['state']): string {
+  switch (state) {
+    case 'queued':
+      return 'Sending'
+    case 'sent':
+      return 'Sent'
+    case 'replied':
+      return 'Replied'
+    case 'uncertain':
+      return 'Status unknown'
+    default:
+      return 'Send'
+  }
+}
+
 function DraftHeader({
   asking,
   busy,
@@ -387,14 +407,7 @@ function DraftHeader({
 }) {
   const sending = busy === 'send' || state === 'queued'
   const completed = state === 'sent' || state === 'replied'
-  const sendLabel =
-    state === 'queued'
-      ? 'Sending'
-      : state === 'sent'
-        ? 'Sent'
-        : state === 'replied'
-          ? 'Replied'
-          : 'Send'
+  const sendLabel = deliveryButtonLabel(state)
   return (
     <header className="flex min-h-58 flex-wrap items-center justify-between gap-10 border-b border-border-faint px-14 py-10 sm:px-16">
       <div

@@ -7,28 +7,16 @@ import type { Id } from './_generated/dataModel'
 import { action, mutation, query } from './_generated/server'
 import { ownedDraft } from './outreachDrafts'
 import {
+  type OutreachMailThread,
+  vOutreachMailThread,
+  vOutreachState,
+} from './outreachModel'
+import {
   humanReadThroughReplyRevision,
   humanUnreadReplyCount,
   observedReplyRevision,
   replyRevision,
 } from './outreachReplyState'
-
-type MailThread = {
-  outreachId: string
-  candidateTitle: string
-  subject: string
-  observedReplyRevision: number
-  omittedMessageCount: number
-  messages: {
-    messageId: string
-    direction: 'outbound' | 'inbound'
-    from: string
-    to: string[]
-    timestamp: string
-    body: string
-    bodyTruncated: boolean
-  }[]
-}
 
 const readMailThread = makeFunctionReference<
   'action',
@@ -37,7 +25,7 @@ const readMailThread = makeFunctionReference<
     foundThreadId: string
     outreachId: Id<'outreachDrafts'>
   },
-  MailThread
+  OutreachMailThread
 >('outreachMailbox:readThread')
 
 const vInboxItem = v.object({
@@ -46,14 +34,7 @@ const vInboxItem = v.object({
   candidateTitle: v.string(),
   recipient: v.string(),
   subject: v.string(),
-  state: v.union(
-    v.literal('draft'),
-    v.literal('approved'),
-    v.literal('queued'),
-    v.literal('sent'),
-    v.literal('replied'),
-    v.literal('failed'),
-  ),
+  state: vOutreachState,
   unreadReplyCount: v.number(),
   latestActivityAt: v.number(),
   canReadThread: v.boolean(),
@@ -90,24 +71,7 @@ export const read = action({
     threadId: v.string(),
     outreachId: v.id('outreachDrafts'),
   },
-  returns: v.object({
-    outreachId: v.string(),
-    candidateTitle: v.string(),
-    subject: v.string(),
-    observedReplyRevision: v.number(),
-    omittedMessageCount: v.number(),
-    messages: v.array(
-      v.object({
-        messageId: v.string(),
-        direction: v.union(v.literal('outbound'), v.literal('inbound')),
-        from: v.string(),
-        to: v.array(v.string()),
-        timestamp: v.string(),
-        body: v.string(),
-        bodyTruncated: v.boolean(),
-      }),
-    ),
-  }),
+  returns: vOutreachMailThread,
   handler: async (ctx, args) =>
     await ctx.runAction(readMailThread, {
       sessionId: args.sessionId,
@@ -132,15 +96,9 @@ export const markRead = mutation({
       currentRevision,
     )
     const nextReadThrough = Math.max(currentReadThrough, observedRevision)
-    const unreadReplyCount = currentRevision - nextReadThrough
-    if (
-      nextReadThrough !== draft.humanReadThroughReplyRevision ||
-      unreadReplyCount !== draft.unreadReplyCount
-    ) {
+    if (nextReadThrough !== draft.humanReadThroughReplyRevision) {
       await ctx.db.patch('outreachDrafts', draft._id, {
-        replyRevision: currentRevision,
         humanReadThroughReplyRevision: nextReadThrough,
-        unreadReplyCount,
       })
     }
     return null

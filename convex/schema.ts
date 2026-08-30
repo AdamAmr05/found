@@ -2,7 +2,11 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { vSessionId } from 'convex-helpers/server/sessions'
 
-import { vOutreachProposal, vOutreachState } from './outreachModel'
+import {
+  vOutreachProposal,
+  vOutreachRevisionRequest,
+  vOutreachState,
+} from './outreachModel'
 
 const schema = defineSchema({
   candidatePartRefs: defineTable({
@@ -52,16 +56,16 @@ const schema = defineSchema({
     state: vOutreachState,
     updatedAt: v.number(),
     latestActivityAt: v.number(),
+    deliveryStartedAt: v.optional(v.number()),
     approvedHash: v.optional(v.string()),
     approvedAt: v.optional(v.number()),
     outboundId: v.optional(v.string()),
     agentmailMessageId: v.optional(v.string()),
     agentmailThreadId: v.optional(v.string()),
-    replyRevision: v.optional(v.number()),
-    humanReadThroughReplyRevision: v.optional(v.number()),
-    agentReadThroughReplyRevision: v.optional(v.number()),
-    unreadReplyCount: v.number(),
-    agentHasUnreadReply: v.optional(v.boolean()),
+    replyRevision: v.number(),
+    humanReadThroughReplyRevision: v.number(),
+    agentReadThroughReplyRevision: v.number(),
+    revisionRequest: v.optional(vOutreachRevisionRequest),
     proposal: v.optional(vOutreachProposal),
   })
     .index('by_session_and_thread_and_latest_activity', [

@@ -7,33 +7,18 @@ type ReplyState = Pick<
   | 'replyRevision'
   | 'humanReadThroughReplyRevision'
   | 'agentReadThroughReplyRevision'
-  | 'unreadReplyCount'
-  | 'agentHasUnreadReply'
 >
 
 export function replyRevision(state: ReplyState): number {
-  return (
-    state.replyRevision ??
-    Math.max(state.unreadReplyCount, state.agentHasUnreadReply ? 1 : 0)
-  )
+  return state.replyRevision
 }
 
 export function humanReadThroughReplyRevision(state: ReplyState): number {
-  const currentRevision = replyRevision(state)
-  return (
-    state.humanReadThroughReplyRevision ??
-    Math.max(0, currentRevision - state.unreadReplyCount)
-  )
+  return state.humanReadThroughReplyRevision
 }
 
 export function agentReadThroughReplyRevision(state: ReplyState): number {
-  const currentRevision = replyRevision(state)
-  if (state.agentReadThroughReplyRevision !== undefined) {
-    return state.agentReadThroughReplyRevision
-  }
-  return state.agentHasUnreadReply === false
-    ? currentRevision
-    : Math.max(0, currentRevision - 1)
+  return state.agentReadThroughReplyRevision
 }
 
 export function humanUnreadReplyCount(state: ReplyState): number {

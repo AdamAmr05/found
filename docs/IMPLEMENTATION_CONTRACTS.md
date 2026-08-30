@@ -96,9 +96,24 @@ projection reports how many older messages were omitted and whether an
 individual body was shortened. AgentMail remains the durable source for the
 complete mailbox thread.
 
-AI-powered draft revision has a generous per-session abuse ceiling of 200
-requests per hour with no separate burst throttle. Manual editing and its
-normal Convex persistence are not rate-limited.
+AI-powered draft revision has a generous per-session token bucket of 200
+requests per hour with capacity for 20 immediate requests. Manual editing and
+its normal Convex persistence are unlimited. One five-minute lease per draft
+prevents overlapping paid revisions and ensures that an older model result
+cannot replace a newer request. The lease is cleared on completion or handled
+failure and expires after an interrupted action.
+
+AgentMail webhooks remain the delivery signal. A bounded reconciliation loop
+bridges the component's temporary outbound ID to the eventual provider message
+and thread IDs that webhook correlation needs. It covers 30 minutes—well past
+the component's normal retry budget—then stops and marks a still-pending draft
+`uncertain` rather than claiming delivery or failure. An uncertain draft stays
+locked to prevent an accidental duplicate send.
+
+Reply revisions are the durable unread source of truth. The human Inbox and
+agent each store only their own read-through revision; unread counts and flags
+are derived. A read advances only through the revision actually returned with
+that thread, so a reply arriving during the read remains unread.
 
 ## Firecrawl research tools
 

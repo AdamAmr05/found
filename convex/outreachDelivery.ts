@@ -18,13 +18,10 @@ import {
   validateOutreachContent,
 } from './outreachContent'
 import { ownedDraft } from './outreachDrafts'
-import {
-  agentReadThroughReplyRevision,
-  humanReadThroughReplyRevision,
-  replyRevision,
-} from './outreachReplyState'
+import { replyRevision } from './outreachReplyState'
 
 const agentmail = new AgentMail(components.agentmail)
+const OUTBOUND_RECONCILIATION_HORIZON_MS = 30 * 60 * 1_000
 
 const inboundMessageSchema = z.object({
   inbox_id: z.string(),
@@ -89,12 +86,14 @@ export const send = mutation({
       text: draft.body,
       labels: ['found-outreach'],
     })
+    const deliveryStartedAt = Date.now()
     await ctx.db.patch('outreachDrafts', draft._id, {
       outboundId: outbound,
       agentmailMessageId: undefined,
       agentmailThreadId: undefined,
       state: 'queued',
-      latestActivityAt: Date.now(),
+      deliveryStartedAt,
+      latestActivityAt: deliveryStartedAt,
     })
     await ctx.scheduler.runAfter(0, internal.outreachDelivery.syncOutbound, {
       draftId: draft._id,
@@ -168,16 +167,28 @@ export const applyOutboundStatus = internalMutation({
       args.status === 'bounced' ||
       args.status === 'complained' ||
       args.status === 'rejected'
+    const now = Date.now()
+    const deliveryStartedAt = draft.deliveryStartedAt ?? draft.latestActivityAt
+    const reconciliationExpired =
+      args.status === 'pending' &&
+      now - deliveryStartedAt >= OUTBOUND_RECONCILIATION_HORIZON_MS
     const patch: OutreachPatch = {
-      state: failed ? 'failed' : args.status === 'pending' ? 'queued' : 'sent',
-      latestActivityAt: Date.now(),
+      state: failed
+        ? 'failed'
+        : reconciliationExpired
+          ? 'uncertain'
+          : args.status === 'pending'
+            ? 'queued'
+            : 'sent',
+      deliveryStartedAt,
+      latestActivityAt: now,
     }
     if (args.agentmailMessageId) {
       patch.agentmailMessageId = args.agentmailMessageId
     }
     if (args.threadId) patch.agentmailThreadId = args.threadId
     await ctx.db.patch('outreachDrafts', draft._id, patch)
-    if (args.status === 'pending') {
+    if (args.status === 'pending' && !reconciliationExpired) {
       await ctx.scheduler.runAfter(
         reconciliationDelayMs(args.attempt),
         internal.outreachDelivery.syncOutbound,
@@ -223,15 +234,9 @@ export const onMessageReceived = internalMutation({
     if (!draft) return null
     const currentReplyRevision = replyRevision(draft)
     const nextReplyRevision = currentReplyRevision + 1
-    const humanReadThrough = humanReadThroughReplyRevision(draft)
-    const agentReadThrough = agentReadThroughReplyRevision(draft)
     await ctx.db.patch('outreachDrafts', draft._id, {
       state: 'replied',
       replyRevision: nextReplyRevision,
-      humanReadThroughReplyRevision: humanReadThrough,
-      agentReadThroughReplyRevision: agentReadThrough,
-      agentHasUnreadReply: nextReplyRevision > agentReadThrough,
-      unreadReplyCount: nextReplyRevision - humanReadThrough,
       latestActivityAt: Date.now(),
     })
     return null
