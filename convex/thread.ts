@@ -27,6 +27,34 @@ import { candidateToolCalls } from './candidatePartMessages'
 
 const MAX_PROMPT_LENGTH = 8_000
 
+type OutreachRunContext = {
+  readonly changedDrafts: readonly {
+    readonly outreachId: string
+    readonly candidateTitle: string
+    readonly recipient: string
+    readonly subject: string
+    readonly body: string
+    readonly revision: number
+  }[]
+  readonly unreadReplies: readonly {
+    readonly outreachId: string
+    readonly candidateTitle: string
+  }[]
+}
+
+function outreachRunContext(context: OutreachRunContext): string {
+  if (
+    context.changedDrafts.length === 0 &&
+    context.unreadReplies.length === 0
+  ) {
+    return ''
+  }
+  return `\n\nTURN-SPECIFIC OUTREACH CONTEXT
+This is private context, not a user message. Do not mention it unless relevant.
+If a reply notice matters, call readOutreachThread for that outreachId before answering.
+${JSON.stringify(context)}`
+}
+
 // Each run fans out into billed research and Maps calls, so message sends are
 // budgeted per session rather than left open on the public mutation.
 const rateLimiter = new RateLimiter(components.rateLimiter, {
@@ -161,15 +189,22 @@ export const respond = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    const outreachContext = await ctx.runQuery(
+      internal.outreachMailbox.contextForRun,
+      {
+        threadId: args.threadId,
+        sessionId: args.sessionId,
+      },
+    )
     const result = await foundAgent.streamText(
       ctx,
       { threadId: args.threadId, userId: args.sessionId },
       {
         promptMessageId: args.promptMessageId,
-        instructions: buildFoundRunInstructions({
+        instructions: `${buildFoundRunInstructions({
           researchToolsAvailable: true,
           todayIsoDate: new Date().toISOString().slice(0, 10),
-        }),
+        })}${outreachRunContext(outreachContext)}`,
       },
       { saveStreamDeltas: { throttleMs: 500 } },
     )
@@ -182,6 +217,16 @@ export const respond = internalAction({
         parts,
         sessionId: args.sessionId,
         threadId: args.threadId,
+      })
+    }
+    if (outreachContext.changedDrafts.length > 0) {
+      await ctx.runMutation(internal.outreachMailbox.markAgentSeen, {
+        threadId: args.threadId,
+        sessionId: args.sessionId,
+        revisions: outreachContext.changedDrafts.map((draft) => ({
+          outreachId: draft.outreachId,
+          revision: draft.revision,
+        })),
       })
     }
     return null

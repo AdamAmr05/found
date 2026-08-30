@@ -18,6 +18,9 @@ export function FoundHeader({
           className="flex items-center gap-6"
           aria-label="Primary navigation"
         >
+          <Link className={navLinkClass} to="/inbox">
+            Inbox
+          </Link>
           <Link className={navLinkClass} to="/bookmarks">
             Bookmarks
           </Link>

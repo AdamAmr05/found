@@ -10,6 +10,9 @@ export const PAGE_IMAGE_MAX_COUNT = 12
 export const PAGE_WARNING_MAX_LENGTH = 500
 export const CANDIDATE_PRESENTATION_MAX_COUNT = 12
 export const CANDIDATE_REF_MAX_LENGTH = 48
+export const OUTREACH_BODY_MAX_LENGTH = 12_000
+export const OUTREACH_INSTRUCTION_MAX_LENGTH = 1_000
+export const OUTREACH_SUBJECT_MAX_LENGTH = 200
 
 const httpUrl = z
   .string()
@@ -254,6 +257,64 @@ export const showCandidatesOutputSchema = z.object({
   presented: z.number().int().min(1).max(CANDIDATE_PRESENTATION_MAX_COUNT),
 })
 
+export const showOutreachDraftInputSchema = z.object({
+  candidateRef: z
+    .string()
+    .trim()
+    .min(1)
+    .max(CANDIDATE_REF_MAX_LENGTH)
+    .optional(),
+  candidateTitle: z.string().trim().min(1).max(140),
+  recipient: emailAddress.optional(),
+  subject: z.string().trim().min(1).max(OUTREACH_SUBJECT_MAX_LENGTH),
+  body: z.string().trim().min(1).max(OUTREACH_BODY_MAX_LENGTH),
+})
+
+export const showOutreachDraftOutputSchema = z.object({
+  draftId: z.string().min(1),
+})
+
+export const listOutreachUpdatesInputSchema = z.object({})
+export const listOutreachUpdatesOutputSchema = z.object({
+  updates: z
+    .array(
+      z.object({
+        outreachId: z.string().min(1),
+        candidateTitle: z.string(),
+        state: z.enum([
+          'draft',
+          'approved',
+          'queued',
+          'sent',
+          'replied',
+          'failed',
+        ]),
+        hasUnreadReply: z.boolean(),
+        latestActivityAt: z.number(),
+      }),
+    )
+    .max(50),
+})
+
+export const readOutreachThreadInputSchema = z.object({
+  outreachId: z.string().min(1),
+})
+export const readOutreachThreadOutputSchema = z.object({
+  outreachId: z.string().min(1),
+  candidateTitle: z.string(),
+  subject: z.string(),
+  messages: z.array(
+    z.object({
+      messageId: z.string(),
+      direction: z.enum(['outbound', 'inbound']),
+      from: z.string(),
+      to: z.array(z.string()),
+      timestamp: z.string(),
+      body: z.string(),
+    }),
+  ),
+})
+
 export type CandidateSnapshot = z.infer<typeof candidateSnapshotSchema>
 type ReadPageInput = z.infer<typeof readPageInputSchema>
 export type ReadPageOutput = z.infer<typeof readPageOutputSchema>
@@ -261,9 +322,36 @@ type SearchWebInput = z.infer<typeof searchWebInputSchema>
 export type SearchWebOutput = z.infer<typeof searchWebOutputSchema>
 export type ShowCandidatesInput = z.infer<typeof showCandidatesInputSchema>
 export type ShowCandidatesOutput = z.infer<typeof showCandidatesOutputSchema>
+export type ShowOutreachDraftInput = z.infer<
+  typeof showOutreachDraftInputSchema
+>
+export type ShowOutreachDraftOutput = z.infer<
+  typeof showOutreachDraftOutputSchema
+>
+export type ListOutreachUpdatesOutput = z.infer<
+  typeof listOutreachUpdatesOutputSchema
+>
+export type ReadOutreachThreadInput = z.infer<
+  typeof readOutreachThreadInputSchema
+>
+export type ReadOutreachThreadOutput = z.infer<
+  typeof readOutreachThreadOutputSchema
+>
 
 export type FoundUITools = {
   searchWeb: { input: SearchWebInput; output: SearchWebOutput }
   readPage: { input: ReadPageInput; output: ReadPageOutput }
   showCandidates: { input: ShowCandidatesInput; output: ShowCandidatesOutput }
+  showOutreachDraft: {
+    input: ShowOutreachDraftInput
+    output: ShowOutreachDraftOutput
+  }
+  listOutreachUpdates: {
+    input: Record<string, never>
+    output: ListOutreachUpdatesOutput
+  }
+  readOutreachThread: {
+    input: ReadOutreachThreadInput
+    output: ReadOutreachThreadOutput
+  }
 }

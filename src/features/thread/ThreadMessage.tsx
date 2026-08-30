@@ -22,6 +22,7 @@ const StreamingMarkdown = lazy(() =>
 )
 const CandidateToolPart = lazy(() => import('./CandidateToolPart'))
 const MapToolPart = lazy(() => import('./MapToolPart'))
+const OutreachToolPart = lazy(() => import('./OutreachToolPart'))
 
 export type FoundUIMessage = UIMessage<
   Record<string, never>,
@@ -157,6 +158,28 @@ function AssistantPart({
       return <ResearchToolStep kind="search" state={part.state} />
     case 'tool-readPage':
       return <ResearchToolStep kind="read" state={part.state} />
+    case 'tool-listOutreachUpdates':
+      return (
+        <ToolStep
+          active={isToolActive(part.state)}
+          label={
+            isToolActive(part.state)
+              ? 'Checking email updates'
+              : 'Checked email updates'
+          }
+        />
+      )
+    case 'tool-readOutreachThread':
+      return (
+        <ToolStep
+          active={isToolActive(part.state)}
+          label={
+            isToolActive(part.state)
+              ? 'Reading the email thread'
+              : 'Read the email thread'
+          }
+        />
+      )
     case 'tool-showCandidates':
       return (
         <Suspense
@@ -181,6 +204,12 @@ function AssistantPart({
           fallback={<ToolStep active label="Composing the map scene" />}
         >
           <MapToolPart part={part} />
+        </Suspense>
+      )
+    case 'tool-showOutreachDraft':
+      return (
+        <Suspense fallback={<ToolStep active label="Writing the email" />}>
+          <OutreachToolPart part={part} />
         </Suspense>
       )
     default:

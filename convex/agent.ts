@@ -4,6 +4,7 @@ import { isStepCount } from 'ai'
 
 import { components } from './_generated/api'
 import { env } from './_generated/server'
+import { FOUND_MODEL } from './aiModel'
 import { FOUND_BASE_INSTRUCTIONS } from './agentInstructions'
 import {
   computeRoutes,
@@ -12,9 +13,12 @@ import {
   searchPlaces,
 } from './tools/maps'
 import { showCandidates, showMap } from './tools/presentation'
+import { showOutreachDraft } from './tools/outreach'
+import {
+  listOutreachUpdates,
+  readOutreachThread,
+} from './tools/outreachMailbox'
 import { readPage, searchWeb } from './tools/research'
-
-export const FOUND_MODEL = 'gpt-5.6-luna' as const
 
 const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
 
@@ -27,6 +31,9 @@ export const foundAgent = new Agent(components.agent, {
     searchWeb,
     showCandidates,
     showMap,
+    showOutreachDraft,
+    listOutreachUpdates,
+    readOutreachThread,
     searchPlaces,
     computeRoutes,
     lookupWeather,

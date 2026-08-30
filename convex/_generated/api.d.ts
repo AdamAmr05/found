@@ -10,14 +10,25 @@
 
 import type * as agent from "../agent.js";
 import type * as agentInstructions from "../agentInstructions.js";
+import type * as aiModel from "../aiModel.js";
 import type * as candidatePartMessages from "../candidatePartMessages.js";
 import type * as candidateParts from "../candidateParts.js";
+import type * as http from "../http.js";
+import type * as outreachContent from "../outreachContent.js";
+import type * as outreachDelivery from "../outreachDelivery.js";
+import type * as outreachDrafts from "../outreachDrafts.js";
+import type * as outreachInbox from "../outreachInbox.js";
+import type * as outreachMailbox from "../outreachMailbox.js";
+import type * as outreachModel from "../outreachModel.js";
+import type * as outreachRevision from "../outreachRevision.js";
 import type * as savedCandidates from "../savedCandidates.js";
 import type * as thread from "../thread.js";
 import type * as threadAccess from "../threadAccess.js";
 import type * as tools_firecrawlAdapter from "../tools/firecrawlAdapter.js";
 import type * as tools_maps from "../tools/maps.js";
 import type * as tools_mapsAdapter from "../tools/mapsAdapter.js";
+import type * as tools_outreach from "../tools/outreach.js";
+import type * as tools_outreachMailbox from "../tools/outreachMailbox.js";
 import type * as tools_presentation from "../tools/presentation.js";
 import type * as tools_research from "../tools/research.js";
 
@@ -30,14 +41,25 @@ import type {
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   agentInstructions: typeof agentInstructions;
+  aiModel: typeof aiModel;
   candidatePartMessages: typeof candidatePartMessages;
   candidateParts: typeof candidateParts;
+  http: typeof http;
+  outreachContent: typeof outreachContent;
+  outreachDelivery: typeof outreachDelivery;
+  outreachDrafts: typeof outreachDrafts;
+  outreachInbox: typeof outreachInbox;
+  outreachMailbox: typeof outreachMailbox;
+  outreachModel: typeof outreachModel;
+  outreachRevision: typeof outreachRevision;
   savedCandidates: typeof savedCandidates;
   thread: typeof thread;
   threadAccess: typeof threadAccess;
   "tools/firecrawlAdapter": typeof tools_firecrawlAdapter;
   "tools/maps": typeof tools_maps;
   "tools/mapsAdapter": typeof tools_mapsAdapter;
+  "tools/outreach": typeof tools_outreach;
+  "tools/outreachMailbox": typeof tools_outreachMailbox;
   "tools/presentation": typeof tools_presentation;
   "tools/research": typeof tools_research;
 }>;
@@ -70,6 +92,7 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
+  agentmail: import("@agentmail/convex/_generated/component.js").ComponentApi<"agentmail">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
   firecrawl: import("@firecrawl/firecrawl-convex/_generated/component.js").ComponentApi<"firecrawl">;
 };

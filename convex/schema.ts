@@ -2,7 +2,9 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { vSessionId } from 'convex-helpers/server/sessions'
 
-export default defineSchema({
+import { vOutreachProposal, vOutreachState } from './outreachModel'
+
+const schema = defineSchema({
   candidatePartRefs: defineTable({
     sessionId: vSessionId,
     threadId: v.string(),
@@ -36,4 +38,37 @@ export default defineSchema({
       'toolCallId',
       'candidateRef',
     ]),
+  outreachDrafts: defineTable({
+    sessionId: vSessionId,
+    threadId: v.string(),
+    toolCallId: v.string(),
+    candidateRef: v.optional(v.string()),
+    candidateTitle: v.string(),
+    recipient: v.string(),
+    subject: v.string(),
+    body: v.string(),
+    revision: v.number(),
+    lastAgentSeenRevision: v.number(),
+    state: vOutreachState,
+    updatedAt: v.number(),
+    latestActivityAt: v.number(),
+    approvedHash: v.optional(v.string()),
+    approvedAt: v.optional(v.number()),
+    outboundId: v.optional(v.string()),
+    agentmailMessageId: v.optional(v.string()),
+    agentmailThreadId: v.optional(v.string()),
+    unreadReplyCount: v.number(),
+    proposal: v.optional(vOutreachProposal),
+  })
+    .index('by_session_and_thread_and_latest_activity', [
+      'sessionId',
+      'threadId',
+      'latestActivityAt',
+    ])
+    .index('by_session_and_latest_activity', ['sessionId', 'latestActivityAt'])
+    .index('by_thread_and_tool_call', ['threadId', 'toolCallId'])
+    .index('by_agentmail_thread', ['agentmailThreadId'])
+    .index('by_agentmail_message', ['agentmailMessageId']),
 })
+
+export default schema
