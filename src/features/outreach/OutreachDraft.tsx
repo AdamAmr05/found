@@ -18,6 +18,7 @@ import {
 } from 'convex-helpers/react/sessions'
 
 import { api } from '../../../convex/_generated/api'
+import { OUTREACH_BODY_MAX_LENGTH } from '../../../shared/foundTools'
 import { changedSpan } from './outreachDiff'
 
 type Draft = NonNullable<FunctionReturnType<typeof api.outreachDrafts.get>>
@@ -146,6 +147,7 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
         instructionRef={instructionRef}
         sendDisabled={sendDisabled}
         state={draft.state}
+        locked={locked}
         onCopy={() => void copyBody()}
         onInstructionChange={setInstruction}
         onRevise={() => void revise()}
@@ -219,7 +221,7 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
             aria-label="Email body"
             className="mt-16 block min-h-180 w-full resize-none overflow-hidden bg-transparent text-body-large outline-none placeholder:text-foreground-muted disabled:text-foreground-muted"
             disabled={locked}
-            maxLength={12000}
+            maxLength={OUTREACH_BODY_MAX_LENGTH}
             placeholder="Write your email"
             value={body}
             onChange={(event) => {
@@ -361,6 +363,7 @@ function DraftHeader({
   busy,
   instruction,
   instructionRef,
+  locked,
   sendDisabled,
   state,
   onCopy,
@@ -373,6 +376,7 @@ function DraftHeader({
   readonly busy: BusyState | undefined
   readonly instruction: string
   readonly instructionRef: RefObject<HTMLInputElement | null>
+  readonly locked: boolean
   readonly sendDisabled: boolean
   readonly state: Draft['state']
   readonly onCopy: () => void
@@ -404,6 +408,7 @@ function DraftHeader({
           aria-expanded={asking}
           aria-label={asking ? 'Close change request' : 'Ask for changes'}
           className="grid size-38 shrink-0 place-items-center text-accent-black focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-heat-100"
+          disabled={locked}
           type="button"
           onClick={onToggleAsking}
         >
@@ -415,6 +420,7 @@ function DraftHeader({
               ref={instructionRef}
               aria-label="Ask for changes"
               className="min-w-0 flex-1 bg-transparent pr-4 text-body-medium outline-none placeholder:text-foreground-muted"
+              disabled={locked}
               maxLength={1000}
               placeholder="Ask for changes"
               value={instruction}
@@ -429,7 +435,7 @@ function DraftHeader({
             <button
               aria-label="Apply requested changes"
               className="mr-3 grid size-30 shrink-0 place-items-center rounded-8 bg-accent-black text-white disabled:opacity-35"
-              disabled={!instruction.trim() || busy === 'revise'}
+              disabled={locked || !instruction.trim() || busy === 'revise'}
               type="button"
               onClick={onRevise}
             >
@@ -443,6 +449,7 @@ function DraftHeader({
         ) : (
           <button
             className="h-full flex-1 pr-12 text-left text-label-medium"
+            disabled={locked}
             type="button"
             onClick={onToggleAsking}
           >

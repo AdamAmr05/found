@@ -1,4 +1,5 @@
 import { createOpenAI } from '@ai-sdk/openai'
+import { HOUR, RateLimiter } from '@convex-dev/rate-limiter'
 import { generateObject } from 'ai'
 import { ConvexError, v } from 'convex/values'
 import { SessionIdArg } from 'convex-helpers/server/sessions'
@@ -9,9 +10,10 @@ import {
   OUTREACH_INSTRUCTION_MAX_LENGTH,
   OUTREACH_SUBJECT_MAX_LENGTH,
 } from '../shared/foundTools'
-import { internal } from './_generated/api'
+import { components, internal } from './_generated/api'
 import { action, env } from './_generated/server'
 import { FOUND_MODEL } from './aiModel'
+import { assertOutreachDraftEditable } from './outreachDrafts'
 
 const revisedDraftSchema = z.object({
   recipient: z.string().max(254),
@@ -23,6 +25,12 @@ const REVISION_INSTRUCTIONS = `You revise one email draft for its author.
 Apply only the requested changes. Preserve accurate details, intent, and the
 author's voice. Do not invent recipient addresses or facts. Return the complete
 recipient, subject, and body, including unchanged content.`
+
+// This is an abuse ceiling, not a typing throttle: ordinary users can request
+// hundreds of AI revisions in an hour, and manual editing remains unlimited.
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  reviseOutreachDraft: { kind: 'fixed window', rate: 200, period: HOUR },
+})
 
 export const request = action({
   args: {
@@ -47,6 +55,11 @@ export const request = action({
     if (!draft) {
       throw new ConvexError({ code: 'OUTREACH_DRAFT_NOT_FOUND' })
     }
+    assertOutreachDraftEditable(draft)
+    await rateLimiter.limit(ctx, 'reviseOutreachDraft', {
+      key: args.sessionId,
+      throws: true,
+    })
 
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
     const result = await generateObject({

@@ -5,6 +5,10 @@ import { vSessionId } from 'convex-helpers/server/sessions'
 import type { SessionId } from 'convex-helpers/server/sessions'
 import { z } from 'zod'
 
+import {
+  OUTREACH_BODY_MAX_LENGTH,
+  OUTREACH_THREAD_MAX_MESSAGES,
+} from '../shared/foundTools'
 import { components } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import {
@@ -58,13 +62,16 @@ const messageSchema = z.object({
   preview: z.string().optional(),
 })
 const threadSchema = z.object({
-  messages: z.array(messageSchema).max(100),
+  // AgentMail's Get Thread endpoint is not paginated. Keep only the recent
+  // window at this external boundary, then validate those messages precisely.
+  messages: z.array(z.unknown()),
 })
 
 const vMailThread = v.object({
   outreachId: v.string(),
   candidateTitle: v.string(),
   subject: v.string(),
+  omittedMessageCount: v.number(),
   messages: v.array(
     v.object({
       messageId: v.string(),
@@ -73,6 +80,7 @@ const vMailThread = v.object({
       to: v.array(v.string()),
       timestamp: v.string(),
       body: v.string(),
+      bodyTruncated: v.boolean(),
     }),
   ),
 })
@@ -244,14 +252,24 @@ async function loadThreadData(
   const response = threadSchema.parse(
     await agentmail.getThread(ctx, inboxId, details.agentmailThreadId),
   )
+  const omittedMessageCount = Math.max(
+    0,
+    response.messages.length - OUTREACH_THREAD_MAX_MESSAGES,
+  )
+  const messages = response.messages
+    .slice(-OUTREACH_THREAD_MAX_MESSAGES)
+    .map((message) => messageSchema.parse(message))
   return {
     outreachId: args.outreachId,
     candidateTitle: details.candidateTitle,
     subject: details.subject,
-    messages: response.messages.map((message) => {
+    omittedMessageCount,
+    messages: messages.map((message) => {
       const from = Array.isArray(message.from)
         ? message.from.join(', ')
         : message.from
+      const fullBody =
+        message.extracted_text ?? message.text ?? message.preview ?? ''
       return {
         messageId: message.message_id,
         direction: from.includes(inboxId)
@@ -260,12 +278,8 @@ async function loadThreadData(
         from,
         to: message.to,
         timestamp: message.timestamp,
-        body: (
-          message.extracted_text ??
-          message.text ??
-          message.preview ??
-          ''
-        ).slice(0, 16_000),
+        body: fullBody.slice(0, OUTREACH_BODY_MAX_LENGTH),
+        bodyTruncated: fullBody.length > OUTREACH_BODY_MAX_LENGTH,
       }
     }),
   }

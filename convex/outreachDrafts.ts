@@ -104,13 +104,24 @@ export async function ownedDraft(
   return draft
 }
 
-function editable(draft: Doc<'outreachDrafts'>): void {
+export function assertOutreachDraftEditable(
+  draft: Pick<Doc<'outreachDrafts'>, 'state'>,
+): void {
   if (
     draft.state === 'queued' ||
     draft.state === 'sent' ||
     draft.state === 'replied'
   ) {
     throw new ConvexError({ code: 'OUTREACH_DRAFT_NOT_EDITABLE' })
+  }
+}
+
+function validateDraftLengths(subject: string, body: string): void {
+  if (subject.length > OUTREACH_SUBJECT_MAX_LENGTH) {
+    throw new ConvexError({ code: 'OUTREACH_SUBJECT_TOO_LONG' })
+  }
+  if (body.length > OUTREACH_BODY_MAX_LENGTH) {
+    throw new ConvexError({ code: 'OUTREACH_BODY_TOO_LONG' })
   }
 }
 
@@ -136,6 +147,8 @@ export const createFromAgent = internalMutation({
       .unique()
     if (existing) return existing._id
 
+    const subject = normalizeOutreachSubject(args.subject)
+    validateDraftLengths(subject, args.body)
     const now = Date.now()
     const newDraft: NewOutreachDraft = {
       sessionId: args.sessionId,
@@ -143,7 +156,7 @@ export const createFromAgent = internalMutation({
       toolCallId: args.toolCallId,
       candidateTitle: args.candidateTitle.trim(),
       recipient: normalizeOutreachRecipient(args.recipient ?? ''),
-      subject: normalizeOutreachSubject(args.subject),
+      subject,
       body: args.body,
       revision: 1,
       lastAgentSeenRevision: 1,
@@ -180,7 +193,7 @@ export const update = mutation({
   returns: v.number(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
-    editable(draft)
+    assertOutreachDraftEditable(draft)
     const recipient = normalizeOutreachRecipient(args.recipient)
     const subject = normalizeOutreachSubject(args.subject)
     if (
@@ -190,12 +203,7 @@ export const update = mutation({
     ) {
       return draft.revision
     }
-    if (subject.length > OUTREACH_SUBJECT_MAX_LENGTH) {
-      throw new ConvexError({ code: 'OUTREACH_SUBJECT_TOO_LONG' })
-    }
-    if (args.body.length > OUTREACH_BODY_MAX_LENGTH) {
-      throw new ConvexError({ code: 'OUTREACH_BODY_TOO_LONG' })
-    }
+    validateDraftLengths(subject, args.body)
     const revision = draft.revision + 1
     const now = Date.now()
     await ctx.db.patch('outreachDrafts', draft._id, {
@@ -219,7 +227,7 @@ export const approve = mutation({
   returns: v.string(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
-    editable(draft)
+    assertOutreachDraftEditable(draft)
     const inboxId = env.AGENTMAIL_INBOX_ID
     if (!inboxId) {
       throw new ConvexError({ code: 'AGENTMAIL_INBOX_NOT_CONFIGURED' })
@@ -255,15 +263,17 @@ export const setProposal = internalMutation({
   returns: v.boolean(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
-    editable(draft)
+    assertOutreachDraftEditable(draft)
     if (draft.revision !== args.baseRevision) return false
     if (args.instruction.length > OUTREACH_INSTRUCTION_MAX_LENGTH) {
       throw new ConvexError({ code: 'OUTREACH_INSTRUCTION_TOO_LONG' })
     }
+    const subject = normalizeOutreachSubject(args.subject)
+    validateDraftLengths(subject, args.body)
     await ctx.db.patch('outreachDrafts', draft._id, {
       proposal: {
         recipient: normalizeOutreachRecipient(args.recipient),
-        subject: normalizeOutreachSubject(args.subject),
+        subject,
         body: args.body,
         instruction: args.instruction,
         baseRevision: args.baseRevision,
@@ -279,11 +289,12 @@ export const acceptProposal = mutation({
   returns: v.number(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
-    editable(draft)
+    assertOutreachDraftEditable(draft)
     const proposal = draft.proposal
     if (!proposal || proposal.baseRevision !== draft.revision) {
       throw new ConvexError({ code: 'OUTREACH_PROPOSAL_STALE' })
     }
+    validateDraftLengths(proposal.subject, proposal.body)
     const revision = draft.revision + 1
     const now = Date.now()
     await ctx.db.patch('outreachDrafts', draft._id, {
@@ -307,7 +318,7 @@ export const discardProposal = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
-    editable(draft)
+    assertOutreachDraftEditable(draft)
     await ctx.db.patch('outreachDrafts', draft._id, { proposal: undefined })
     return null
   },

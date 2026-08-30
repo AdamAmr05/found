@@ -7,6 +7,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { api, components, internal } from './_generated/api'
 import schema from './schema'
+import { OUTREACH_BODY_MAX_LENGTH } from '../shared/foundTools'
 
 const modules = import.meta.glob('./**/*.ts')
 // SAFETY: SessionId is a nominal brand over strings; this fixed value models
@@ -136,6 +137,71 @@ describe('outreach drafts', () => {
       body: 'Hi,\n\nI hope you are well. Is this still available?',
       revision: 2,
       state: 'draft',
+    })
+  })
+
+  test('enforces the email body boundary for agent and manual edits', async () => {
+    const t = setup()
+    const { draftId, threadId } = await createDraft(t)
+    const maximumBody = 'x'.repeat(OUTREACH_BODY_MAX_LENGTH)
+    const oversizedBody = `${maximumBody}x`
+
+    await expect(
+      t.mutation(api.outreachDrafts.update, {
+        draftId,
+        sessionId: ownerSession,
+        recipient: 'host@example.com',
+        subject: 'Availability',
+        body: maximumBody,
+      }),
+    ).resolves.toBe(2)
+    await expect(
+      t.mutation(api.outreachDrafts.update, {
+        draftId,
+        sessionId: ownerSession,
+        recipient: 'host@example.com',
+        subject: 'Availability',
+        body: oversizedBody,
+      }),
+    ).rejects.toMatchObject({ data: { code: 'OUTREACH_BODY_TOO_LONG' } })
+    await expect(
+      t.mutation(internal.outreachDrafts.createFromAgent, {
+        sessionId: ownerSession,
+        threadId,
+        toolCallId: 'oversized-draft-call',
+        candidateTitle: 'Apartment B',
+        subject: 'Availability',
+        body: oversizedBody,
+      }),
+    ).rejects.toMatchObject({ data: { code: 'OUTREACH_BODY_TOO_LONG' } })
+    await expect(
+      t.mutation(internal.outreachDrafts.setProposal, {
+        draftId,
+        sessionId: ownerSession,
+        baseRevision: 2,
+        instruction: 'Make it warmer',
+        recipient: 'host@example.com',
+        subject: 'Availability',
+        body: oversizedBody,
+      }),
+    ).rejects.toMatchObject({ data: { code: 'OUTREACH_BODY_TOO_LONG' } })
+  })
+
+  test('rejects AI revisions for locked drafts before model work', async () => {
+    const t = setup()
+    const { draftId } = await createDraft(t)
+    await t.run(async (ctx) => {
+      await ctx.db.patch('outreachDrafts', draftId, { state: 'sent' })
+    })
+
+    await expect(
+      t.action(api.outreachRevision.request, {
+        draftId,
+        sessionId: ownerSession,
+        instruction: 'Make it warmer',
+      }),
+    ).rejects.toMatchObject({
+      data: { code: 'OUTREACH_DRAFT_NOT_EDITABLE' },
     })
   })
 

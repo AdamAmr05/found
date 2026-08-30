@@ -1,3 +1,8 @@
+import {
+  OUTREACH_BODY_MAX_LENGTH,
+  OUTREACH_SUBJECT_MAX_LENGTH,
+} from '../shared/foundTools'
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function normalizeOutreachRecipient(recipient: string): string {
@@ -19,8 +24,14 @@ export function validateOutreachContent(args: {
   if (args.subject.length === 0) {
     throw new Error('A subject is required.')
   }
+  if (args.subject.length > OUTREACH_SUBJECT_MAX_LENGTH) {
+    throw new Error('The email subject is too long.')
+  }
   if (args.body.trim().length === 0) {
     throw new Error('The email body cannot be empty.')
+  }
+  if (args.body.length > OUTREACH_BODY_MAX_LENGTH) {
+    throw new Error('The email body is too long.')
   }
 }
 

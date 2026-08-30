@@ -32,7 +32,7 @@ export const showOutreachDraft = createTool({
     'Create and present one editable email draft for one accommodation candidate.',
     'Call this only when the user asks to draft or write an email.',
     'Use the contact email found in the candidate sources when available; otherwise omit recipient so the user can add it.',
-    'Write the complete email body. Nothing is sent by this tool.',
+    'Write the complete plain-text email body in at most 4,000 characters. Nothing is sent by this tool.',
   ].join(' '),
   inputSchema: showOutreachDraftInputSchema,
   outputSchema: showOutreachDraftOutputSchema,

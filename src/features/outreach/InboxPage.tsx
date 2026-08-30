@@ -183,6 +183,13 @@ function ThreadDetail({
       <p className="mt-6 text-body-large text-foreground-muted">
         {thread.subject}
       </p>
+      {thread.omittedMessageCount > 0 ? (
+        <p className="mt-16 text-body-small text-foreground-muted">
+          Showing the latest messages; {thread.omittedMessageCount} older
+          {thread.omittedMessageCount === 1 ? ' message was' : ' messages were'}
+          omitted.
+        </p>
+      ) : null}
       <div className="mt-28 grid gap-12">
         {thread.messages.map((message) => (
           <article
@@ -202,6 +209,11 @@ function ThreadDetail({
             <p className="mt-12 text-body-large whitespace-pre-wrap">
               {message.body || 'No plain-text content.'}
             </p>
+            {message.bodyTruncated ? (
+              <p className="mt-10 text-body-small text-foreground-muted">
+                Message shortened to 4,000 characters.
+              </p>
+            ) : null}
           </article>
         ))}
       </div>

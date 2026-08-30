@@ -11,6 +11,7 @@ type MailThread = {
   outreachId: string
   candidateTitle: string
   subject: string
+  omittedMessageCount: number
   messages: {
     messageId: string
     direction: 'outbound' | 'inbound'
@@ -18,6 +19,7 @@ type MailThread = {
     to: string[]
     timestamp: string
     body: string
+    bodyTruncated: boolean
   }[]
 }
 
@@ -85,6 +87,7 @@ export const read = action({
     outreachId: v.string(),
     candidateTitle: v.string(),
     subject: v.string(),
+    omittedMessageCount: v.number(),
     messages: v.array(
       v.object({
         messageId: v.string(),
@@ -93,6 +96,7 @@ export const read = action({
         to: v.array(v.string()),
         timestamp: v.string(),
         body: v.string(),
+        bodyTruncated: v.boolean(),
       }),
     ),
   }),

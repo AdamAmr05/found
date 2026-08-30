@@ -10,9 +10,10 @@ export const PAGE_IMAGE_MAX_COUNT = 12
 export const PAGE_WARNING_MAX_LENGTH = 500
 export const CANDIDATE_PRESENTATION_MAX_COUNT = 12
 export const CANDIDATE_REF_MAX_LENGTH = 48
-export const OUTREACH_BODY_MAX_LENGTH = 12_000
+export const OUTREACH_BODY_MAX_LENGTH = 4_000
 export const OUTREACH_INSTRUCTION_MAX_LENGTH = 1_000
 export const OUTREACH_SUBJECT_MAX_LENGTH = 200
+export const OUTREACH_THREAD_MAX_MESSAGES = 20
 
 const httpUrl = z
   .string()
@@ -267,7 +268,12 @@ export const showOutreachDraftInputSchema = z.object({
   candidateTitle: z.string().trim().min(1).max(140),
   recipient: emailAddress.optional(),
   subject: z.string().trim().min(1).max(OUTREACH_SUBJECT_MAX_LENGTH),
-  body: z.string().trim().min(1).max(OUTREACH_BODY_MAX_LENGTH),
+  body: z
+    .string()
+    .trim()
+    .min(1)
+    .max(OUTREACH_BODY_MAX_LENGTH)
+    .describe('The complete plain-text email body, at most 4,000 characters.'),
 })
 
 export const showOutreachDraftOutputSchema = z.object({
@@ -303,16 +309,20 @@ export const readOutreachThreadOutputSchema = z.object({
   outreachId: z.string().min(1),
   candidateTitle: z.string(),
   subject: z.string(),
-  messages: z.array(
-    z.object({
-      messageId: z.string(),
-      direction: z.enum(['outbound', 'inbound']),
-      from: z.string(),
-      to: z.array(z.string()),
-      timestamp: z.string(),
-      body: z.string(),
-    }),
-  ),
+  omittedMessageCount: z.number().int().nonnegative(),
+  messages: z
+    .array(
+      z.object({
+        messageId: z.string(),
+        direction: z.enum(['outbound', 'inbound']),
+        from: z.string(),
+        to: z.array(z.string()),
+        timestamp: z.string(),
+        body: z.string().max(OUTREACH_BODY_MAX_LENGTH),
+        bodyTruncated: z.boolean(),
+      }),
+    )
+    .max(OUTREACH_THREAD_MAX_MESSAGES),
 })
 
 export type CandidateSnapshot = z.infer<typeof candidateSnapshotSchema>
