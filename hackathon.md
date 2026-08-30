@@ -9,12 +9,12 @@
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
 - **Convex deployment:** https://sensible-bee-189.eu-west-1.convex.cloud
-- **Components:** @convex-dev/agent, @convex-dev/rate-limiter, @firecrawl/firecrawl-convex
-- **Convex features:** schema, indexes, components, queries, paginated queries, mutations, internal actions, scheduler, realtime subscriptions, rate limiting
+- **Components:** @convex-dev/agent, @convex-dev/rate-limiter, @firecrawl/firecrawl-convex, @agentmail/convex
+- **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting
 - **Auth:** none
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-29T18:54:27Z
+- **Last updated:** 2026-08-30T23:36:30Z
 
 ## Log
 
@@ -163,3 +163,24 @@ Registered `@convex-dev/rate-limiter` and hardened the provider boundary with
 typed decoding, cancellation, selective retries, attribution, route warnings,
 offscreen WebGL cleanup, and contract tests (`convex/tools/maps.ts`,
 `convex/tools/mapsAdapter.ts`, `convex/thread.ts`).
+
+### 2026-08-30 - 70f08e9
+
+Shipped outreach as a first-class artifact inside the research thread. The
+agent turns a request into a live email card whose recipient, subject, and body
+can be edited directly and are saved to Convex. “Ask for changes” expands in
+place, shows the AI's proposed revision in context, and offers Undo or Accept
+without adding chat clutter. Sending still requires explicit approval of the
+exact draft, then the card carries its delivery state into a separate Inbox
+when replies arrive (`convex/outreachDrafts.ts`, `convex/outreachDelivery.ts`,
+`src/features/outreach/OutreachDraft.tsx`, `src/features/outreach/InboxPage.tsx`).
+
+Registered the AgentMail component and webhook and gave the agent narrow tools
+for drafting and reading relevant replies. Seven follow-up commits hardened the
+same flow: delivery and resend states cannot regress, delayed sends can recover
+without polling forever, human and agent unread state stay separate, paid
+revisions cannot overlap, long or HTML-only mail is safely normalized, and a
+rare unknown delivery state offers a one-shot status check. Verified the full
+loop with a real AgentMail send and inbound replies in the browser
+(`convex/convex.config.ts`, `convex/http.ts`, `convex/outreachMailbox.ts`,
+`convex/outreachRevision.ts`).
