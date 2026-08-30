@@ -113,6 +113,10 @@ export function diveCamera(
 }
 
 export function sceneModelFromShowMap(scene: ShowMapInput): Map3DSceneModel {
+  // The experience deliberately owns its opening shot: frame the actual pins
+  // and route, using the agent's center only as a fallback. The protocol's
+  // zoom, tilt, and mode remain reserved until agent-directed cameras earn a
+  // product role.
   const pins: MapPin3D[] = scene.markers.map((marker, index) => {
     const pin: MapPin3D = {
       id: `pin-${index}`,
