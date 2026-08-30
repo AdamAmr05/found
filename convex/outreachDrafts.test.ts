@@ -1,7 +1,19 @@
 /// <reference types="vite/client" />
 
+import {
+  type OutboundId,
+  type OutboundStatus,
+  vOutboundStatus,
+} from '@agentmail/convex'
+import agentmailTest from '@agentmail/convex/test'
 import { register as registerAgent } from '@convex-dev/agent/test'
+import {
+  componentsGeneric,
+  type FunctionReference,
+  mutationGeneric,
+} from 'convex/server'
 import { convexTest } from 'convex-test'
+import { v } from 'convex/values'
 import type { SessionId } from 'convex-helpers/server/sessions'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
@@ -16,9 +28,72 @@ const ownerSession = 'outreach-owner' as SessionId
 // SAFETY: This distinct branded fixture models a different browser session.
 const otherSession = 'outreach-other' as SessionId
 
+type AgentmailOutboundStatusFields = {
+  status: OutboundStatus
+  agentmailMessageId?: string
+  threadId?: string
+}
+
+const setAgentmailOutboundStatus = mutationGeneric({
+  args: {
+    outboundId: v.optional(v.id('outboundMessages')),
+    status: vOutboundStatus,
+    agentmailMessageId: v.optional(v.string()),
+    threadId: v.optional(v.string()),
+  },
+  returns: v.id('outboundMessages'),
+  handler: async (ctx, args) => {
+    const statusFields: AgentmailOutboundStatusFields = { status: args.status }
+    if (args.agentmailMessageId) {
+      statusFields.agentmailMessageId = args.agentmailMessageId
+    }
+    if (args.threadId) statusFields.threadId = args.threadId
+    if (args.outboundId) {
+      await ctx.db.patch('outboundMessages', args.outboundId, statusFields)
+      return args.outboundId
+    }
+    return await ctx.db.insert('outboundMessages', {
+      inboxId: 'found-d@agentmail.to',
+      kind: 'send',
+      payload: {},
+      ...statusFields,
+    })
+  },
+})
+
+const agentmailModules = {
+  ...agentmailTest.modules,
+  './component/testFixtures.ts': async () => ({
+    setOutboundStatus: setAgentmailOutboundStatus,
+  }),
+}
+
+function requiredTestReference<Reference>(
+  reference: Reference | undefined,
+): Reference {
+  if (!reference) throw new Error('AgentMail test reference is unavailable')
+  return reference
+}
+
+const agentmailTestComponents = componentsGeneric()
+const setAgentmailOutboundStatusReference: FunctionReference<
+  'mutation',
+  'public',
+  {
+    outboundId?: OutboundId
+    status: OutboundStatus
+    agentmailMessageId?: string
+    threadId?: string
+  },
+  OutboundId
+> = requiredTestReference(
+  agentmailTestComponents.agentmail?.testFixtures?.setOutboundStatus,
+)
+
 function setup() {
   const t = convexTest(schema, modules)
   registerAgent(t)
+  t.registerComponent('agentmail', agentmailTest.schema, agentmailModules)
   return t
 }
 
@@ -395,25 +470,44 @@ describe('outreach drafts', () => {
     ).toBe(false)
   })
 
-  test('recovers an uncertain draft when component status later resolves', async () => {
+  test('rechecks uncertain delivery through the real AgentMail component', async () => {
     const t = setup()
     const { draftId } = await createDraft(t)
+    const outboundId = await t.mutation(setAgentmailOutboundStatusReference, {
+      status: 'pending',
+    })
     await t.run(async (ctx) => {
       await ctx.db.patch('outreachDrafts', draftId, {
-        outboundId: 'outbound-current',
+        outboundId,
         state: 'uncertain',
       })
     })
 
-    await t.mutation(internal.outreachDelivery.applyOutboundStatus, {
-      draftId,
-      outboundId: 'outbound-current',
-      attempt: 0,
+    await expect(
+      t.mutation(api.outreachDelivery.recheck, {
+        draftId,
+        sessionId: otherSession,
+      }),
+    ).rejects.toMatchObject({ data: { code: 'OUTREACH_DRAFT_NOT_FOUND' } })
+    await expect(
+      t.mutation(api.outreachDelivery.recheck, {
+        draftId,
+        sessionId: ownerSession,
+      }),
+    ).resolves.toBe('uncertain')
+
+    await t.mutation(setAgentmailOutboundStatusReference, {
+      outboundId,
       status: 'sent',
       agentmailMessageId: 'message-current',
       threadId: 'thread-current',
-      errorMessage: null,
     })
+    await expect(
+      t.mutation(api.outreachDelivery.recheck, {
+        draftId,
+        sessionId: ownerSession,
+      }),
+    ).resolves.toBe('sent')
     await expect(
       t.run(async (ctx) => await ctx.db.get('outreachDrafts', draftId)),
     ).resolves.toMatchObject({

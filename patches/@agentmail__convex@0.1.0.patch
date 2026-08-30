@@ -448,3 +448,9 @@ index e20117d8509e1698e22475ba9fbe6e49fd9feabd..6b8e2c48844d9ca27a0d5a1994fe4f6c
    let body: string | undefined;
    if (opts.body !== undefined) {
      headers["Content-Type"] = "application/json";
+diff --git a/src/test.ts b/src/test.ts
+--- a/src/test.ts
++++ b/src/test.ts
+@@ -5 +5 @@ import schema from "./component/schema.js";
+-const modules = import.meta.glob("./component/**/!(*.*.*)*.ts");
++const modules = import.meta.glob("./component/**/*.ts");
