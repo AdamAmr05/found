@@ -1,3 +1,4 @@
+import { AgentMail } from '@agentmail/convex'
 import { makeFunctionReference } from 'convex/server'
 import { ConvexError, v } from 'convex/values'
 import { vSessionId } from 'convex-helpers/server/sessions'
@@ -14,6 +15,8 @@ import {
 } from './_generated/server'
 import { ownedDraft } from './outreachDrafts'
 import { assertThreadOwner } from './threadAccess'
+
+const agentmail = new AgentMail(components.agentmail)
 
 type ThreadDetails = {
   candidateTitle: string
@@ -232,10 +235,7 @@ export const readThread = internalAction({
       throw new ConvexError({ code: 'OUTREACH_THREAD_NOT_AVAILABLE' })
     }
     const response = threadSchema.parse(
-      await ctx.runAction(components.agentmail.lib.getThread, {
-        inboxId,
-        threadId: details.agentmailThreadId,
-      }),
+      await agentmail.getThread(ctx, inboxId, details.agentmailThreadId),
     )
     await ctx.runMutation(markThreadRead, {
       sessionId: args.sessionId,
