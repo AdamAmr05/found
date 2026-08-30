@@ -94,7 +94,16 @@ Inbox and agent reads share one bounded projection of an AgentMail thread: the
 latest 20 messages, each with at most 4,000 characters of plain text. The
 projection reports how many older messages were omitted and whether an
 individual body was shortened. AgentMail remains the durable source for the
-complete mailbox thread.
+complete mailbox thread. The installed component's documented `getThread`
+client currently targets an internal component action and fails at runtime, so
+Found performs this one owner-checked remote read directly from its Convex
+action. The API key remains server-only; sending, retries, webhook ingestion,
+and mirrored inbound state still belong to the component.
+
+Thread normalization prefers extracted plain text, then plain text or preview.
+When a sender provides HTML only—as iPhone Mail may—it converts AgentMail's
+extracted HTML to inert plain text before applying the same body bound. Raw
+email HTML is never rendered or passed to the agent.
 
 AI-powered draft revision has a generous per-session token bucket of 200
 requests per hour with capacity for 20 immediate requests. Manual editing and

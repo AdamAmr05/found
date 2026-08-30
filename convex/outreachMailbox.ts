@@ -1,4 +1,3 @@
-import { AgentMail } from '@agentmail/convex'
 import { makeFunctionReference } from 'convex/server'
 import { ConvexError, v } from 'convex/values'
 import { vSessionId } from 'convex-helpers/server/sessions'
@@ -9,7 +8,6 @@ import {
   OUTREACH_BODY_MAX_LENGTH,
   OUTREACH_THREAD_MAX_MESSAGES,
 } from '../shared/foundTools'
-import { components } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import {
   type ActionCtx,
@@ -19,6 +17,7 @@ import {
   internalQuery,
 } from './_generated/server'
 import { ownedDraft } from './outreachDrafts'
+import { emailHtmlToPlainText } from './outreachMailText'
 import {
   type OutreachMailThread,
   vOutreachMailThread,
@@ -32,7 +31,7 @@ import {
 } from './outreachReplyState'
 import { assertThreadOwner } from './threadAccess'
 
-const agentmail = new AgentMail(components.agentmail)
+const DEFAULT_AGENTMAIL_BASE_URL = 'https://api.agentmail.to/v0'
 
 type ThreadDetails = {
   candidateTitle: string
@@ -75,6 +74,8 @@ const messageSchema = z.object({
   to: z.array(z.string()).default([]),
   text: z.string().optional(),
   extracted_text: z.string().optional(),
+  html: z.string().optional(),
+  extracted_html: z.string().optional(),
   preview: z.string().optional(),
 })
 const threadSchema = z.object({
@@ -82,6 +83,34 @@ const threadSchema = z.object({
   // window at this external boundary, then validate those messages precisely.
   messages: z.array(z.unknown()),
 })
+type AgentMailThreadPayload = z.infer<typeof threadSchema>
+
+async function fetchAgentMailThread(
+  inboxId: string,
+  threadId: string,
+): Promise<AgentMailThreadPayload> {
+  const apiKey = env.AGENTMAIL_API_KEY
+  if (!apiKey) {
+    throw new ConvexError({ code: 'AGENTMAIL_NOT_CONFIGURED' })
+  }
+  let response: Response
+  try {
+    response = await fetch(
+      `${DEFAULT_AGENTMAIL_BASE_URL}/inboxes/${encodeURIComponent(inboxId)}/threads/${encodeURIComponent(threadId)}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } },
+    )
+  } catch {
+    throw new ConvexError({ code: 'OUTREACH_THREAD_READ_FAILED' })
+  }
+  if (!response.ok) {
+    throw new ConvexError({
+      code: 'OUTREACH_THREAD_READ_FAILED',
+      status: response.status,
+    })
+  }
+  const payload: unknown = await response.json()
+  return threadSchema.parse(payload)
+}
 
 const vUpdate = v.object({
   outreachId: v.string(),
@@ -240,8 +269,9 @@ async function loadThreadData(
   if (!details || !inboxId) {
     throw new ConvexError({ code: 'OUTREACH_THREAD_NOT_AVAILABLE' })
   }
-  const response = threadSchema.parse(
-    await agentmail.getThread(ctx, inboxId, details.agentmailThreadId),
+  const response = await fetchAgentMailThread(
+    inboxId,
+    details.agentmailThreadId,
   )
   const omittedMessageCount = Math.max(
     0,
@@ -261,7 +291,10 @@ async function loadThreadData(
         ? message.from.join(', ')
         : message.from
       const fullBody =
-        message.extracted_text ?? message.text ?? message.preview ?? ''
+        message.extracted_text ??
+        message.text ??
+        message.preview ??
+        emailHtmlToPlainText(message.extracted_html ?? message.html ?? '')
       return {
         messageId: message.message_id,
         direction: from.includes(inboxId)

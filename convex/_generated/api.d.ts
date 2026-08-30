@@ -18,6 +18,7 @@ import type * as outreachContent from "../outreachContent.js";
 import type * as outreachDelivery from "../outreachDelivery.js";
 import type * as outreachDrafts from "../outreachDrafts.js";
 import type * as outreachInbox from "../outreachInbox.js";
+import type * as outreachMailText from "../outreachMailText.js";
 import type * as outreachMailbox from "../outreachMailbox.js";
 import type * as outreachModel from "../outreachModel.js";
 import type * as outreachReplyState from "../outreachReplyState.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   outreachDelivery: typeof outreachDelivery;
   outreachDrafts: typeof outreachDrafts;
   outreachInbox: typeof outreachInbox;
+  outreachMailText: typeof outreachMailText;
   outreachMailbox: typeof outreachMailbox;
   outreachModel: typeof outreachModel;
   outreachReplyState: typeof outreachReplyState;
