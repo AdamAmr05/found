@@ -1,8 +1,8 @@
 import { createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
-import { ConvexProvider } from 'convex/react'
-import { SessionProvider } from 'convex-helpers/react/sessions'
+import { ConvexAuthProvider } from '@convex-dev/auth/react'
+import { api } from '../convex/_generated/api'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -32,13 +32,17 @@ export function getRouter() {
     defaultErrorComponent: (err) => <p>{err.error.stack}</p>,
     defaultNotFoundComponent: () => <p>not found</p>,
     Wrap: ({ children }) => (
-      <ConvexProvider client={convexQueryClient.convexClient}>
-        <SessionProvider storageKey="found-session-id" ssrFriendly>
-          <QueryClientProvider client={queryClient}>
-            {children}
-          </QueryClientProvider>
-        </SessionProvider>
-      </ConvexProvider>
+      <ConvexAuthProvider
+        api={{
+          refreshSession: api.auth.refreshSession,
+          signOut: api.auth.signOut,
+        }}
+        client={convexQueryClient.convexClient}
+      >
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </ConvexAuthProvider>
     ),
   })
 

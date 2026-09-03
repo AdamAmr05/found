@@ -3,7 +3,6 @@ import {
   paginationResultValidator,
 } from 'convex/server'
 import { ConvexError, v } from 'convex/values'
-import { SessionIdArg } from 'convex-helpers/server/sessions'
 
 import {
   CANDIDATE_PRESENTATION_MAX_COUNT,
@@ -17,6 +16,7 @@ import type { QueryCtx } from './_generated/server'
 import { candidateFromToolMessage } from './candidatePartMessages'
 import { assertCandidatePartReference } from './candidateParts'
 import { assertThreadOwner } from './threadAccess'
+import { requireViewerId } from './viewer'
 
 const MAX_TOOL_CALL_ID_LENGTH = 256
 
@@ -146,12 +146,13 @@ async function resolveSavedCandidates(
 }
 
 export const listBookmarks = query({
-  args: { ...SessionIdArg, paginationOpts: paginationOptsValidator },
+  args: { paginationOpts: paginationOptsValidator },
   returns: paginationResultValidator(savedCandidateView),
   handler: async (ctx, args) => {
+    const userId = await requireViewerId(ctx)
     const result = await ctx.db
       .query('savedCandidates')
-      .withIndex('by_session', (index) => index.eq('sessionId', args.sessionId))
+      .withIndex('by_user', (index) => index.eq('userId', userId))
       .order('desc')
       .paginate(args.paginationOpts)
 
@@ -161,17 +162,17 @@ export const listBookmarks = query({
 
 export const listForThread = query({
   args: {
-    ...SessionIdArg,
     threadId: v.string(),
     paginationOpts: paginationOptsValidator,
   },
   returns: paginationResultValidator(savedCandidateView),
   handler: async (ctx, args) => {
-    await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    const userId = await requireViewerId(ctx)
+    await assertThreadOwner(ctx, args.threadId, userId)
     const result = await ctx.db
       .query('savedCandidates')
-      .withIndex('by_session_and_thread', (index) =>
-        index.eq('sessionId', args.sessionId).eq('threadId', args.threadId),
+      .withIndex('by_user_and_thread', (index) =>
+        index.eq('userId', userId).eq('threadId', args.threadId),
       )
       .order('desc')
       .paginate(args.paginationOpts)
@@ -182,28 +183,28 @@ export const listForThread = query({
 
 export const listForToolPart = query({
   args: {
-    ...SessionIdArg,
     threadId: v.string(),
     toolCallId: v.string(),
   },
   returns: savedCandidatePartState,
   handler: async (ctx, args) => {
+    const userId = await requireViewerId(ctx)
     assertToolCallId(args.toolCallId)
     const [part, entries] = await Promise.all([
       ctx.db
         .query('candidatePartRefs')
-        .withIndex('by_session_thread_tool', (index) =>
+        .withIndex('by_user_and_thread_and_tool_call', (index) =>
           index
-            .eq('sessionId', args.sessionId)
+            .eq('userId', userId)
             .eq('threadId', args.threadId)
             .eq('toolCallId', args.toolCallId),
         )
         .unique(),
       ctx.db
         .query('savedCandidates')
-        .withIndex('by_session_and_thread_and_tool_and_candidate', (index) =>
+        .withIndex('by_user_and_thread_and_tool_call_and_candidate', (index) =>
           index
-            .eq('sessionId', args.sessionId)
+            .eq('userId', userId)
             .eq('threadId', args.threadId)
             .eq('toolCallId', args.toolCallId),
         )
@@ -219,7 +220,6 @@ export const listForToolPart = query({
 
 export const setSaved = mutation({
   args: {
-    ...SessionIdArg,
     threadId: v.string(),
     toolCallId: v.string(),
     candidateRef: v.string(),
@@ -227,17 +227,18 @@ export const setSaved = mutation({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    const userId = await requireViewerId(ctx)
     assertToolCallId(args.toolCallId)
     assertCandidateRef(args.candidateRef)
-    await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    await assertThreadOwner(ctx, args.threadId, userId)
     const part = args.saved
-      ? await assertCandidatePartReference(ctx, args)
+      ? await assertCandidatePartReference(ctx, { ...args, userId })
       : undefined
     const existing = await ctx.db
       .query('savedCandidates')
-      .withIndex('by_session_and_thread_and_tool_and_candidate', (index) =>
+      .withIndex('by_user_and_thread_and_tool_call_and_candidate', (index) =>
         index
-          .eq('sessionId', args.sessionId)
+          .eq('userId', userId)
           .eq('threadId', args.threadId)
           .eq('toolCallId', args.toolCallId)
           .eq('candidateRef', args.candidateRef),
@@ -246,7 +247,7 @@ export const setSaved = mutation({
 
     if (args.saved && !existing && part) {
       const savedCandidate = {
-        sessionId: args.sessionId,
+        userId,
         threadId: args.threadId,
         messageId: part.messageId,
         toolCallId: args.toolCallId,

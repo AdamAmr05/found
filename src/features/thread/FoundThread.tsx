@@ -1,10 +1,7 @@
 import { optimisticallySendMessage } from '@convex-dev/agent/react'
 import { ArrowRight } from '@phosphor-icons/react'
 import { useUIMessages } from '@convex-dev/agent/react'
-import {
-  useSessionIdArg,
-  useSessionMutation,
-} from 'convex-helpers/react/sessions'
+import { useMutation } from 'convex/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 
@@ -30,8 +27,8 @@ export function FoundThread() {
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
-  const startThread = useSessionMutation(api.thread.start)
-  const sendMessage = useSessionMutation(api.thread.send).withOptimisticUpdate(
+  const startThread = useMutation(api.thread.start)
+  const sendMessage = useMutation(api.thread.send).withOptimisticUpdate(
     (store, args) => {
       optimisticallySendMessage(api.thread.listMessages)(store, {
         threadId: args.threadId,
@@ -39,13 +36,14 @@ export function FoundThread() {
       })
     },
   )
-  const messageArgs = useSessionIdArg(
-    threadId ? { threadId } : ('skip' as const),
+  const messageQuery = useUIMessages(
+    api.thread.listMessages,
+    threadId ? { threadId } : 'skip',
+    {
+      initialNumItems: 40,
+      stream: true,
+    },
   )
-  const messageQuery = useUIMessages(api.thread.listMessages, messageArgs, {
-    initialNumItems: 40,
-    stream: true,
-  })
   // SAFETY: listMessages returns the Agent component's UIMessage values unchanged.
   // The Agent component owns the full message union. Found narrows only its
   // three stable tool parts in ThreadMessage.

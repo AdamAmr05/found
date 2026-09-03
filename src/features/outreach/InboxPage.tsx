@@ -1,10 +1,6 @@
 import { ArrowLeft, EnvelopeSimple, SpinnerGap } from '@phosphor-icons/react'
 import type { FunctionReturnType } from 'convex/server'
-import {
-  useSessionAction,
-  useSessionMutation,
-  useSessionQuery,
-} from 'convex-helpers/react/sessions'
+import { useAction, useMutation, useQuery } from 'convex/react'
 import { useRef, useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
@@ -23,9 +19,9 @@ function activityLabel(timestamp: number): string {
 }
 
 export function InboxPage() {
-  const items = useSessionQuery(api.outreachInbox.list, {})
-  const readThread = useSessionAction(api.outreachInbox.read)
-  const markRead = useSessionMutation(api.outreachInbox.markRead)
+  const items = useQuery(api.outreachInbox.list, {})
+  const readThread = useAction(api.outreachInbox.read)
+  const markRead = useMutation(api.outreachInbox.markRead)
   const [selectedId, setSelectedId] = useState<Id<'outreachDrafts'>>()
   const [thread, setThread] = useState<MailThread>()
   const [error, setError] = useState<string>()

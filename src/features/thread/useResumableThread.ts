@@ -1,4 +1,4 @@
-import { useSessionQuery } from 'convex-helpers/react/sessions'
+import { useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
@@ -24,9 +24,9 @@ export function useResumableThread() {
     storageLoaded: false,
   })
   const { storageLoaded, storedThreadId, trustedThreadId } = resumeState
-  const canResume = useSessionQuery(
+  const canResume = useQuery(
     api.thread.canResume,
-    storedThreadId ? { threadId: storedThreadId } : ('skip' as const),
+    storedThreadId ? { threadId: storedThreadId } : 'skip',
   )
 
   useEffect(() => {

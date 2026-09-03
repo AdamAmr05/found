@@ -2,42 +2,59 @@
 
 import { register as registerAgent } from '@convex-dev/agent/test'
 import { convexTest } from 'convex-test'
-import type { SessionId } from 'convex-helpers/server/sessions'
 import { describe, expect, test } from 'vitest'
 
 import { api, components, internal } from './_generated/api'
+import type { Id } from './_generated/dataModel'
 import { candidateToolCalls } from './candidatePartMessages'
 import schema from './schema'
 
 const modules = import.meta.glob('./**/*.ts')
 
-// SAFETY: SessionId is a nominal brand over strings; these fixed values model
-// one browser session at the public mutation boundary.
-const ownerSession = 'owner-session' as SessionId
-// SAFETY: SessionId is a nominal brand over strings; this distinct fixed value
-// models a different browser session at the public mutation boundary.
-const otherSession = 'other-session' as SessionId
 const toolCallId = 'show-candidates-call'
 const candidateRef = 'candidate-a'
 
-function setup() {
+type TestApp = ReturnType<typeof createApp>
+
+type TestUser = {
+  readonly id: Id<'users'>
+  readonly as: ReturnType<TestApp['withIdentity']>
+}
+
+// Convex Auth mints access tokens whose subject is the `users` id, so a
+// signed-in caller is modelled by an identity with that subject.
+async function createUser(t: TestApp, displayName: string): Promise<TestUser> {
+  const id = await t.run(
+    async (ctx) => await ctx.db.insert('users', { displayName }),
+  )
+  return { id, as: t.withIdentity({ subject: id }) }
+}
+
+function createApp() {
   const t = convexTest(schema, modules)
   registerAgent(t)
   return t
 }
 
-async function createThread(
-  t: ReturnType<typeof setup>,
-  sessionId: SessionId,
-): Promise<string> {
+async function setup() {
+  const t = createApp()
+  return {
+    t,
+    owner: await createUser(t, 'Owner'),
+    other: await createUser(t, 'Other'),
+  }
+}
+
+async function createThread(t: TestApp, userId: Id<'users'>): Promise<string> {
   const thread = await t.mutation(components.agent.threads.createThread, {
-    userId: sessionId,
+    userId,
   })
   return thread._id
 }
 
 async function recordCandidatePart(
-  t: ReturnType<typeof setup>,
+  t: TestApp,
+  userId: Id<'users'>,
   threadId: string,
   ref = candidateRef,
   callId = toolCallId,
@@ -101,7 +118,7 @@ async function recordCandidatePart(
         toolCallId: callId,
       },
     ],
-    sessionId: ownerSession,
+    userId,
     threadId,
   })
 }
@@ -110,8 +127,8 @@ const firstPage = { cursor: null, numItems: 1 }
 
 describe('saved candidate references', () => {
   test('derives one shortlist preview from persisted research tool output', async () => {
-    const t = setup()
-    const threadId = await createThread(t, ownerSession)
+    const { t, owner } = await setup()
+    const threadId = await createThread(t, owner.id)
     const input = {
       candidates: [
         {
@@ -206,13 +223,12 @@ describe('saved candidate references', () => {
   })
 
   test('normalizes a malformed component thread id on writes', async () => {
-    const t = setup()
+    const { owner } = await setup()
 
     await expect(
-      t.mutation(api.savedCandidates.setSaved, {
+      owner.as.mutation(api.savedCandidates.setSaved, {
         candidateRef,
         saved: true,
-        sessionId: ownerSession,
         threadId: 'not-a-convex-thread-id',
         toolCallId,
       }),
@@ -222,8 +238,8 @@ describe('saved candidate references', () => {
   })
 
   test('rejects malformed candidate refs at the provenance boundary', async () => {
-    const t = setup()
-    const threadId = await createThread(t, ownerSession)
+    const { t, owner } = await setup()
+    const threadId = await createThread(t, owner.id)
 
     await expect(
       t.mutation(internal.candidateParts.recordBatch, {
@@ -234,7 +250,7 @@ describe('saved candidate references', () => {
             toolCallId,
           },
         ],
-        sessionId: ownerSession,
+        userId: owner.id,
         threadId,
       }),
     ).rejects.toMatchObject({
@@ -243,15 +259,14 @@ describe('saved candidate references', () => {
   })
 
   test('rejects a candidate ref that was not presented by the tool part', async () => {
-    const t = setup()
-    const threadId = await createThread(t, ownerSession)
-    await recordCandidatePart(t, threadId)
+    const { t, owner } = await setup()
+    const threadId = await createThread(t, owner.id)
+    await recordCandidatePart(t, owner.id, threadId)
 
     await expect(
-      t.mutation(api.savedCandidates.setSaved, {
+      owner.as.mutation(api.savedCandidates.setSaved, {
         candidateRef: 'fabricated-candidate',
         saved: true,
-        sessionId: ownerSession,
         threadId,
         toolCallId,
       }),
@@ -261,16 +276,15 @@ describe('saved candidate references', () => {
   })
 
   test('rejects a candidate ref presented in a different thread', async () => {
-    const t = setup()
-    const sourceThreadId = await createThread(t, ownerSession)
-    const targetThreadId = await createThread(t, ownerSession)
-    await recordCandidatePart(t, sourceThreadId)
+    const { t, owner } = await setup()
+    const sourceThreadId = await createThread(t, owner.id)
+    const targetThreadId = await createThread(t, owner.id)
+    await recordCandidatePart(t, owner.id, sourceThreadId)
 
     await expect(
-      t.mutation(api.savedCandidates.setSaved, {
+      owner.as.mutation(api.savedCandidates.setSaved, {
         candidateRef,
         saved: true,
-        sessionId: ownerSession,
         threadId: targetThreadId,
         toolCallId,
       }),
@@ -279,16 +293,15 @@ describe('saved candidate references', () => {
     })
   })
 
-  test('rejects a save from a session that does not own the thread', async () => {
-    const t = setup()
-    const threadId = await createThread(t, ownerSession)
-    await recordCandidatePart(t, threadId)
+  test('rejects a save from a user who does not own the thread', async () => {
+    const { t, owner, other } = await setup()
+    const threadId = await createThread(t, owner.id)
+    await recordCandidatePart(t, owner.id, threadId)
 
     await expect(
-      t.mutation(api.savedCandidates.setSaved, {
+      other.as.mutation(api.savedCandidates.setSaved, {
         candidateRef,
         saved: true,
-        sessionId: otherSession,
         threadId,
         toolCallId,
       }),
@@ -298,14 +311,13 @@ describe('saved candidate references', () => {
   })
 
   test('repeating the same save creates one relationship', async () => {
-    const t = setup()
-    const threadId = await createThread(t, ownerSession)
-    await recordCandidatePart(t, threadId)
+    const { t, owner } = await setup()
+    const threadId = await createThread(t, owner.id)
+    await recordCandidatePart(t, owner.id, threadId)
     const save = () =>
-      t.mutation(api.savedCandidates.setSaved, {
+      owner.as.mutation(api.savedCandidates.setSaved, {
         candidateRef,
         saved: true,
-        sessionId: ownerSession,
         threadId,
         toolCallId,
       })
@@ -314,8 +326,7 @@ describe('saved candidate references', () => {
     await save()
 
     await expect(
-      t.query(api.savedCandidates.listForToolPart, {
-        sessionId: ownerSession,
+      owner.as.query(api.savedCandidates.listForToolPart, {
         threadId,
         toolCallId,
       }),
@@ -323,21 +334,19 @@ describe('saved candidate references', () => {
   })
 
   test('reports that saving is unavailable until provenance is recorded', async () => {
-    const t = setup()
-    const threadId = await createThread(t, ownerSession)
+    const { t, owner } = await setup()
+    const threadId = await createThread(t, owner.id)
 
     await expect(
-      t.query(api.savedCandidates.listForToolPart, {
-        sessionId: ownerSession,
+      owner.as.query(api.savedCandidates.listForToolPart, {
         threadId,
         toolCallId,
       }),
     ).resolves.toEqual({ ready: false, savedRefs: [] })
     await expect(
-      t.mutation(api.savedCandidates.setSaved, {
+      owner.as.mutation(api.savedCandidates.setSaved, {
         candidateRef,
         saved: true,
-        sessionId: ownerSession,
         threadId,
         toolCallId,
       }),
@@ -345,11 +354,10 @@ describe('saved candidate references', () => {
       data: { code: 'CANDIDATE_PART_NOT_FOUND' },
     })
 
-    await recordCandidatePart(t, threadId)
+    await recordCandidatePart(t, owner.id, threadId)
 
     await expect(
-      t.query(api.savedCandidates.listForToolPart, {
-        sessionId: ownerSession,
+      owner.as.query(api.savedCandidates.listForToolPart, {
         threadId,
         toolCallId,
       }),
@@ -357,41 +365,38 @@ describe('saved candidate references', () => {
   })
 
   test('projects one table as a thread shortlist and global bookmarks', async () => {
-    const t = setup()
-    const firstThreadId = await createThread(t, ownerSession)
-    const secondThreadId = await createThread(t, ownerSession)
+    const { t, owner } = await setup()
+    const firstThreadId = await createThread(t, owner.id)
+    const secondThreadId = await createThread(t, owner.id)
     const secondCandidateRef = 'candidate-b'
     const secondToolCallId = 'show-candidates-call-b'
-    await recordCandidatePart(t, firstThreadId)
+    await recordCandidatePart(t, owner.id, firstThreadId)
     await recordCandidatePart(
       t,
+      owner.id,
       secondThreadId,
       secondCandidateRef,
       secondToolCallId,
     )
 
-    await t.mutation(api.savedCandidates.setSaved, {
+    await owner.as.mutation(api.savedCandidates.setSaved, {
       candidateRef,
       saved: true,
-      sessionId: ownerSession,
       threadId: firstThreadId,
       toolCallId,
     })
-    await t.mutation(api.savedCandidates.setSaved, {
+    await owner.as.mutation(api.savedCandidates.setSaved, {
       candidateRef: secondCandidateRef,
       saved: true,
-      sessionId: ownerSession,
       threadId: secondThreadId,
       toolCallId: secondToolCallId,
     })
 
-    const shortlist = await t.query(api.savedCandidates.listForThread, {
-      sessionId: ownerSession,
+    const shortlist = await owner.as.query(api.savedCandidates.listForThread, {
       threadId: firstThreadId,
       paginationOpts: firstPage,
     })
-    const bookmarks = await t.query(api.savedCandidates.listBookmarks, {
-      sessionId: ownerSession,
+    const bookmarks = await owner.as.query(api.savedCandidates.listBookmarks, {
       paginationOpts: firstPage,
     })
 
@@ -411,10 +416,9 @@ describe('saved candidate references', () => {
     expect(bookmarks.page).toHaveLength(1)
     expect(bookmarks.isDone).toBe(false)
 
-    const remainingBookmarks = await t.query(
+    const remainingBookmarks = await owner.as.query(
       api.savedCandidates.listBookmarks,
       {
-        sessionId: ownerSession,
         paginationOpts: {
           cursor: bookmarks.continueCursor,
           numItems: 1,
@@ -435,35 +439,34 @@ describe('saved candidate references', () => {
   })
 
   test('isolates a broken saved reference without failing the page', async () => {
-    const t = setup()
-    const threadId = await createThread(t, ownerSession)
-    await recordCandidatePart(t, threadId)
+    const { t, owner } = await setup()
+    const threadId = await createThread(t, owner.id)
+    await recordCandidatePart(t, owner.id, threadId)
     await recordCandidatePart(
       t,
+      owner.id,
       threadId,
       'candidate-b',
       'show-candidates-call-b',
     )
-    await t.mutation(api.savedCandidates.setSaved, {
+    await owner.as.mutation(api.savedCandidates.setSaved, {
       candidateRef,
       saved: true,
-      sessionId: ownerSession,
       threadId,
       toolCallId,
     })
-    await t.mutation(api.savedCandidates.setSaved, {
+    await owner.as.mutation(api.savedCandidates.setSaved, {
       candidateRef: 'candidate-b',
       saved: true,
-      sessionId: ownerSession,
       threadId,
       toolCallId: 'show-candidates-call-b',
     })
     const messageId = await t.run(async (ctx) => {
       const entry = await ctx.db
         .query('savedCandidates')
-        .withIndex('by_session_and_thread_and_tool_and_candidate', (index) =>
+        .withIndex('by_user_and_thread_and_tool_call_and_candidate', (index) =>
           index
-            .eq('sessionId', ownerSession)
+            .eq('userId', owner.id)
             .eq('threadId', threadId)
             .eq('toolCallId', toolCallId)
             .eq('candidateRef', candidateRef),
@@ -476,8 +479,7 @@ describe('saved candidate references', () => {
       messageIds: [messageId],
     })
 
-    const bookmarks = await t.query(api.savedCandidates.listBookmarks, {
-      sessionId: ownerSession,
+    const bookmarks = await owner.as.query(api.savedCandidates.listBookmarks, {
       paginationOpts: { cursor: null, numItems: 10 },
     })
 

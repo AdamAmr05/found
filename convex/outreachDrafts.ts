@@ -1,6 +1,4 @@
 import { ConvexError, type Infer, v } from 'convex/values'
-import { SessionIdArg, vSessionId } from 'convex-helpers/server/sessions'
-import type { SessionId } from 'convex-helpers/server/sessions'
 
 import {
   OUTREACH_BODY_MAX_LENGTH,
@@ -25,6 +23,7 @@ import {
 import { vOutreachProposal, vOutreachState } from './outreachModel'
 import { humanUnreadReplyCount } from './outreachReplyState'
 import { assertThreadOwner } from './threadAccess'
+import { requireViewerId } from './viewer'
 
 const REVISION_LEASE_MS = 5 * 60 * 1_000
 
@@ -68,14 +67,22 @@ function draftView(draft: Doc<'outreachDrafts'>) {
 export async function ownedDraft(
   ctx: QueryCtx | MutationCtx,
   draftId: Id<'outreachDrafts'>,
-  sessionId: SessionId,
+  userId: Id<'users'>,
 ): Promise<Doc<'outreachDrafts'>> {
   const draft = await ctx.db.get('outreachDrafts', draftId)
-  if (!draft || draft.sessionId !== sessionId) {
+  if (!draft || draft.userId !== userId) {
     throw new ConvexError({ code: 'OUTREACH_DRAFT_NOT_FOUND' })
   }
-  await assertThreadOwner(ctx, draft.threadId, sessionId)
+  await assertThreadOwner(ctx, draft.threadId, userId)
   return draft
+}
+
+/** The draft a signed-in caller owns, for public functions. */
+export async function viewerDraft(
+  ctx: QueryCtx | MutationCtx,
+  draftId: Id<'outreachDrafts'>,
+): Promise<Doc<'outreachDrafts'>> {
+  return await ownedDraft(ctx, draftId, await requireViewerId(ctx))
 }
 
 export function assertOutreachDraftEditable(
@@ -102,7 +109,7 @@ function validateDraftLengths(subject: string, body: string): void {
 
 export const createFromAgent = internalMutation({
   args: {
-    sessionId: vSessionId,
+    userId: v.id('users'),
     threadId: v.string(),
     toolCallId: v.string(),
     candidateRef: v.optional(v.string()),
@@ -113,7 +120,7 @@ export const createFromAgent = internalMutation({
   },
   returns: v.id('outreachDrafts'),
   handler: async (ctx, args) => {
-    await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    await assertThreadOwner(ctx, args.threadId, args.userId)
     const existing = await ctx.db
       .query('outreachDrafts')
       .withIndex('by_thread_and_tool_call', (index) =>
@@ -126,7 +133,7 @@ export const createFromAgent = internalMutation({
     validateDraftLengths(subject, args.body)
     const now = Date.now()
     const newDraft: NewOutreachDraft = {
-      sessionId: args.sessionId,
+      userId: args.userId,
       threadId: args.threadId,
       toolCallId: args.toolCallId,
       candidateTitle: args.candidateTitle.trim(),
@@ -148,19 +155,19 @@ export const createFromAgent = internalMutation({
 })
 
 export const get = query({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  args: { draftId: v.id('outreachDrafts') },
   returns: v.union(v.null(), vDraftView),
   handler: async (ctx, args) => {
+    const userId = await requireViewerId(ctx)
     const draft = await ctx.db.get('outreachDrafts', args.draftId)
-    if (!draft || draft.sessionId !== args.sessionId) return null
-    await assertThreadOwner(ctx, draft.threadId, args.sessionId)
+    if (!draft || draft.userId !== userId) return null
+    await assertThreadOwner(ctx, draft.threadId, userId)
     return draftView(draft)
   },
 })
 
 export const update = mutation({
   args: {
-    ...SessionIdArg,
     draftId: v.id('outreachDrafts'),
     recipient: v.string(),
     subject: v.string(),
@@ -168,7 +175,7 @@ export const update = mutation({
   },
   returns: v.number(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await viewerDraft(ctx, args.draftId)
     assertOutreachDraftEditable(draft)
     const recipient = normalizeOutreachRecipient(args.recipient)
     const subject = normalizeOutreachSubject(args.subject)
@@ -200,10 +207,10 @@ export const update = mutation({
 })
 
 export const approve = mutation({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  args: { draftId: v.id('outreachDrafts') },
   returns: v.string(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await viewerDraft(ctx, args.draftId)
     assertOutreachDraftEditable(draft)
     const inboxId = env.AGENTMAIL_INBOX_ID
     if (!inboxId) {
@@ -231,7 +238,7 @@ export const approve = mutation({
 export const beginRevision = internalMutation({
   args: {
     draftId: v.id('outreachDrafts'),
-    sessionId: vSessionId,
+    userId: v.id('users'),
     requestId: v.string(),
   },
   returns: v.object({
@@ -241,7 +248,7 @@ export const beginRevision = internalMutation({
     revision: v.number(),
   }),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await ownedDraft(ctx, args.draftId, args.userId)
     assertOutreachDraftEditable(draft)
     const now = Date.now()
     if (
@@ -269,12 +276,12 @@ export const beginRevision = internalMutation({
 export const clearRevision = internalMutation({
   args: {
     draftId: v.id('outreachDrafts'),
-    sessionId: vSessionId,
+    userId: v.id('users'),
     requestId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await ownedDraft(ctx, args.draftId, args.userId)
     if (draft.revisionRequest?.requestId === args.requestId) {
       await ctx.db.patch('outreachDrafts', draft._id, {
         revisionRequest: undefined,
@@ -287,7 +294,7 @@ export const clearRevision = internalMutation({
 export const setProposal = internalMutation({
   args: {
     draftId: v.id('outreachDrafts'),
-    sessionId: vSessionId,
+    userId: v.id('users'),
     baseRevision: v.number(),
     requestId: v.string(),
     instruction: v.string(),
@@ -297,7 +304,7 @@ export const setProposal = internalMutation({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await ownedDraft(ctx, args.draftId, args.userId)
     assertOutreachDraftEditable(draft)
     if (
       draft.revision !== args.baseRevision ||
@@ -327,10 +334,10 @@ export const setProposal = internalMutation({
 })
 
 export const acceptProposal = mutation({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  args: { draftId: v.id('outreachDrafts') },
   returns: v.number(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await viewerDraft(ctx, args.draftId)
     assertOutreachDraftEditable(draft)
     const proposal = draft.proposal
     if (!proposal || proposal.baseRevision !== draft.revision) {
@@ -357,10 +364,10 @@ export const acceptProposal = mutation({
 })
 
 export const discardProposal = mutation({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  args: { draftId: v.id('outreachDrafts') },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await viewerDraft(ctx, args.draftId)
     assertOutreachDraftEditable(draft)
     await ctx.db.patch('outreachDrafts', draft._id, { proposal: undefined })
     return null

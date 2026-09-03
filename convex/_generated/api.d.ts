@@ -11,6 +11,8 @@
 import type * as agent from "../agent.js";
 import type * as agentInstructions from "../agentInstructions.js";
 import type * as aiModel from "../aiModel.js";
+import type * as appOrigins from "../appOrigins.js";
+import type * as auth from "../auth.js";
 import type * as candidatePartMessages from "../candidatePartMessages.js";
 import type * as candidateParts from "../candidateParts.js";
 import type * as http from "../http.js";
@@ -33,6 +35,9 @@ import type * as tools_outreach from "../tools/outreach.js";
 import type * as tools_outreachMailbox from "../tools/outreachMailbox.js";
 import type * as tools_presentation from "../tools/presentation.js";
 import type * as tools_research from "../tools/research.js";
+import type * as tools_toolOwner from "../tools/toolOwner.js";
+import type * as users from "../users.js";
+import type * as viewer from "../viewer.js";
 
 import type {
   ApiFromModules,
@@ -44,6 +49,8 @@ declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   agentInstructions: typeof agentInstructions;
   aiModel: typeof aiModel;
+  appOrigins: typeof appOrigins;
+  auth: typeof auth;
   candidatePartMessages: typeof candidatePartMessages;
   candidateParts: typeof candidateParts;
   http: typeof http;
@@ -66,6 +73,9 @@ declare const fullApi: ApiFromModules<{
   "tools/outreachMailbox": typeof tools_outreachMailbox;
   "tools/presentation": typeof tools_presentation;
   "tools/research": typeof tools_research;
+  "tools/toolOwner": typeof tools_toolOwner;
+  users: typeof users;
+  viewer: typeof viewer;
 }>;
 
 /**
@@ -97,6 +107,10 @@ export declare const internal: FilterApi<
 export declare const components: {
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
   agentmail: import("@agentmail/convex/_generated/component.js").ComponentApi<"agentmail">;
+  auth: import("@convex-dev/auth/core/_generated/component.js").ComponentApi<"auth">;
+  oauthGoogle: import("@convex-dev/auth/providers/oauth/_generated/component.js").ComponentApi<"oauthGoogle">;
+  authPasswordProvider: import("@convex-dev/auth/providers/password/_generated/component.js").ComponentApi<"authPasswordProvider">;
+  authUsername: import("@convex-dev/auth/username/_generated/component.js").ComponentApi<"authUsername">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
   firecrawl: import("@firecrawl/firecrawl-convex/_generated/component.js").ComponentApi<"firecrawl">;
 };

@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test'
 
+import { signUpFreshAccount } from './auth'
+
 test('starts from a focused accommodation conversation', async ({ page }) => {
-  await page.goto('/')
+  await signUpFreshAccount(page)
 
   await expect(
     page.getByRole('heading', { name: 'Where do you need to live?' }),

@@ -79,8 +79,17 @@ and generated identifiers unless the name is genuinely part of a public surface.
 - Found currently calls OpenAI directly because the Convex AI Gateway requires
   a paid plan. Do not replace that transport with generic Gateway guidance
   unless the user explicitly revisits the decision.
-- Do not add authentication until the user supplies the Convex Auth v2 alpha
-  documentation.
+- Authentication is Convex Auth v2 (`@convex-dev/auth@alpha`), wired in
+  `convex/auth.ts` with the Google and username-password providers. It is an
+  alpha with no published docs; the installed package source and its JSDoc are
+  the reference. Do not add providers or change token lifetimes without the
+  user's agreement.
+- Derive the caller in every public function from `requireViewerId` or
+  `viewerId` in `convex/viewer.ts`. Never accept a user id as a public
+  function argument. Internal functions and agent tools carry
+  `userId: v.id('users')` and still re-check thread ownership.
+- User-owned surfaces render behind `RequireAuth` so their subscriptions only
+  exist for a verified session.
 - Never deploy or modify production data without explicit user approval.
 
 ## UI and design system

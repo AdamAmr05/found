@@ -5,7 +5,6 @@ import {
   vOutboundStatus,
 } from '@agentmail/convex'
 import { ConvexError, v } from 'convex/values'
-import { SessionIdArg } from 'convex-helpers/server/sessions'
 import { z } from 'zod'
 
 import { components, internal } from './_generated/api'
@@ -17,7 +16,7 @@ import {
   outreachContentHash,
   validateOutreachContent,
 } from './outreachContent'
-import { ownedDraft } from './outreachDrafts'
+import { viewerDraft } from './outreachDrafts'
 import { vOutreachState } from './outreachModel'
 import { replyRevision } from './outreachReplyState'
 
@@ -56,10 +55,10 @@ function reconciliationDelayMs(attempt: number): number {
 }
 
 export const send = mutation({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  args: { draftId: v.id('outreachDrafts') },
   returns: v.string(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await viewerDraft(ctx, args.draftId)
     if (draft.state !== 'approved' || !draft.approvedHash) {
       throw new ConvexError({ code: 'OUTREACH_APPROVAL_REQUIRED' })
     }
@@ -106,7 +105,7 @@ export const send = mutation({
 })
 
 export const status = query({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  args: { draftId: v.id('outreachDrafts') },
   returns: v.union(
     v.null(),
     v.object({
@@ -117,17 +116,17 @@ export const status = query({
     }),
   ),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await viewerDraft(ctx, args.draftId)
     if (!draft.outboundId) return null
     return await agentmail.status(ctx, outboundId(draft.outboundId))
   },
 })
 
 export const recheck = mutation({
-  args: { ...SessionIdArg, draftId: v.id('outreachDrafts') },
+  args: { draftId: v.id('outreachDrafts') },
   returns: vOutreachState,
   handler: async (ctx, args): Promise<Doc<'outreachDrafts'>['state']> => {
-    const draft = await ownedDraft(ctx, args.draftId, args.sessionId)
+    const draft = await viewerDraft(ctx, args.draftId)
     if (draft.state !== 'uncertain') return draft.state
     if (!draft.outboundId) {
       throw new ConvexError({ code: 'OUTREACH_STATUS_NOT_AVAILABLE' })

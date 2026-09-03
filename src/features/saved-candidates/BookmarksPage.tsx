@@ -1,4 +1,4 @@
-import { useSessionPaginatedQuery } from 'convex-helpers/react/sessions'
+import { usePaginatedQuery } from 'convex/react'
 
 import { api } from '../../../convex/_generated/api'
 import { FoundHeader } from '../navigation/FoundHeader'
@@ -7,13 +7,13 @@ import { SavedCandidateRow } from './SavedCandidateRow'
 const BOOKMARK_PAGE_SIZE = 20
 
 export function BookmarksPage() {
-  const bookmarks = useSessionPaginatedQuery(
+  const bookmarks = usePaginatedQuery(
     api.savedCandidates.listBookmarks,
     {},
     { initialNumItems: BOOKMARK_PAGE_SIZE },
   )
-  const candidates = bookmarks?.results ?? []
-  const loading = !bookmarks || bookmarks.status === 'LoadingFirstPage'
+  const candidates = bookmarks.results
+  const loading = bookmarks.status === 'LoadingFirstPage'
 
   return (
     <main className="min-h-dvh bg-background-base">
@@ -52,7 +52,7 @@ export function BookmarksPage() {
           </div>
         )}
 
-        {bookmarks?.status === 'CanLoadMore' ? (
+        {bookmarks.status === 'CanLoadMore' ? (
           <div className="mt-24 flex justify-center">
             <button
               className="min-h-44 rounded-10 border border-border-muted bg-background-lighter px-16 py-10 text-label-small text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"

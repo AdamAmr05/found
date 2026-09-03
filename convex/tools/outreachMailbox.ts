@@ -1,6 +1,5 @@
 import { createTool } from '@convex-dev/agent'
 import { makeFunctionReference } from 'convex/server'
-import type { SessionId } from 'convex-helpers/server/sessions'
 
 import {
   listOutreachUpdatesInputSchema,
@@ -11,27 +10,23 @@ import {
   type ReadOutreachThreadOutput,
 } from '../../shared/foundTools'
 import type { Id } from '../_generated/dataModel'
+import { requireToolOwner } from './toolOwner'
 
 const listUpdates = makeFunctionReference<
   'query',
-  { sessionId: SessionId; threadId: string },
+  { userId: Id<'users'>; threadId: string },
   ListOutreachUpdatesOutput['updates']
 >('outreachMailbox:listForAgent')
 
 const readThread = makeFunctionReference<
   'action',
   {
-    sessionId: SessionId
+    userId: Id<'users'>
     foundThreadId: string
     outreachId: Id<'outreachDrafts'>
   },
   ReadOutreachThreadOutput
 >('outreachMailbox:readThreadForAgent')
-
-function sessionId(value: string): SessionId {
-  // SAFETY: Agent tool userId is the branded session ID supplied to the run.
-  return value as SessionId
-}
 
 function outreachId(value: string): Id<'outreachDrafts'> {
   // SAFETY: This tool accepts the ID emitted by listOutreachUpdates.
@@ -44,13 +39,7 @@ export const listOutreachUpdates = createTool({
   inputSchema: listOutreachUpdatesInputSchema,
   outputSchema: listOutreachUpdatesOutputSchema,
   execute: async (ctx) => {
-    if (!ctx.userId || !ctx.threadId) {
-      throw new Error('An owned Found thread is required to list outreach.')
-    }
-    const updates = await ctx.runQuery(listUpdates, {
-      sessionId: sessionId(ctx.userId),
-      threadId: ctx.threadId,
-    })
+    const updates = await ctx.runQuery(listUpdates, requireToolOwner(ctx))
     return { updates }
   },
 })
@@ -61,12 +50,10 @@ export const readOutreachThread = createTool({
   inputSchema: readOutreachThreadInputSchema,
   outputSchema: readOutreachThreadOutputSchema,
   execute: async (ctx, input) => {
-    if (!ctx.userId || !ctx.threadId) {
-      throw new Error('An owned Found thread is required to read outreach.')
-    }
+    const owner = requireToolOwner(ctx)
     return await ctx.runAction(readThread, {
-      sessionId: sessionId(ctx.userId),
-      foundThreadId: ctx.threadId,
+      userId: owner.userId,
+      foundThreadId: owner.threadId,
       outreachId: outreachId(input.outreachId),
     })
   },

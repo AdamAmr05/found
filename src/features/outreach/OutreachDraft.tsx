@@ -12,11 +12,7 @@ import type { FunctionReturnType } from 'convex/server'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import {
-  useSessionAction,
-  useSessionMutation,
-  useSessionQuery,
-} from 'convex-helpers/react/sessions'
+import { useAction, useMutation, useQuery } from 'convex/react'
 
 import { api } from '../../../convex/_generated/api'
 import { OUTREACH_BODY_MAX_LENGTH } from '../../../shared/foundTools'
@@ -33,7 +29,7 @@ function outreachDraftId(value: string): Id<'outreachDrafts'> {
 
 export function OutreachDraft({ draftId }: { readonly draftId: string }) {
   const id = outreachDraftId(draftId)
-  const draft = useSessionQuery(api.outreachDrafts.get, { draftId: id })
+  const draft = useQuery(api.outreachDrafts.get, { draftId: id })
 
   if (draft === undefined) {
     return <DraftShell label="Opening the draft" />
@@ -65,12 +61,12 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
     setRecipient,
     setSubject,
   })
-  const acceptProposal = useSessionMutation(api.outreachDrafts.acceptProposal)
-  const discardProposal = useSessionMutation(api.outreachDrafts.discardProposal)
-  const approveDraft = useSessionMutation(api.outreachDrafts.approve)
-  const sendDraft = useSessionMutation(api.outreachDelivery.send)
-  const recheckDelivery = useSessionMutation(api.outreachDelivery.recheck)
-  const requestRevision = useSessionAction(api.outreachRevision.request)
+  const acceptProposal = useMutation(api.outreachDrafts.acceptProposal)
+  const discardProposal = useMutation(api.outreachDrafts.discardProposal)
+  const approveDraft = useMutation(api.outreachDrafts.approve)
+  const sendDraft = useMutation(api.outreachDelivery.send)
+  const recheckDelivery = useMutation(api.outreachDelivery.recheck)
+  const requestRevision = useAction(api.outreachRevision.request)
 
   useLayoutEffect(() => {
     const textarea = bodyRef.current
@@ -310,7 +306,7 @@ function useDraftPersistence({
   readonly setRecipient: Dispatch<SetStateAction<string>>
   readonly setSubject: Dispatch<SetStateAction<string>>
 }) {
-  const updateDraft = useSessionMutation(api.outreachDrafts.update)
+  const updateDraft = useMutation(api.outreachDrafts.update)
   const lastObservedRevision = useRef(draft.revision)
   const lastSubmitted = useRef<DraftFields | undefined>(undefined)
   const changed =

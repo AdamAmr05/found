@@ -1,7 +1,4 @@
-import {
-  useSessionMutation,
-  useSessionQuery,
-} from 'convex-helpers/react/sessions'
+import { useMutation, useQuery } from 'convex/react'
 import { LayoutGroup } from 'motion/react'
 import { useState } from 'react'
 
@@ -32,18 +29,14 @@ export function CandidateResults({
   toolCallId,
 }: CandidateResultsProps) {
   const [saveErrorRef, setSaveErrorRef] = useState<string>()
-  const savedCandidateState = useSessionQuery(
-    api.savedCandidates.listForToolPart,
-    {
-      threadId,
-      toolCallId,
-    },
-  )
-  const setSaved = useSessionMutation(
+  const savedCandidateState = useQuery(api.savedCandidates.listForToolPart, {
+    threadId,
+    toolCallId,
+  })
+  const setSaved = useMutation(
     api.savedCandidates.setSaved,
   ).withOptimisticUpdate((store, args) => {
     const queryArgs = {
-      sessionId: args.sessionId,
       threadId: args.threadId,
       toolCallId: args.toolCallId,
     }

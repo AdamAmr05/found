@@ -2,7 +2,6 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { HOUR, RateLimiter } from '@convex-dev/rate-limiter'
 import { generateObject } from 'ai'
 import { ConvexError, v } from 'convex/values'
-import { SessionIdArg } from 'convex-helpers/server/sessions'
 import { z } from 'zod'
 
 import {
@@ -13,6 +12,7 @@ import {
 import { components, internal } from './_generated/api'
 import { action, env } from './_generated/server'
 import { FOUND_MODEL } from './aiModel'
+import { requireViewerId } from './viewer'
 
 const revisedDraftSchema = z.object({
   recipient: z.string().max(254),
@@ -38,12 +38,12 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
 
 export const request = action({
   args: {
-    ...SessionIdArg,
     draftId: v.id('outreachDrafts'),
     instruction: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const userId = await requireViewerId(ctx)
     const instruction = args.instruction.trim()
     if (
       instruction.length === 0 ||
@@ -54,13 +54,13 @@ export const request = action({
 
     const requestId = crypto.randomUUID()
     const draft = await ctx.runMutation(internal.outreachDrafts.beginRevision, {
-      sessionId: args.sessionId,
+      userId,
       draftId: args.draftId,
       requestId,
     })
     try {
       await rateLimiter.limit(ctx, 'reviseOutreachDraft', {
-        key: args.sessionId,
+        key: userId,
         throws: true,
       })
 
@@ -82,7 +82,7 @@ export const request = action({
       const stored = await ctx.runMutation(
         internal.outreachDrafts.setProposal,
         {
-          sessionId: args.sessionId,
+          userId,
           draftId: args.draftId,
           baseRevision: draft.revision,
           requestId,
@@ -95,7 +95,7 @@ export const request = action({
       }
     } catch (cause) {
       await ctx.runMutation(internal.outreachDrafts.clearRevision, {
-        sessionId: args.sessionId,
+        userId,
         draftId: args.draftId,
         requestId,
       })

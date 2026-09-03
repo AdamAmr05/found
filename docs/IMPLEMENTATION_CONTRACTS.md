@@ -13,10 +13,11 @@ One Agent component thread backs one Found workspace. The component owns the
 stored messages, tool calls, tool results, model metadata, and stream deltas.
 Found does not recreate those tables or maintain a second message history.
 
-Until Convex Auth v2 is connected, an unguessable browser session ID acts as a
-temporary bearer credential for thread ownership. Every public thread read and
-write verifies that ownership. This is a development bridge, not the final
-identity model, and it must be replaced rather than layered beside auth.
+Convex Auth v2 owns identity. Every public thread read and write derives the
+caller from the verified access token (`requireViewerId`) and checks that the
+Agent component thread's `userId` is that user. Internal functions scheduled
+on the user's behalf carry the same `users` id and repeat the ownership check
+rather than trusting the scheduler.
 
 An agent run uses the Agent component's AI SDK integration:
 

@@ -1,7 +1,4 @@
-import {
-  useSessionMutation,
-  useSessionPaginatedQuery,
-} from 'convex-helpers/react/sessions'
+import { useMutation, usePaginatedQuery } from 'convex/react'
 import { useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
@@ -16,19 +13,19 @@ const SHORTLIST_PAGE_SIZE = 5
 
 export function ThreadShortlist({ threadId }: { readonly threadId: string }) {
   const [removeError, setRemoveError] = useState(false)
-  const shortlist = useSessionPaginatedQuery(
+  const shortlist = usePaginatedQuery(
     api.savedCandidates.listForThread,
     { threadId },
     { initialNumItems: SHORTLIST_PAGE_SIZE },
   )
-  const setSaved = useSessionMutation(api.savedCandidates.setSaved)
-  const candidates = shortlist?.results ?? []
+  const setSaved = useMutation(api.savedCandidates.setSaved)
+  const candidates = shortlist.results
   const hasMore =
-    shortlist?.status === 'CanLoadMore' || shortlist?.status === 'LoadingMore'
+    shortlist.status === 'CanLoadMore' || shortlist.status === 'LoadingMore'
   const items = candidates.map(toTrayItem)
   const summary = shortlistSummary(candidates, hasMore)
 
-  if (shortlist?.status === 'LoadingFirstPage' || candidates.length === 0) {
+  if (shortlist.status === 'LoadingFirstPage' || candidates.length === 0) {
     return null
   }
 
@@ -62,7 +59,7 @@ export function ThreadShortlist({ threadId }: { readonly threadId: string }) {
         }
         hasMore={hasMore}
         items={items}
-        loadingMore={shortlist?.status === 'LoadingMore'}
+        loadingMore={shortlist.status === 'LoadingMore'}
         onLoadMore={
           hasMore ? () => shortlist.loadMore(SHORTLIST_PAGE_SIZE) : undefined
         }

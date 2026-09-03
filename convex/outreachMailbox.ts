@@ -1,8 +1,6 @@
 import { AgentMail } from '@agentmail/convex'
 import { makeFunctionReference } from 'convex/server'
 import { ConvexError, v } from 'convex/values'
-import { vSessionId } from 'convex-helpers/server/sessions'
-import type { SessionId } from 'convex-helpers/server/sessions'
 import { z } from 'zod'
 
 import {
@@ -43,7 +41,7 @@ type ThreadDetails = {
 }
 
 type ReadThreadArgs = {
-  sessionId: SessionId
+  userId: Id<'users'>
   foundThreadId: string
   outreachId: Id<'outreachDrafts'>
 }
@@ -51,7 +49,7 @@ type ReadThreadArgs = {
 const getThreadDetails = makeFunctionReference<
   'query',
   {
-    sessionId: SessionId
+    userId: Id<'users'>
     foundThreadId: string
     outreachId: Id<'outreachDrafts'>
   },
@@ -61,7 +59,7 @@ const getThreadDetails = makeFunctionReference<
 const markThreadSeenByAgent = makeFunctionReference<
   'mutation',
   {
-    sessionId: SessionId
+    userId: Id<'users'>
     outreachId: Id<'outreachDrafts'>
     observedReplyRevision: number
   },
@@ -118,14 +116,14 @@ const vRunDraft = v.object({
 })
 
 export const listForAgent = internalQuery({
-  args: { sessionId: vSessionId, threadId: v.string() },
+  args: { userId: v.id('users'), threadId: v.string() },
   returns: v.array(vUpdate),
   handler: async (ctx, args) => {
-    await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    await assertThreadOwner(ctx, args.threadId, args.userId)
     const drafts = await ctx.db
       .query('outreachDrafts')
-      .withIndex('by_session_and_thread_and_latest_activity', (index) =>
-        index.eq('sessionId', args.sessionId).eq('threadId', args.threadId),
+      .withIndex('by_user_and_thread_and_latest_activity', (index) =>
+        index.eq('userId', args.userId).eq('threadId', args.threadId),
       )
       .order('desc')
       .take(50)
@@ -140,7 +138,7 @@ export const listForAgent = internalQuery({
 })
 
 export const contextForRun = internalQuery({
-  args: { sessionId: vSessionId, threadId: v.string() },
+  args: { userId: v.id('users'), threadId: v.string() },
   returns: v.object({
     changedDrafts: v.array(vRunDraft),
     unreadReplies: v.array(
@@ -151,11 +149,11 @@ export const contextForRun = internalQuery({
     ),
   }),
   handler: async (ctx, args) => {
-    await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    await assertThreadOwner(ctx, args.threadId, args.userId)
     const drafts = await ctx.db
       .query('outreachDrafts')
-      .withIndex('by_session_and_thread_and_latest_activity', (index) =>
-        index.eq('sessionId', args.sessionId).eq('threadId', args.threadId),
+      .withIndex('by_user_and_thread_and_latest_activity', (index) =>
+        index.eq('userId', args.userId).eq('threadId', args.threadId),
       )
       .order('desc')
       .take(50)
@@ -190,7 +188,7 @@ export const contextForRun = internalQuery({
 
 export const markAgentSeen = internalMutation({
   args: {
-    sessionId: vSessionId,
+    userId: v.id('users'),
     threadId: v.string(),
     revisions: v.array(
       v.object({
@@ -201,11 +199,11 @@ export const markAgentSeen = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    await assertThreadOwner(ctx, args.threadId, args.userId)
     for (const seen of args.revisions.slice(0, 50)) {
       const draft = await ctx.db.get('outreachDrafts', seen.outreachId)
       if (
-        draft?.sessionId === args.sessionId &&
+        draft?.userId === args.userId &&
         draft.threadId === args.threadId &&
         seen.revision > draft.lastAgentSeenRevision &&
         seen.revision <= draft.revision
@@ -221,7 +219,7 @@ export const markAgentSeen = internalMutation({
 
 export const detailsForAgent = internalQuery({
   args: {
-    sessionId: vSessionId,
+    userId: v.id('users'),
     foundThreadId: v.string(),
     outreachId: v.id('outreachDrafts'),
   },
@@ -235,7 +233,7 @@ export const detailsForAgent = internalQuery({
     }),
   ),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.outreachId, args.sessionId)
+    const draft = await ownedDraft(ctx, args.outreachId, args.userId)
     if (draft.threadId !== args.foundThreadId || !draft.agentmailThreadId) {
       return null
     }
@@ -302,7 +300,7 @@ async function loadThreadData(
 }
 
 const readThreadArgs = {
-  sessionId: vSessionId,
+  userId: v.id('users'),
   foundThreadId: v.string(),
   outreachId: v.id('outreachDrafts'),
 }
@@ -313,7 +311,7 @@ export const readThreadForAgent = internalAction({
   handler: async (ctx, args) => {
     const thread = await loadThreadData(ctx, args)
     await ctx.runMutation(markThreadSeenByAgent, {
-      sessionId: args.sessionId,
+      userId: args.userId,
       outreachId: args.outreachId,
       observedReplyRevision: thread.observedReplyRevision,
     })
@@ -329,13 +327,13 @@ export const readThread = internalAction({
 
 export const markReadForAgent = internalMutation({
   args: {
-    sessionId: vSessionId,
+    userId: v.id('users'),
     outreachId: v.id('outreachDrafts'),
     observedReplyRevision: v.number(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const draft = await ownedDraft(ctx, args.outreachId, args.sessionId)
+    const draft = await ownedDraft(ctx, args.outreachId, args.userId)
     const currentRevision = replyRevision(draft)
     const currentReadThrough = agentReadThroughReplyRevision(draft)
     const observedRevision = observedReplyRevision(

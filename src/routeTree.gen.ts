@@ -9,26 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as BookmarksRouteImport } from './routes/bookmarks'
-import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as LabRouteImport } from './routes/lab'
 import { Route as PlaygroundRouteImport } from './routes/playground'
+import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppBookmarksRouteImport } from './routes/_app.bookmarks'
+import { Route as AppInboxRouteImport } from './routes/_app.inbox'
 import { Route as PlaygroundMaterialsAsciiRouteImport } from './routes/playground_.materials.ascii'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BookmarksRoute = BookmarksRouteImport.update({
-  id: '/bookmarks',
-  path: '/bookmarks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InboxRoute = InboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LabRoute = LabRouteImport.update({
@@ -41,6 +31,21 @@ const PlaygroundRoute = PlaygroundRouteImport.update({
   path: '/playground',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBookmarksRoute = AppBookmarksRouteImport.update({
+  id: '/bookmarks',
+  path: '/bookmarks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInboxRoute = AppInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
 const PlaygroundMaterialsAsciiRoute =
   PlaygroundMaterialsAsciiRouteImport.update({
     id: '/playground_/materials/ascii',
@@ -49,61 +54,61 @@ const PlaygroundMaterialsAsciiRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/bookmarks': typeof BookmarksRoute
-  '/inbox': typeof InboxRoute
+  '/': typeof AppIndexRoute
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
+  '/bookmarks': typeof AppBookmarksRoute
+  '/inbox': typeof AppInboxRoute
   '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/bookmarks': typeof BookmarksRoute
-  '/inbox': typeof InboxRoute
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
+  '/bookmarks': typeof AppBookmarksRoute
+  '/inbox': typeof AppInboxRoute
+  '/': typeof AppIndexRoute
   '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/bookmarks': typeof BookmarksRoute
-  '/inbox': typeof InboxRoute
+  '/_app': typeof AppRouteWithChildren
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
+  '/_app/bookmarks': typeof AppBookmarksRoute
+  '/_app/inbox': typeof AppInboxRoute
+  '/_app/': typeof AppIndexRoute
   '/playground_/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/bookmarks'
-    | '/inbox'
     | '/lab'
     | '/playground'
+    | '/bookmarks'
+    | '/inbox'
     | '/playground/materials/ascii'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/bookmarks'
-    | '/inbox'
     | '/lab'
     | '/playground'
+    | '/bookmarks'
+    | '/inbox'
+    | '/'
     | '/playground/materials/ascii'
   id:
     | '__root__'
-    | '/'
-    | '/bookmarks'
-    | '/inbox'
+    | '/_app'
     | '/lab'
     | '/playground'
+    | '/_app/bookmarks'
+    | '/_app/inbox'
+    | '/_app/'
     | '/playground_/materials/ascii'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  BookmarksRoute: typeof BookmarksRoute
-  InboxRoute: typeof InboxRoute
+  AppRoute: typeof AppRouteWithChildren
   LabRoute: typeof LabRoute
   PlaygroundRoute: typeof PlaygroundRoute
   PlaygroundMaterialsAsciiRoute: typeof PlaygroundMaterialsAsciiRoute
@@ -111,25 +116,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bookmarks': {
-      id: '/bookmarks'
-      path: '/bookmarks'
-      fullPath: '/bookmarks'
-      preLoaderRoute: typeof BookmarksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inbox': {
-      id: '/inbox'
-      path: '/inbox'
-      fullPath: '/inbox'
-      preLoaderRoute: typeof InboxRouteImport
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lab': {
@@ -146,6 +137,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlaygroundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/': {
+      id: '/_app/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/bookmarks': {
+      id: '/_app/bookmarks'
+      path: '/bookmarks'
+      fullPath: '/bookmarks'
+      preLoaderRoute: typeof AppBookmarksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inbox': {
+      id: '/_app/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AppInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/playground_/materials/ascii': {
       id: '/playground_/materials/ascii'
       path: '/playground/materials/ascii'
@@ -156,10 +168,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppRouteChildren {
+  AppBookmarksRoute: typeof AppBookmarksRoute
+  AppInboxRoute: typeof AppInboxRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppBookmarksRoute: AppBookmarksRoute,
+  AppInboxRoute: AppInboxRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  BookmarksRoute: BookmarksRoute,
-  InboxRoute: InboxRoute,
+  AppRoute: AppRouteWithChildren,
   LabRoute: LabRoute,
   PlaygroundRoute: PlaygroundRoute,
   PlaygroundMaterialsAsciiRoute: PlaygroundMaterialsAsciiRoute,

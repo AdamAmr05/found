@@ -1,6 +1,4 @@
 import { ConvexError, v } from 'convex/values'
-import { vSessionId } from 'convex-helpers/server/sessions'
-import type { SessionId } from 'convex-helpers/server/sessions'
 
 import {
   CANDIDATE_REF_MAX_LENGTH,
@@ -8,6 +6,7 @@ import {
   HTTP_URL_MAX_LENGTH,
 } from '../shared/foundTools'
 import { isHttpUrl } from '../shared/httpUrl'
+import type { Id } from './_generated/dataModel'
 import { internalMutation } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
 import { assertThreadOwner } from './threadAccess'
@@ -58,7 +57,7 @@ function assertPreviewImages(
 export async function assertCandidatePartReference(
   ctx: MutationCtx,
   args: {
-    readonly sessionId: SessionId
+    readonly userId: Id<'users'>
     readonly threadId: string
     readonly toolCallId: string
     readonly candidateRef: string
@@ -70,9 +69,9 @@ export async function assertCandidatePartReference(
 }> {
   const part = await ctx.db
     .query('candidatePartRefs')
-    .withIndex('by_session_thread_tool', (index) =>
+    .withIndex('by_user_and_thread_and_tool_call', (index) =>
       index
-        .eq('sessionId', args.sessionId)
+        .eq('userId', args.userId)
         .eq('threadId', args.threadId)
         .eq('toolCallId', args.toolCallId),
     )
@@ -95,7 +94,7 @@ export async function assertCandidatePartReference(
 
 export const recordBatch = internalMutation({
   args: {
-    sessionId: vSessionId,
+    userId: v.id('users'),
     threadId: v.string(),
     parts: v.array(
       v.object({
@@ -116,16 +115,16 @@ export const recordBatch = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await assertThreadOwner(ctx, args.threadId, args.sessionId)
+    await assertThreadOwner(ctx, args.threadId, args.userId)
     for (const part of args.parts) {
       assertCandidateRefs(part.candidateRefs)
       const previewImages = part.previewImages ?? []
       assertPreviewImages(part.candidateRefs, previewImages)
       const existing = await ctx.db
         .query('candidatePartRefs')
-        .withIndex('by_session_thread_tool', (index) =>
+        .withIndex('by_user_and_thread_and_tool_call', (index) =>
           index
-            .eq('sessionId', args.sessionId)
+            .eq('userId', args.userId)
             .eq('threadId', args.threadId)
             .eq('toolCallId', part.toolCallId),
         )
@@ -155,7 +154,7 @@ export const recordBatch = internalMutation({
 
       await ctx.db.insert('candidatePartRefs', {
         ...part,
-        sessionId: args.sessionId,
+        userId: args.userId,
         threadId: args.threadId,
         previewImages,
       })

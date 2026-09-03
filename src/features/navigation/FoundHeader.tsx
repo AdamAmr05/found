@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router'
 
+import { AccountControl } from '../auth/AccountControl'
+
 const navLinkClass =
   'rounded-8 px-10 py-8 text-label-small text-foreground-muted transition-colors hover:bg-background-lighter hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100 data-[status=active]:bg-background-lighter data-[status=active]:text-accent-black'
 
@@ -39,6 +41,7 @@ export function FoundHeader({
               New thread
             </button>
           ) : null}
+          <AccountControl />
         </nav>
       </div>
     </header>

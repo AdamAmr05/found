@@ -1,6 +1,5 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { vSessionId } from 'convex-helpers/server/sessions'
 
 import {
   vOutreachProposal,
@@ -9,8 +8,15 @@ import {
 } from './outreachModel'
 
 const schema = defineSchema({
+  // The app-owned account record behind a Convex Auth session. The auth core
+  // stores only this document's id; provider accounts map onto it.
+  users: defineTable({
+    displayName: v.string(),
+    email: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+  }),
   candidatePartRefs: defineTable({
-    sessionId: vSessionId,
+    userId: v.id('users'),
     threadId: v.string(),
     messageId: v.string(),
     toolCallId: v.string(),
@@ -24,9 +30,13 @@ const schema = defineSchema({
         }),
       ),
     ),
-  }).index('by_session_thread_tool', ['sessionId', 'threadId', 'toolCallId']),
+  }).index('by_user_and_thread_and_tool_call', [
+    'userId',
+    'threadId',
+    'toolCallId',
+  ]),
   savedCandidates: defineTable({
-    sessionId: vSessionId,
+    userId: v.id('users'),
     threadId: v.string(),
     messageId: v.string(),
     toolCallId: v.string(),
@@ -34,16 +44,16 @@ const schema = defineSchema({
     imageSourceRef: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
   })
-    .index('by_session', ['sessionId'])
-    .index('by_session_and_thread', ['sessionId', 'threadId'])
-    .index('by_session_and_thread_and_tool_and_candidate', [
-      'sessionId',
+    .index('by_user', ['userId'])
+    .index('by_user_and_thread', ['userId', 'threadId'])
+    .index('by_user_and_thread_and_tool_call_and_candidate', [
+      'userId',
       'threadId',
       'toolCallId',
       'candidateRef',
     ]),
   outreachDrafts: defineTable({
-    sessionId: vSessionId,
+    userId: v.id('users'),
     threadId: v.string(),
     toolCallId: v.string(),
     candidateRef: v.optional(v.string()),
@@ -68,12 +78,12 @@ const schema = defineSchema({
     revisionRequest: v.optional(vOutreachRevisionRequest),
     proposal: v.optional(vOutreachProposal),
   })
-    .index('by_session_and_thread_and_latest_activity', [
-      'sessionId',
+    .index('by_user_and_thread_and_latest_activity', [
+      'userId',
       'threadId',
       'latestActivityAt',
     ])
-    .index('by_session_and_latest_activity', ['sessionId', 'latestActivityAt'])
+    .index('by_user_and_latest_activity', ['userId', 'latestActivityAt'])
     .index('by_thread_and_tool_call', ['threadId', 'toolCallId'])
     .index('by_agentmail_thread', ['agentmailThreadId'])
     .index('by_agentmail_message', ['agentmailMessageId']),
