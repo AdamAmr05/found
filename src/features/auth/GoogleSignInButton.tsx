@@ -21,13 +21,13 @@ export function GoogleSignInButton() {
 
   return (
     <button
-      className="flex h-44 w-full items-center justify-center gap-10 rounded-10 border border-border-muted bg-background-lighter text-label-medium text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100 disabled:opacity-50"
+      className="auth-google-button"
       disabled={leaving}
       type="button"
       onClick={() => void start()}
     >
       <GoogleMark className="size-18" />
-      {leaving ? 'Opening Google…' : 'Continue with Google'}
+      {leaving ? 'Opening Google…' : 'Sign in with Google'}
     </button>
   )
 }

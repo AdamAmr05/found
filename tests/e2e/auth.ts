@@ -5,9 +5,7 @@ import { expect, type Page } from '@playwright/test'
 export async function signUpFreshAccount(page: Page): Promise<string> {
   const username = `e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
   await page.goto('/')
-  await page
-    .getByRole('button', { name: 'New here? Create an account' })
-    .click()
+  await page.getByRole('button', { name: 'Sign up' }).click()
   await page.getByLabel('Username').fill(username)
   await page.getByLabel('Password').fill('correct-horse-battery-e2e')
   await page.getByRole('button', { name: 'Create account' }).click()
