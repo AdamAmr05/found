@@ -176,13 +176,15 @@ export const respond = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     await assertThreadOwner(ctx, args.threadId, args.userId)
-    const outreachContext = await ctx.runQuery(
-      internal.outreachMailbox.contextForRun,
-      {
+    const [userProfile, outreachContext] = await Promise.all([
+      ctx.runQuery(internal.users.profileForAgent, {
+        userId: args.userId,
+      }),
+      ctx.runQuery(internal.outreachMailbox.contextForRun, {
         threadId: args.threadId,
         userId: args.userId,
-      },
-    )
+      }),
+    ])
     const result = await foundAgent.streamText(
       ctx,
       { threadId: args.threadId, userId: args.userId },
@@ -191,6 +193,7 @@ export const respond = internalAction({
         instructions: `${buildFoundRunInstructions({
           researchToolsAvailable: true,
           todayIsoDate: new Date().toISOString().slice(0, 10),
+          userDisplayName: userProfile.displayName,
         })}${outreachRunContext(outreachContext)}`,
       },
       { saveStreamDeltas: { throttleMs: 500 } },

@@ -5,7 +5,7 @@ import {
 import { v } from 'convex/values'
 
 import type { Doc } from './_generated/dataModel'
-import { internalMutation, query } from './_generated/server'
+import { internalMutation, internalQuery, query } from './_generated/server'
 import { viewerId } from './viewer'
 
 type UserFields = Omit<Doc<'users'>, '_id' | '_creationTime'>
@@ -67,6 +67,19 @@ export const syncGoogleProfile = internalMutation({
     if (!user) return null
     await ctx.db.replace('users', user._id, userFieldsFromGoogle(args.profile))
     return null
+  },
+})
+
+// Agent actions cannot read the database directly. Keep their user context
+// app-owned and provider-neutral: both password and Google accounts resolve to
+// the same canonical Found profile.
+export const profileForAgent = internalQuery({
+  args: { userId: v.id('users') },
+  returns: v.object({ displayName: v.string() }),
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get('users', args.userId)
+    if (!user) throw new Error('Agent user profile not found')
+    return { displayName: user.displayName }
   },
 })
 
