@@ -9,12 +9,12 @@
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
 - **Convex deployment:** https://sensible-bee-189.eu-west-1.convex.cloud
-- **Components:** @convex-dev/agent, @convex-dev/rate-limiter, @firecrawl/firecrawl-convex, @agentmail/convex
+- **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @firecrawl/firecrawl-convex, @agentmail/convex
 - **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting
-- **Auth:** none
+- **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-08-30T23:36:30Z
+- **Last updated:** 2026-09-03T09:21:27Z
 
 ## Log
 
@@ -185,3 +185,17 @@ a one-shot status check. Verified the full loop with a real AgentMail send and
 inbound replies in the browser
 (`convex/convex.config.ts`, `convex/http.ts`, `convex/outreachMailbox.ts`,
 `convex/outreachRevision.ts`).
+
+### 2026-09-03 - f3ba438
+
+Added Convex Auth v2 with Google OAuth and username/password sessions, an
+app-owned user record, protected application routes, and owner-derived access
+across threads, saved candidates, and outreach. Internal jobs carry the same
+Found user ID and repeat ownership checks (`convex/auth.ts`, `convex/users.ts`,
+`convex/viewer.ts`, `convex/threadAccess.ts`).
+
+Rebuilt sign-in as a responsive Found-colored split interface with a
+visibility-aware dither shader and Google's official mark. Agent runs now read
+one provider-neutral display name and include it as inert profile context so
+email drafts can use the real sender name (`src/features/auth/SignInPage.tsx`,
+`src/features/auth/AuthDitherShader.tsx`, `convex/agentInstructions.ts`).
