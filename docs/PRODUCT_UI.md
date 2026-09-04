@@ -115,6 +115,8 @@ universal representation for every state.
   warm `border-beam` treatment runs only on an untouched, empty conversation.
   Focus or editing dismisses it for that conversation; New thread resets it.
   Reduced motion disables the beam and textarea height transitions.
+- The input and send button share one row. The composer starts at 64px high
+  and grows with the draft; the send button stays at the lower right.
 - Keep entry copy to the heading, questions, and input placeholder. No category
   eyebrow, keyboard instructions, or implementation-oriented footer is needed.
 

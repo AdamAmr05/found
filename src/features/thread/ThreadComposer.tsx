@@ -82,7 +82,7 @@ export function ThreadComposer({
     >
       <form
         aria-label="Message composer"
-        className="thread-composer rounded-20 bg-background-lighter p-12 shadow-surface-raised"
+        className="thread-composer flex items-end gap-8 rounded-20 bg-background-lighter p-12 shadow-surface-raised"
         onFocusCapture={() => setInteracted(true)}
         onSubmit={handleSubmit}
       >
@@ -92,7 +92,7 @@ export function ThreadComposer({
         <textarea
           ref={textareaRef}
           id="found-message"
-          className="min-h-40 w-full resize-none overflow-y-auto bg-transparent px-8 py-6 text-body-input text-accent-black transition-[height] duration-200 ease-[cubic-bezier(0.2,0,0,1)] outline-none placeholder:text-foreground-muted disabled:opacity-50 motion-reduce:transition-none"
+          className="min-h-40 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-8 py-6 text-body-input text-accent-black transition-[height] duration-200 ease-[cubic-bezier(0.2,0,0,1)] outline-none placeholder:text-foreground-muted disabled:opacity-50 motion-reduce:transition-none"
           disabled={disabled}
           placeholder="Describe your next place…"
           rows={1}
@@ -103,16 +103,14 @@ export function ThreadComposer({
           }}
           onKeyDown={handleKeyDown}
         />
-        <div className="flex justify-end">
-          <button
-            aria-label="Send message"
-            className="grid size-36 shrink-0 place-items-center rounded-10 bg-heat-100 text-accent-white shadow-action-heat transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:bg-border-faint disabled:text-foreground-muted disabled:shadow-none"
-            disabled={disabled || value.trim().length === 0}
-            type="submit"
-          >
-            <ArrowUp aria-hidden className="size-18" weight="regular" />
-          </button>
-        </div>
+        <button
+          aria-label="Send message"
+          className="mb-2 grid size-36 shrink-0 place-items-center rounded-10 bg-heat-100 text-accent-white shadow-action-heat transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:bg-border-faint disabled:text-foreground-muted disabled:shadow-none"
+          disabled={disabled || value.trim().length === 0}
+          type="submit"
+        >
+          <ArrowUp aria-hidden className="size-18" weight="regular" />
+        </button>
       </form>
     </BorderBeam>
   )
