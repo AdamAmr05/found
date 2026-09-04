@@ -101,6 +101,23 @@ universal representation for every state.
 
 ## Component vocabulary
 
+### Conversation entry
+
+- The empty conversation groups a 32/36 heading (24/32 on small screens), four illustrated starters,
+  and the composer into one centered, scrollable surface. The composer stays
+  docked to the bottom once there are messages.
+- Starter buttons use 16px corners, a nearly white face, a white upper lip,
+  and a small inset lower edge. Hover strengthens the border without lifting
+  the surface or increasing its shadow. Pressing gives an inset response.
+- Koboyo illustrations are decorative and locally served; each starter's full
+  question is its accessible name. Selecting one sends that exact question.
+- The white composer retains its 20px corners and surface shadow. An understated
+  warm `border-beam` treatment runs only on an untouched, empty conversation.
+  Focus or editing dismisses it for that conversation; New thread resets it.
+  Reduced motion disables the beam and textarea height transitions.
+- Keep entry copy to the heading, questions, and input placeholder. No category
+  eyebrow, keyboard instructions, or implementation-oriented footer is needed.
+
 ### CandidateTile
 
 - Optimized for scanning several candidates without opening each one.
