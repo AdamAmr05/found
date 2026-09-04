@@ -120,6 +120,16 @@ universal representation for every state.
 - Keep entry copy to the heading, questions, and input placeholder. No category
   eyebrow, keyboard instructions, or implementation-oriented footer is needed.
 
+### External links
+
+- Thread markdown uses Streamdown's link-safety hook with a product-owned native
+  dialog. Its default Tailwind modal does not match this app's pixel-based tokens.
+- The dialog is centered, capped at 440px, with 24px padding, 16px corners, and
+  16px minimum viewport gutters. The full destination wraps and remains selectable.
+- Copy link reports success or failure; Open link opens an isolated new tab.
+  Escape, the close button, and the backdrop dismiss the dialog and restore focus
+  to the originating link. Focus stays inside the modal while it is open.
+
 ### CandidateTile
 
 - Optimized for scanning several candidates without opening each one.

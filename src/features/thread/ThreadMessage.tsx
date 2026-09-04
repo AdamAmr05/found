@@ -17,9 +17,7 @@ import {
   isToolActive,
 } from './toolState'
 
-const StreamingMarkdown = lazy(() =>
-  import('streamdown').then(({ Streamdown }) => ({ default: Streamdown })),
-)
+const StreamingMarkdown = lazy(() => import('./ThreadMarkdown'))
 const CandidateToolPart = lazy(() => import('./CandidateToolPart'))
 const MapToolPart = lazy(() => import('./MapToolPart'))
 const OutreachToolPart = lazy(() => import('./OutreachToolPart'))
@@ -253,14 +251,7 @@ function MessageText({
   const [smoothText] = useSmoothText(text, { startStreaming: streaming })
   return (
     <Suspense fallback={<p className="whitespace-pre-wrap">{smoothText}</p>}>
-      <StreamingMarkdown
-        className="[&_a]:text-heat-100 [&_a]:underline [&_a]:underline-offset-3 [&_h1]:mt-16 [&_h1]:text-title-h5 [&_h2]:mt-14 [&_h2]:text-label-x-large [&_h3]:mt-12 [&_h3]:text-label-large [&_li]:my-3 [&_li]:pl-2 [&_ol]:my-8 [&_ol]:list-decimal [&_ol]:pl-22 [&_p+p]:mt-8 [&_ul]:my-8 [&_ul]:list-disc [&_ul]:pl-22"
-        controls={false}
-        isAnimating={streaming}
-        mode={streaming ? 'streaming' : 'static'}
-      >
-        {smoothText}
-      </StreamingMarkdown>
+      <StreamingMarkdown streaming={streaming} text={smoothText} />
     </Suspense>
   )
 }
