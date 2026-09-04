@@ -186,7 +186,7 @@ inbound replies in the browser
 (`convex/convex.config.ts`, `convex/http.ts`, `convex/outreachMailbox.ts`,
 `convex/outreachRevision.ts`).
 
-### 2026-09-03 - f3ba438
+### 2026-09-03 - 65430eb
 
 Added Convex Auth v2 with Google OAuth and username/password sessions, an
 app-owned user record, protected application routes, and owner-derived access
