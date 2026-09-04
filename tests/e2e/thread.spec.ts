@@ -46,6 +46,38 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
   )
   await expect(savedPrompt).toBeVisible()
 
+  // A short viewport makes this real conversation scroll without depending on
+  // the model's response length. Both empty margins must scroll the messages.
+  await page.setViewportSize({ width: 1440, height: 280 })
+  const conversation = page.getByRole('log')
+  const scroller = conversation.locator(':scope > div').first()
+  await expect
+    .poll(() => scroller.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(40)
+  const composerBounds = await composer.boundingBox()
+  for (const x of [16, 1424]) {
+    await scroller.evaluate((element) => {
+      element.scrollTop = element.scrollHeight
+    })
+    const previousTop = await scroller.evaluate((element) => element.scrollTop)
+    const bounds = await conversation.boundingBox()
+    if (!bounds) throw new Error('Conversation is not laid out')
+    await page.mouse.move(x, bounds.y + bounds.height / 2)
+    await page.mouse.wheel(0, -120)
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBeLessThan(previousTop)
+  }
+  await expect(
+    page.getByRole('button', { name: 'Jump to latest message' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Jump to latest message' }).click()
+  await expect(
+    page.getByRole('button', { name: 'Jump to latest message' }),
+  ).toHaveCount(0)
+  expect(await composer.boundingBox()).toEqual(composerBounds)
+  await page.setViewportSize({ width: 1280, height: 720 })
+
   await page.reload()
   await expect(savedPrompt).toBeVisible()
   await page.getByRole('button', { name: 'New thread' }).click()

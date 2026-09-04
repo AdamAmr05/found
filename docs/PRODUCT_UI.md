@@ -117,6 +117,9 @@ universal representation for every state.
   Reduced motion disables the beam and textarea height transitions.
 - The input and send button share one row. The composer starts at 64px high
   and grows with the draft; the send button stays at the lower right.
+- The conversation's scroll viewport spans the available page width, including
+  the empty margins. Only the inner messages are constrained to 720px, with
+  20px mobile / 32px desktop gutters. The composer remains docked while scrolling.
 - Keep entry copy to the heading, questions, and input placeholder. No category
   eyebrow, keyboard instructions, or implementation-oriented footer is needed.
 

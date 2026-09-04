@@ -27,12 +27,12 @@ export function FoundThread() {
     <main className="fixed inset-0 flex flex-col overflow-hidden bg-background-base">
       <FoundHeader {...(threadId ? { onNewThread: startNewThread } : {})} />
       <section
-        className={`mx-auto flex min-h-0 w-full max-w-920 flex-1 flex-col px-20 sm:px-32 ${idleScreen ? 'overflow-y-auto' : 'overflow-hidden'}`}
+        className={`flex min-h-0 w-full flex-1 flex-col ${idleScreen ? 'overflow-y-auto' : 'overflow-hidden'}`}
       >
         <div
           className={
             idleScreen
-              ? 'mx-auto my-auto w-full max-w-720 py-24 sm:py-48'
+              ? 'mx-auto my-auto w-full max-w-784 px-20 py-24 sm:px-32 sm:py-48'
               : 'flex min-h-0 flex-1 flex-col'
           }
         >
@@ -63,7 +63,7 @@ export function FoundThread() {
             className={
               idleScreen
                 ? 'mt-24'
-                : 'mt-auto shrink-0 bg-gradient-to-t from-background-base via-background-base to-transparent pt-16 pb-16 sm:pt-20 sm:pb-22'
+                : 'mt-auto shrink-0 bg-gradient-to-t from-background-base via-background-base to-transparent px-20 pt-16 pb-16 sm:px-32 sm:pt-20 sm:pb-22'
             }
           >
             <div className="mx-auto max-w-720">

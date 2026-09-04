@@ -27,14 +27,17 @@ export function ThreadConversation({ children }: ThreadConversationProps) {
   return (
     <div className="relative min-h-0 flex-1 overflow-hidden">
       <StickToBottom
-        className="relative h-full w-full overflow-y-auto overscroll-contain"
+        className="relative h-full w-full overflow-hidden"
         contextRef={setConversationContext}
         initial="smooth"
         resize="smooth"
         role="log"
         onScrollCapture={handleScroll}
       >
-        <StickToBottom.Content className="mx-auto flex w-full max-w-720 flex-col gap-24 py-36 sm:py-44">
+        <StickToBottom.Content
+          className="mx-auto flex w-full max-w-784 flex-col gap-24 px-20 py-36 sm:px-32 sm:py-44"
+          scrollClassName="overflow-y-auto overscroll-contain"
+        >
           {children}
         </StickToBottom.Content>
         <ConversationScrollButton />
