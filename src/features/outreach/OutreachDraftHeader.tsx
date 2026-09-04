@@ -3,7 +3,6 @@ import {
   ArrowUp,
   Check,
   Copy,
-  PaperPlaneTilt,
   PencilSimple,
   SpinnerGap,
 } from '@phosphor-icons/react'
@@ -11,6 +10,7 @@ import { useId, useLayoutEffect, useRef } from 'react'
 import type { FunctionReturnType } from 'convex/server'
 
 import type { api } from '../../../convex/_generated/api'
+import { animateSendGlyph } from './sendGlyph'
 import './outreach-header.css'
 
 type DraftState = NonNullable<
@@ -150,6 +150,14 @@ export function OutreachDraftHeader({
             disabled={statusUnknown ? Boolean(busy) : sendDisabled}
             type="button"
             onClick={statusUnknown ? onCheckStatus : onSend}
+            onPointerEnter={(event) => {
+              if (event.pointerType === 'mouse')
+                animateSendGlyph(event.currentTarget)
+            }}
+            onFocus={(event) => {
+              if (event.currentTarget.matches(':focus-visible'))
+                animateSendGlyph(event.currentTarget)
+            }}
           >
             {sending || checking ? (
               <SpinnerGap aria-hidden className="animate-spin" size={16} />
@@ -158,7 +166,20 @@ export function OutreachDraftHeader({
             ) : statusUnknown ? (
               <ArrowClockwise aria-hidden size={16} />
             ) : (
-              <PaperPlaneTilt aria-hidden size={16} />
+              <svg
+                aria-hidden
+                className="shrink-0"
+                fill="currentColor"
+                width={16}
+                height={16}
+                overflow="hidden"
+                viewBox="0 0 256 256"
+              >
+                <path
+                  className="outreach-send-plane"
+                  d="M231.4,44.34s0,.1,0,.15l-58.2,191.94a15.88,15.88,0,0,1-14,11.51q-.69.06-1.38.06a15.86,15.86,0,0,1-14.42-9.15L107,164.15a4,4,0,0,1,.77-4.58l57.92-57.92a8,8,0,0,0-11.31-11.31L96.43,148.26a4,4,0,0,1-4.58.77L17.08,112.64a16,16,0,0,1,2.49-29.8l191.94-58.2.15,0A16,16,0,0,1,231.4,44.34Z"
+                />
+              </svg>
             )}
             {deliveryButtonLabel(state)}
           </button>

@@ -272,6 +272,9 @@ universal representation for every state.
   Narrow cards expand the request onto a full row above the delivery controls,
   animating the header height alongside the field width. Reduced motion makes
   both changes instant.
+- The Send plane makes one clipped flight on mouse hover or keyboard focus,
+  returning to rest without moving the label. Reduced motion keeps it static;
+  sending, completion, and status checks retain their own feedback icons.
 
 ### ArtifactFrame
 
