@@ -1,4 +1,8 @@
-import { makeFunctionReference } from 'convex/server'
+import {
+  makeFunctionReference,
+  paginationOptsValidator,
+  paginationResultValidator,
+} from 'convex/server'
 import { v } from 'convex/values'
 
 import type { Id } from './_generated/dataModel'
@@ -40,9 +44,9 @@ const vInboxItem = v.object({
 })
 
 export const list = query({
-  args: {},
-  returns: v.array(vInboxItem),
-  handler: async (ctx) => {
+  args: { paginationOpts: paginationOptsValidator },
+  returns: paginationResultValidator(vInboxItem),
+  handler: async (ctx, args) => {
     const userId = await requireViewerId(ctx)
     const drafts = await ctx.db
       .query('outreachDrafts')
@@ -50,18 +54,21 @@ export const list = query({
         index.eq('userId', userId),
       )
       .order('desc')
-      .take(100)
-    return drafts.map((draft) => ({
-      outreachId: draft._id,
-      threadId: draft.threadId,
-      candidateTitle: draft.candidateTitle,
-      recipient: draft.recipient,
-      subject: draft.subject,
-      state: draft.state,
-      unreadReplyCount: humanUnreadReplyCount(draft),
-      latestActivityAt: draft.latestActivityAt,
-      canReadThread: Boolean(draft.agentmailThreadId),
-    }))
+      .paginate(args.paginationOpts)
+    return {
+      ...drafts,
+      page: drafts.page.map((draft) => ({
+        outreachId: draft._id,
+        threadId: draft.threadId,
+        candidateTitle: draft.candidateTitle,
+        recipient: draft.recipient,
+        subject: draft.subject,
+        state: draft.state,
+        unreadReplyCount: humanUnreadReplyCount(draft),
+        latestActivityAt: draft.latestActivityAt,
+        canReadThread: Boolean(draft.agentmailThreadId),
+      })),
+    }
   },
 })
 

@@ -112,6 +112,10 @@ universal representation for every state.
   changes do not discard drafts or reset the desktop history drawer. Inbox and
   Bookmarks use the same 1040px content limit, gutters, and heading scale; each
   page scrolls beneath the stationary header.
+- Inbox and Bookmarks use owner-scoped cursor pagination in batches of 20.
+  Load more keeps existing rows visible, stays disabled while fetching, and
+  disappears when the list is exhausted. Inbox orders by latest activity;
+  Bookmarks orders by when a place was saved. Neither has a total-item cutoff.
 - Compact headers use labeled icons for Chat, Inbox, and Bookmarks. Lab and
   Playground are development-only studies, absent from product navigation and
   unavailable in production. Their development headers provide Back to chat.

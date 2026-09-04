@@ -601,9 +601,15 @@ describe('outreach drafts', () => {
       humanReadThroughReplyRevision: 1,
       agentReadThroughReplyRevision: 1,
     })
-    await expect(owner.as.query(api.outreachInbox.list, {})).resolves.toEqual([
-      expect.objectContaining({ outreachId: draftId, unreadReplyCount: 1 }),
-    ])
+    await expect(
+      owner.as.query(api.outreachInbox.list, {
+        paginationOpts: { cursor: null, numItems: 20 },
+      }),
+    ).resolves.toMatchObject({
+      page: [
+        expect.objectContaining({ outreachId: draftId, unreadReplyCount: 1 }),
+      ],
+    })
     await expect(
       t.query(internal.outreachMailbox.listForAgent, {
         userId: owner.id,
@@ -628,9 +634,15 @@ describe('outreach drafts', () => {
       humanReadThroughReplyRevision: 2,
       agentReadThroughReplyRevision: 2,
     })
-    await expect(owner.as.query(api.outreachInbox.list, {})).resolves.toEqual([
-      expect.objectContaining({ outreachId: draftId, unreadReplyCount: 0 }),
-    ])
+    await expect(
+      owner.as.query(api.outreachInbox.list, {
+        paginationOpts: { cursor: null, numItems: 20 },
+      }),
+    ).resolves.toMatchObject({
+      page: [
+        expect.objectContaining({ outreachId: draftId, unreadReplyCount: 0 }),
+      ],
+    })
     await expect(
       t.query(internal.outreachMailbox.listForAgent, {
         userId: owner.id,

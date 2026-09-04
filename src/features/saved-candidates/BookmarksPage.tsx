@@ -46,14 +46,18 @@ export function BookmarksPage() {
           </div>
         )}
 
-        {bookmarks.status === 'CanLoadMore' ? (
+        {bookmarks.status === 'CanLoadMore' ||
+        bookmarks.status === 'LoadingMore' ? (
           <div className="mt-24 flex justify-center">
             <button
-              className="min-h-44 rounded-10 border border-border-muted bg-background-lighter px-16 py-10 text-label-small text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"
+              className="min-h-44 rounded-10 border border-border-muted bg-background-lighter px-16 py-10 text-label-small text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100 disabled:cursor-default disabled:opacity-60"
               type="button"
+              disabled={bookmarks.status === 'LoadingMore'}
               onClick={() => bookmarks.loadMore(BOOKMARK_PAGE_SIZE)}
             >
-              Load more places
+              {bookmarks.status === 'LoadingMore'
+                ? 'Loading…'
+                : 'Load more places'}
             </button>
           </div>
         ) : null}

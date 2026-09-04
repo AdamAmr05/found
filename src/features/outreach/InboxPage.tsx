@@ -1,12 +1,13 @@
 import { ArrowLeft, EnvelopeSimple, SpinnerGap } from '@phosphor-icons/react'
 import type { FunctionReturnType } from 'convex/server'
-import { useAction, useMutation, useQuery } from 'convex/react'
+import { useAction, useMutation, usePaginatedQuery } from 'convex/react'
 import { useRef, useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 
 type MailThread = FunctionReturnType<typeof api.outreachInbox.read>
+const INBOX_PAGE_SIZE = 20
 
 function activityLabel(timestamp: number): string {
   return new Intl.DateTimeFormat(undefined, {
@@ -18,7 +19,12 @@ function activityLabel(timestamp: number): string {
 }
 
 export function InboxPage() {
-  const items = useQuery(api.outreachInbox.list, {})
+  const inbox = usePaginatedQuery(
+    api.outreachInbox.list,
+    {},
+    { initialNumItems: INBOX_PAGE_SIZE },
+  )
+  const items = inbox.results
   const readThread = useAction(api.outreachInbox.read)
   const markRead = useMutation(api.outreachInbox.markRead)
   const [selectedId, setSelectedId] = useState<Id<'outreachDrafts'>>()
@@ -83,7 +89,7 @@ export function InboxPage() {
 
         {selectedId ? (
           <ThreadDetail error={error} loading={loading} thread={thread} />
-        ) : items === undefined ? (
+        ) : inbox.status === 'LoadingFirstPage' ? (
           <p className="mt-40 font-mono text-mono-small text-foreground-muted">
             Loading outreach…
           </p>
@@ -139,6 +145,21 @@ export function InboxPage() {
             ))}
           </div>
         )}
+        {!selectedId &&
+        (inbox.status === 'CanLoadMore' || inbox.status === 'LoadingMore') ? (
+          <div className="mt-24 flex justify-center">
+            <button
+              className="min-h-44 rounded-10 border border-border-muted bg-background-lighter px-16 py-10 text-label-small text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100 disabled:cursor-default disabled:opacity-60"
+              type="button"
+              disabled={inbox.status === 'LoadingMore'}
+              onClick={() => inbox.loadMore(INBOX_PAGE_SIZE)}
+            >
+              {inbox.status === 'LoadingMore'
+                ? 'Loading…'
+                : 'Load more conversations'}
+            </button>
+          </div>
+        ) : null}
       </section>
     </main>
   )
