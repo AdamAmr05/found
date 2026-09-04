@@ -1,0 +1,29 @@
+.thread-activity-label {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-foreground-muted) 35%,
+    var(--color-background-base) 50%,
+    var(--color-foreground-muted) 65%
+  );
+  background-size: 250% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: thread-activity-shimmer 2s linear infinite;
+}
+
+@keyframes thread-activity-shimmer {
+  from {
+    background-position: 100% center;
+  }
+  to {
+    background-position: 0% center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread-activity-label {
+    animation: none;
+    background: none;
+    color: var(--color-foreground-muted);
+  }
+}

@@ -9,13 +9,7 @@ import {
 } from '../../../shared/googleMaps'
 import { sceneCandidateRefs } from '../accommodation/map3dScene'
 import { MapSceneBridgeProvider } from './mapSceneBridge'
-import { MapsGroundingPart } from './MapsGroundingPart'
-import { ThinkingStep, ToolStep } from './ThreadToolStep'
-import {
-  type FoundThreadTools,
-  type FoundToolState,
-  isToolActive,
-} from './toolState'
+import type { FoundThreadTools } from './toolState'
 
 const StreamingMarkdown = lazy(() => import('./ThreadMarkdown'))
 const CandidateToolPart = lazy(() => import('./CandidateToolPart'))
@@ -38,13 +32,6 @@ export function ThreadMessage({
   if (message.role === 'system') return null
 
   const failed = message.status === 'failed'
-  const hasVisiblePart = message.parts.some(
-    (part) => part.type === 'text' || part.type.startsWith('tool-'),
-  )
-
-  if (message.role === 'assistant' && !hasVisiblePart && !failed) {
-    return <ThinkingStep />
-  }
 
   if (message.role === 'user') {
     return <UserMessage message={message} />
@@ -114,25 +101,33 @@ function AssistantMessage({
     return refs
   }, [message.parts])
 
+  const visibleParts = message.parts.filter(
+    (part) =>
+      (part.type === 'text' && part.text.trim().length > 0) ||
+      ((part.type === 'tool-showCandidates' ||
+        part.type === 'tool-showMap' ||
+        part.type === 'tool-showOutreachDraft') &&
+        part.state === 'output-available'),
+  )
+  if (visibleParts.length === 0 && !failed) return null
+
   return (
     <MapSceneBridgeProvider mappedRefs={mappedRefs} weather={weather}>
-      <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black">
+      <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black empty:hidden">
+        {visibleParts.map((part, index) => (
+          <AssistantPart
+            key={`${message.key}-${part.type}-${index}`}
+            part={part}
+            readPages={readPages}
+            streaming={message.status === 'streaming'}
+            threadId={threadId}
+          />
+        ))}
         {failed ? (
-          <p className="text-accent-crimson">
-            I couldn’t finish that response. Check the service configuration and
-            try again.
+          <p className="text-foreground-muted" role="alert">
+            I couldn’t finish this response. Please try again.
           </p>
-        ) : (
-          message.parts.map((part, index) => (
-            <AssistantPart
-              key={`${message.key}-${part.type}-${index}`}
-              part={part}
-              readPages={readPages}
-              streaming={message.status === 'streaming'}
-              threadId={threadId}
-            />
-          ))
-        )}
+        ) : null}
       </article>
     </MapSceneBridgeProvider>
   )
@@ -152,37 +147,9 @@ function AssistantPart({
   switch (part.type) {
     case 'text':
       return <MessageText streaming={streaming} text={part.text} />
-    case 'tool-searchWeb':
-      return <ResearchToolStep kind="search" state={part.state} />
-    case 'tool-readPage':
-      return <ResearchToolStep kind="read" state={part.state} />
-    case 'tool-listOutreachUpdates':
-      return (
-        <ToolStep
-          active={isToolActive(part.state)}
-          label={
-            isToolActive(part.state)
-              ? 'Checking email updates'
-              : 'Checked email updates'
-          }
-        />
-      )
-    case 'tool-readOutreachThread':
-      return (
-        <ToolStep
-          active={isToolActive(part.state)}
-          label={
-            isToolActive(part.state)
-              ? 'Reading the email thread'
-              : 'Read the email thread'
-          }
-        />
-      )
     case 'tool-showCandidates':
       return (
-        <Suspense
-          fallback={<ToolStep active label="Preparing the useful options" />}
-        >
+        <Suspense fallback={null}>
           <CandidateToolPart
             part={part}
             readPages={readPages}
@@ -191,54 +158,21 @@ function AssistantPart({
           />
         </Suspense>
       )
-    case 'tool-searchPlaces':
-    case 'tool-computeRoutes':
-    case 'tool-lookupWeather':
-    case 'tool-resolvePlaces':
-      return <MapsGroundingPart part={part} />
     case 'tool-showMap':
       return (
-        <Suspense
-          fallback={<ToolStep active label="Composing the map scene" />}
-        >
+        <Suspense fallback={null}>
           <MapToolPart part={part} />
         </Suspense>
       )
     case 'tool-showOutreachDraft':
       return (
-        <Suspense fallback={<ToolStep active label="Writing the email" />}>
+        <Suspense fallback={null}>
           <OutreachToolPart part={part} />
         </Suspense>
       )
     default:
       return null
   }
-}
-
-function ResearchToolStep({
-  kind,
-  state,
-}: {
-  readonly kind: 'read' | 'search'
-  readonly state: FoundToolState
-}) {
-  const active = isToolActive(state)
-  const error = state === 'output-error' || state === 'output-denied'
-  const labels =
-    kind === 'search'
-      ? {
-          active: 'Searching the live web',
-          error: 'Web search failed',
-          success: 'Searched the live web',
-        }
-      : {
-          active: 'Reading a relevant source',
-          error: 'Couldn’t read a source',
-          success: 'Read a relevant source',
-        }
-  const label = active ? labels.active : error ? labels.error : labels.success
-
-  return <ToolStep active={active} error={error} label={label} />
 }
 
 function MessageText({
@@ -255,5 +189,3 @@ function MessageText({
     </Suspense>
   )
 }
-
-export { ThinkingStep } from './ThreadToolStep'

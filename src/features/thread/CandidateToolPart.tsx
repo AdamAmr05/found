@@ -11,8 +11,6 @@ import {
 import { attachCandidateMedia } from '../accommodation/candidateMediaCatalog'
 import { useMapSceneBridge } from './mapSceneBridge'
 import type { FoundUIMessage } from './ThreadMessage'
-import { ToolStep } from './ThreadToolStep'
-import { isToolActive } from './toolState'
 
 type CandidatePart = Extract<
   FoundUIMessage['parts'][number],
@@ -35,21 +33,7 @@ export default function CandidateToolPart({
   readonly streaming: boolean
   readonly threadId: string
 }) {
-  if (part.state !== 'output-available') {
-    const failed =
-      part.state === 'output-error' || part.state === 'output-denied'
-    return (
-      <ToolStep
-        active={isToolActive(part.state)}
-        error={failed}
-        label={
-          failed
-            ? 'Couldn’t prepare the options'
-            : 'Preparing the useful options'
-        }
-      />
-    )
-  }
+  if (part.state !== 'output-available') return null
 
   return (
     <CompletedCandidateToolPart
@@ -85,7 +69,7 @@ function CompletedCandidateToolPart({
     [parsed, readPages],
   )
   if (!parsed.success) {
-    return <ToolStep error label="Candidate output could not be displayed" />
+    return null
   }
 
   const mapBridge: CandidateMapBridge | undefined =

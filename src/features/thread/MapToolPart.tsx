@@ -3,8 +3,6 @@ import { lazy, Suspense, useMemo, useSyncExternalStore } from 'react'
 import { showMapInputSchema } from '../../../shared/googleMaps'
 import { useMapSceneBridge } from './mapSceneBridge'
 import type { FoundUIMessage } from './ThreadMessage'
-import { ToolStep } from './ThreadToolStep'
-import { isToolActive } from './toolState'
 
 const MapScene = lazy(() => import('../accommodation/MapScene'))
 
@@ -16,17 +14,7 @@ type MapPart = Extract<
 type CompletedMapPart = Extract<MapPart, { state: 'output-available' }>
 
 export default function MapToolPart({ part }: { readonly part: MapPart }) {
-  if (part.state !== 'output-available') {
-    const failed =
-      part.state === 'output-error' || part.state === 'output-denied'
-    return (
-      <ToolStep
-        active={isToolActive(part.state)}
-        error={failed}
-        label={failed ? 'Couldn’t compose the map' : 'Composing the map scene'}
-      />
-    )
-  }
+  if (part.state !== 'output-available') return null
 
   return <CompletedMapToolPart part={part} />
 }
@@ -40,14 +28,14 @@ function CompletedMapToolPart({ part }: { readonly part: CompletedMapPart }) {
   )
 
   if (!parsed.success) {
-    return <ToolStep error label="Map scene could not be displayed" />
+    return null
   }
   if (!client) {
-    return <ToolStep active label="Composing the map scene" />
+    return null
   }
 
   return (
-    <Suspense fallback={<ToolStep active label="Composing the map scene" />}>
+    <Suspense fallback={null}>
       <MapScene
         bridge={
           bridge && {

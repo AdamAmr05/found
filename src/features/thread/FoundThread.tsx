@@ -1,4 +1,4 @@
-import { ThreadMessage, ThinkingStep } from './ThreadMessage'
+import { ThreadTranscript } from './ThreadTranscript'
 import { ThreadConversation } from './ThreadConversation'
 import { ThreadShortlist } from '../saved-candidates/ThreadShortlist'
 import { useThreadSession } from './useThreadSession'
@@ -44,7 +44,9 @@ export function FoundThread() {
           >
             {openingThread ? (
               <div className="grid flex-1 place-items-center">
-                <ThinkingStep label="Opening thread" />
+                <output className="text-body-medium text-foreground-muted">
+                  Opening thread…
+                </output>
               </div>
             ) : !threadId || messages.length === 0 ? (
               <ThreadWelcome
@@ -53,16 +55,11 @@ export function FoundThread() {
               />
             ) : (
               <ThreadConversation key={threadId}>
-                <div className="flex flex-col gap-24">
-                  {messages.map((message) => (
-                    <ThreadMessage
-                      key={message.key}
-                      message={message}
-                      threadId={threadId}
-                    />
-                  ))}
-                  {submitting && !runActive ? <ThinkingStep /> : null}
-                </div>
+                <ThreadTranscript
+                  messages={messages}
+                  active={runActive || submitting}
+                  threadId={threadId}
+                />
               </ThreadConversation>
             )}
             <div

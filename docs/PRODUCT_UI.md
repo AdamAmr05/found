@@ -151,6 +151,24 @@ universal representation for every state.
 - Existing agent runs continue when the user switches conversations. Navigation
   pauses only while the send mutation itself is pending.
 
+### Research activity
+
+- One activity disclosure belongs to each user turn, across the Agent component's
+  model-step messages. Consecutive calls with the same tool and state become one
+  counted row. There are no orange/green status dots.
+- The disclosure uses the `tw-connect` task treatment: a search icon, quiet
+  summary and chevron, with indented rows along a thin inset rule. It starts open
+  during research, collapses on completion, and remains available in history.
+  Maps source links and route caveats remain attached to their steps.
+- A single 36px monochrome `thinking-orbs` canvas stays at the working edge for
+  the full active run, including gaps between tools and streamed prose. Each turn chooses a random animation, excluding the previous turn’s choice,
+  and keeps it through every tool step. Only the label follows the current tool;
+  quiet intervals say Thinking or Working. Thread loading uses plain status text. The label
+  has a restrained shimmer. Reduced motion freezes the orb and removes shimmer.
+- Invalid historical candidate, map, and email embeds are omitted. Raw renderer
+  diagnostics do not become conversation content. A failed response retains its
+  useful partial content and provides one plain-language retry notice.
+
 ### External links
 
 - Thread markdown uses Streamdown's link-safety hook with a product-owned native
