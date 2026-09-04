@@ -35,7 +35,7 @@ export function ThreadWelcome({ disabled, onSelect }: ThreadWelcomeProps) {
         {STARTERS.map(({ prompt, illustration }) => (
           <button
             key={illustration}
-            className="thread-starter flex min-h-76 items-center gap-14 rounded-16 px-16 py-12 text-left text-body-medium text-accent-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:pointer-events-none disabled:opacity-50 sm:min-h-92 sm:gap-16 sm:px-18 sm:py-16"
+            className="surface-paper surface-paper-interactive flex min-h-76 items-center gap-14 rounded-16 px-16 py-12 text-left text-body-medium text-accent-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:pointer-events-none disabled:opacity-50 sm:min-h-92 sm:gap-16 sm:px-18 sm:py-16"
             disabled={disabled}
             type="button"
             onClick={() => onSelect(prompt)}

@@ -1,7 +1,6 @@
 import { usePaginatedQuery } from 'convex/react'
 
 import { api } from '../../../convex/_generated/api'
-import { FoundHeader } from '../navigation/FoundHeader'
 import { SavedCandidateRow } from './SavedCandidateRow'
 
 const BOOKMARK_PAGE_SIZE = 20
@@ -16,16 +15,11 @@ export function BookmarksPage() {
   const loading = bookmarks.status === 'LoadingFirstPage'
 
   return (
-    <main className="min-h-dvh bg-background-base">
-      <FoundHeader />
-      <section className="mx-auto w-full max-w-920 px-20 py-40 sm:px-32 sm:py-56">
-        <p className="font-mono text-mono-small text-heat-100">BOOKMARKS</p>
-        <h1 className="mt-12 text-title-h3 text-accent-black sm:text-title-h2">
-          Places worth returning to
-        </h1>
+    <main className="min-h-0 flex-1 overflow-y-auto">
+      <section className="mx-auto w-full max-w-1040 px-20 py-40 sm:px-32 sm:py-56">
+        <h1 className="text-title-h4 text-accent-black">Bookmarks</h1>
         <p className="mt-12 max-w-620 text-body-large text-foreground-muted">
-          Every place you saved, across every accommodation thread. The original
-          research remains attached to the message that produced it.
+          Places you’ve saved.
         </p>
 
         {loading ? (
@@ -33,7 +27,7 @@ export function BookmarksPage() {
             Loading saved places…
           </p>
         ) : candidates.length === 0 ? (
-          <div className="mt-40 rounded-16 border border-border-faint bg-background-lighter p-24 text-center">
+          <div className="surface-paper mt-32 rounded-16 p-24 text-center">
             <p className="text-label-large text-accent-black">
               Nothing saved yet
             </p>

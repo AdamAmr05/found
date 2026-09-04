@@ -1,7 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { LabScene } from '~/features/lab/LabScene'
 
 export const Route = createFileRoute('/lab')({
+  beforeLoad: () => {
+    if (import.meta.env.PROD) throw notFound()
+  },
   component: Lab,
 })
 
@@ -13,7 +16,7 @@ function Lab() {
           className="text-label-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-heat-100"
           to="/"
         >
-          found
+          Back to chat
         </Link>
         <div className="flex items-center gap-8 font-mono text-mono-x-small text-foreground-muted">
           <span className="size-6 rounded-full bg-heat-100" />

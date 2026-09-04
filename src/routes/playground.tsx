@@ -1,7 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { ThreadPrototype } from '~/features/playground/ThreadPrototype'
 
 export const Route = createFileRoute('/playground')({
+  beforeLoad: () => {
+    if (import.meta.env.PROD) throw notFound()
+  },
   component: Playground,
 })
 
@@ -13,7 +16,7 @@ function Playground() {
           className="text-label-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-heat-100"
           to="/"
         >
-          found
+          Back to chat
         </Link>
         <div className="flex items-center gap-14">
           <Link

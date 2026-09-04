@@ -101,6 +101,26 @@ universal representation for every state.
 
 ## Component vocabulary
 
+### App layout and navigation
+
+- Chat, Inbox, and Bookmarks share one persistent authenticated workspace: a
+  64px full-width header, conversation history, and New thread controls. The
+  wordmark and navigation keep their positions across routes. Chat explicitly
+  returns to the current conversation; opening history or starting a new thread
+  works from every product page.
+- The workspace owns the mounted conversation session and its drafts. Route
+  changes do not discard drafts or reset the desktop history drawer. Inbox and
+  Bookmarks use the same 1040px content limit, gutters, and heading scale; each
+  page scrolls beneath the stationary header.
+- Compact headers use labeled icons for Chat, Inbox, and Bookmarks. Lab and
+  Playground are development-only studies, absent from product navigation and
+  unavailable in production. Their development headers provide Back to chat.
+- `surface-paper` in `src/components/materials/paper.css` is the shared white
+  material for starter buttons, inbox rows, and saved-place cards. It retains
+  the white upper lip and restrained inset lower edge. Add
+  `surface-paper-interactive` only to actionable surfaces, for border-only hover
+  and an inset press response.
+
 ### Conversation entry
 
 - The empty conversation groups a 32/36 heading (24/32 on small screens), four illustrated starters,
@@ -142,8 +162,8 @@ universal representation for every state.
   instant. Rapid toggles reverse from the current position.
 - On screens narrower than 768px, history becomes a native modal drawer with
   background inertness, Escape dismissal, and focus return to its opener. The
-  drawer is 288px wide with 20px outer corners. The compact header hides study
-  links and uses an accessible icon for Sign out to avoid crowding.
+  drawer is 288px wide with 20px outer corners. The compact header uses
+  accessible icons for product navigation and Sign out to avoid crowding.
   Selecting a conversation dismisses the mobile drawer.
 - Switching threads preserves their unsent drafts for the mounted session,
   resets the message viewport, and resumes the same persisted messages and

@@ -5,7 +5,6 @@ import { useRef, useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import { FoundHeader } from '../navigation/FoundHeader'
 
 type MailThread = FunctionReturnType<typeof api.outreachInbox.read>
 
@@ -57,8 +56,7 @@ export function InboxPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-background-base">
-      <FoundHeader />
+    <main className="min-h-0 flex-1 overflow-y-auto">
       <section className="mx-auto w-full max-w-1040 px-20 py-40 sm:px-32 sm:py-56">
         {selectedId ? (
           <button
@@ -72,17 +70,13 @@ export function InboxPage() {
             }}
           >
             <ArrowLeft aria-hidden size={15} />
-            All outreach
+            Inbox
           </button>
         ) : (
           <>
-            <p className="font-mono text-mono-small text-heat-100">INBOX</p>
-            <h1 className="mt-12 text-title-h3 text-accent-black sm:text-title-h2">
-              Conversations, outside the chat
-            </h1>
+            <h1 className="text-title-h4 text-accent-black">Inbox</h1>
             <p className="mt-12 max-w-620 text-body-large text-foreground-muted">
-              Drafts, sent emails, and replies stay connected to the place that
-              started them.
+              Drafts, sent emails, and replies.
             </p>
           </>
         )}
@@ -94,7 +88,7 @@ export function InboxPage() {
             Loading outreach…
           </p>
         ) : items.length === 0 ? (
-          <div className="mt-40 rounded-16 border border-border-faint bg-background-lighter p-24 text-center">
+          <div className="surface-paper mt-32 rounded-16 p-24 text-center">
             <EnvelopeSimple
               aria-hidden
               className="mx-auto text-foreground-muted"
@@ -106,12 +100,12 @@ export function InboxPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-32 overflow-hidden rounded-16 border border-border-muted bg-background-lighter shadow-surface-compact">
+          <div className="mt-32 grid gap-12">
             {items.map((item) => (
               <button
                 key={item.outreachId}
                 aria-label={`Open outreach to ${item.candidateTitle}: ${item.subject || 'No subject'}`}
-                className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-16 border-b border-border-faint px-18 py-16 text-left last:border-b-0 hover:bg-background-base focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-heat-100 disabled:cursor-default disabled:opacity-60"
+                className="surface-paper surface-paper-interactive grid w-full grid-cols-[minmax(0,1fr)_auto] gap-12 rounded-16 px-18 py-16 text-left focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:cursor-default sm:gap-16"
                 disabled={!item.canReadThread}
                 type="button"
                 onClick={() => void select(item.outreachId, item.threadId)}
@@ -137,7 +131,7 @@ export function InboxPage() {
                   <span className="block text-label-small text-accent-black capitalize">
                     {item.state}
                   </span>
-                  <span className="mt-4 block text-mono-x-small text-foreground-muted">
+                  <span className="mt-4 block text-mono-x-small text-foreground-muted tabular-nums">
                     {activityLabel(item.latestActivityAt)}
                   </span>
                 </span>

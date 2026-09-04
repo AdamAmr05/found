@@ -44,7 +44,7 @@ export function SavedCandidateRow({
         className={
           compact
             ? 'rounded-12 bg-background-lighter p-12'
-            : 'rounded-16 border border-border-faint bg-background-lighter p-18 shadow-surface-compact'
+            : 'surface-paper rounded-16 p-18'
         }
       >
         <p className="text-label-medium text-accent-black">
@@ -64,7 +64,7 @@ export function SavedCandidateRow({
       className={
         compact
           ? 'grid grid-cols-[48px_minmax(0,1fr)] gap-12 rounded-12 p-8 transition-colors hover:bg-background-lighter'
-          : 'grid grid-cols-[72px_minmax(0,1fr)] gap-14 rounded-16 border border-border-faint bg-background-lighter p-10 shadow-surface-compact sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center sm:p-12'
+          : 'surface-paper grid grid-cols-[72px_minmax(0,1fr)] gap-14 rounded-16 p-10 sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center sm:p-12'
       }
     >
       <div

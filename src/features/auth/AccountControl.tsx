@@ -11,7 +11,7 @@ export function AccountControl() {
   if (!viewer) return null
 
   return (
-    <div className="ml-4 flex items-center gap-6 border-l border-border-faint pl-10">
+    <div className="ml-2 flex items-center gap-6 border-l border-border-faint pl-6 sm:ml-4 sm:pl-10">
       <span
         className="hidden max-w-160 truncate text-label-small text-accent-black sm:block"
         title={viewer.displayName}

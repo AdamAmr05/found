@@ -8,8 +8,8 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'Where would you like to live?' }),
   ).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Playground' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Lab' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Playground' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Lab' })).toHaveCount(0)
 
   const composer = page.getByRole('textbox', { name: 'Message Found' })
   const send = page.getByRole('button', { name: 'Send message' })
@@ -107,6 +107,15 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
   const olderThread = history.getByRole('button', {
     name: /I need a place in Berlin/,
   })
+  await olderThread.click()
+  await expect(savedPrompt).toBeVisible()
+  await expect(olderThread).toHaveAttribute('aria-current', 'page')
+  await page.getByRole('link', { name: 'Inbox', exact: true }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Inbox', exact: true }),
+  ).toBeVisible()
+  await expect(history).toBeVisible()
+  await expect(olderThread).not.toHaveAttribute('aria-current')
   await olderThread.click()
   await expect(savedPrompt).toBeVisible()
   await expect(olderThread).toHaveAttribute('aria-current', 'page')

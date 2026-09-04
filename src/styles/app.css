@@ -1,3 +1,4 @@
+@import '../components/materials/paper.css';
 @import 'tailwindcss';
 
 @theme {
