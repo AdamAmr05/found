@@ -1,25 +1,16 @@
-import {
-  ArrowCounterClockwise,
-  ArrowClockwise,
-  ArrowUp,
-  Check,
-  Copy,
-  PaperPlaneTilt,
-  PencilSimple,
-  SpinnerGap,
-} from '@phosphor-icons/react'
+import { ArrowCounterClockwise, Check } from '@phosphor-icons/react'
 import type { FunctionReturnType } from 'convex/server'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { useAction, useMutation, useQuery } from 'convex/react'
 
 import { api } from '../../../convex/_generated/api'
 import { OUTREACH_BODY_MAX_LENGTH } from '../../../shared/foundTools'
 import { changedSpan } from './outreachDiff'
+import { OutreachDraftHeader, type DraftBusyState } from './OutreachDraftHeader'
 
 type Draft = NonNullable<FunctionReturnType<typeof api.outreachDrafts.get>>
-type BusyState = 'copy' | 'revise' | 'send' | 'status'
 type DraftFields = { recipient: string; subject: string; body: string }
 
 function outreachDraftId(value: string): Id<'outreachDrafts'> {
@@ -46,11 +37,10 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
   const [body, setBody] = useState(draft.body)
   const [instruction, setInstruction] = useState('')
   const [asking, setAsking] = useState(false)
-  const [busy, setBusy] = useState<BusyState>()
+  const [busy, setBusy] = useState<DraftBusyState>()
   const [error, setError] = useState<string>()
   const [statusNote, setStatusNote] = useState<string>()
   const bodyRef = useRef<HTMLTextAreaElement>(null)
-  const instructionRef = useRef<HTMLInputElement>(null)
   const { saveCurrent } = useDraftPersistence({
     body,
     draft,
@@ -157,11 +147,10 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
 
   return (
     <section className="relative w-full overflow-hidden rounded-16 bg-background-lighter shadow-surface-artifact">
-      <DraftHeader
+      <OutreachDraftHeader
         asking={asking}
         busy={busy}
         instruction={instruction}
-        instructionRef={instructionRef}
         sendDisabled={sendDisabled}
         state={draft.state}
         locked={locked}
@@ -170,10 +159,7 @@ function DraftEditor({ draft }: { readonly draft: Draft }) {
         onInstructionChange={setInstruction}
         onRevise={() => void revise()}
         onSend={() => void send()}
-        onToggleAsking={() => {
-          setAsking((current) => !current)
-          window.setTimeout(() => instructionRef.current?.focus(), 0)
-        }}
+        onAskingChange={setAsking}
       />
 
       <div className="relative px-16 pb-18 sm:px-20">
@@ -275,7 +261,7 @@ function isLocked(state: Draft['state']): boolean {
 
 function canSend(
   args: DraftFields & {
-    readonly busy: BusyState | undefined
+    readonly busy: DraftBusyState | undefined
     readonly hasProposal: boolean
     readonly locked: boolean
   },
@@ -386,148 +372,6 @@ function useDraftPersistence({
   return { changed, saveCurrent }
 }
 
-function deliveryButtonLabel(state: Draft['state']): string {
-  switch (state) {
-    case 'queued':
-      return 'Sending'
-    case 'sent':
-      return 'Sent'
-    case 'replied':
-      return 'Replied'
-    case 'uncertain':
-      return 'Check status'
-    default:
-      return 'Send'
-  }
-}
-
-function DraftHeader({
-  asking,
-  busy,
-  instruction,
-  instructionRef,
-  locked,
-  sendDisabled,
-  state,
-  onCopy,
-  onCheckStatus,
-  onInstructionChange,
-  onRevise,
-  onSend,
-  onToggleAsking,
-}: {
-  readonly asking: boolean
-  readonly busy: BusyState | undefined
-  readonly instruction: string
-  readonly instructionRef: RefObject<HTMLInputElement | null>
-  readonly locked: boolean
-  readonly sendDisabled: boolean
-  readonly state: Draft['state']
-  readonly onCopy: () => void
-  readonly onCheckStatus: () => void
-  readonly onInstructionChange: (value: string) => void
-  readonly onRevise: () => void
-  readonly onSend: () => void
-  readonly onToggleAsking: () => void
-}) {
-  const checking = busy === 'status'
-  const sending = busy === 'send' || state === 'queued'
-  const completed = state === 'sent' || state === 'replied'
-  const statusUnknown = state === 'uncertain'
-  const sendLabel = deliveryButtonLabel(state)
-  return (
-    <header className="flex min-h-58 flex-wrap items-center justify-between gap-10 border-b border-border-faint px-14 py-10 sm:px-16">
-      <div
-        className={`flex h-38 items-center overflow-hidden rounded-10 border transition-[width,border-color,background-color] duration-200 motion-reduce:transition-none ${
-          asking
-            ? 'w-full border-border-muted bg-background-base sm:w-360'
-            : 'w-82 border-border-muted bg-background-lighter hover:border-border-loud'
-        }`}
-      >
-        <button
-          aria-expanded={asking}
-          aria-label={asking ? 'Close change request' : 'Ask for changes'}
-          className="grid size-38 shrink-0 place-items-center text-accent-black focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-heat-100"
-          disabled={locked}
-          type="button"
-          onClick={onToggleAsking}
-        >
-          <PencilSimple aria-hidden size={17} />
-        </button>
-        {asking ? (
-          <>
-            <input
-              ref={instructionRef}
-              aria-label="Ask for changes"
-              className="min-w-0 flex-1 bg-transparent pr-4 text-body-medium outline-none placeholder:text-foreground-muted"
-              disabled={locked}
-              maxLength={1000}
-              placeholder="Ask for changes"
-              value={instruction}
-              onChange={(event) => onInstructionChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault()
-                  onRevise()
-                }
-              }}
-            />
-            <button
-              aria-label="Apply requested changes"
-              className="mr-3 grid size-30 shrink-0 place-items-center rounded-8 bg-accent-black text-white disabled:opacity-35"
-              disabled={locked || !instruction.trim() || busy === 'revise'}
-              type="button"
-              onClick={onRevise}
-            >
-              {busy === 'revise' ? (
-                <SpinnerGap aria-hidden className="animate-spin" size={15} />
-              ) : (
-                <ArrowUp aria-hidden size={15} weight="bold" />
-              )}
-            </button>
-          </>
-        ) : (
-          <button
-            className="h-full flex-1 pr-12 text-left text-label-medium"
-            disabled={locked}
-            type="button"
-            onClick={onToggleAsking}
-          >
-            Edit
-          </button>
-        )}
-      </div>
-
-      <div className="ml-auto flex items-center gap-4">
-        <IconButton label="Copy email body" onClick={onCopy}>
-          {busy === 'copy' ? (
-            <Check aria-hidden size={17} />
-          ) : (
-            <Copy aria-hidden size={17} />
-          )}
-        </IconButton>
-        <button
-          className="flex h-38 items-center gap-7 rounded-10 bg-accent-black px-13 text-label-medium text-white transition-opacity disabled:opacity-35"
-          disabled={statusUnknown ? Boolean(busy) : sendDisabled}
-          type="button"
-          onClick={statusUnknown ? onCheckStatus : onSend}
-        >
-          {sending || checking ? (
-            <SpinnerGap aria-hidden className="animate-spin" size={16} />
-          ) : completed ? (
-            <Check aria-hidden size={16} />
-          ) : statusUnknown ? (
-            <ArrowClockwise aria-hidden size={16} />
-          ) : (
-            <PaperPlaneTilt aria-hidden size={16} />
-          )}
-          {sendLabel}
-        </button>
-      </div>
-    </header>
-  )
-}
-
 function Proposal({
   body,
   proposal,
@@ -584,28 +428,6 @@ function ChangedText({
       ) : null}
       {span.after}
     </>
-  )
-}
-
-function IconButton({
-  children,
-  label,
-  onClick,
-}: {
-  readonly children: React.ReactNode
-  readonly label: string
-  readonly onClick: () => void
-}) {
-  return (
-    <button
-      aria-label={label}
-      className="grid size-38 place-items-center rounded-10 text-foreground-muted hover:bg-background-base hover:text-accent-black focus-visible:outline-2 focus-visible:outline-heat-100"
-      title={label}
-      type="button"
-      onClick={onClick}
-    >
-      {children}
-    </button>
   )
 }
 

@@ -266,6 +266,12 @@ universal representation for every state.
   invalidates the previous approval.
 - The primary action morphs between draft, review, approved, sending, sent, and
   failure states without changing position or losing its accessible name.
+- The email header uses an even 8px inset, 40px controls, and 8px control
+  corners inside its 16px shell. Edit expands and contracts over 200ms, with
+  a short content fade; hidden inputs remain inert and closing restores focus.
+  Narrow cards expand the request onto a full row above the delivery controls,
+  animating the header height alongside the field width. Reduced motion makes
+  both changes instant.
 
 ### ArtifactFrame
 
