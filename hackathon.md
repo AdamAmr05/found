@@ -1,6 +1,6 @@
 # Hackathon log
 
-<!-- Before maintaining this file, read agent/skills/convex-hackathon-skill/SKILL.md and follow its referenced log format. -->
+<!-- Before maintaining this file, read .agents/skills/convex-hackathon-skill/SKILL.md and follow its referenced log format. -->
 
 - **Project:** Found
 - **Event:** Convex All Gas Hackathon sponsored by OpenAI, Firecrawl, and AgentMail
@@ -9,12 +9,12 @@
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** not deployed
 - **Convex deployment:** https://sensible-bee-189.eu-west-1.convex.cloud
-- **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @firecrawl/firecrawl-convex, @agentmail/convex
+- **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter
 - **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-03T09:21:27Z
+- **Last updated:** 2026-09-04T22:04:08Z
 
 ## Log
 
@@ -199,3 +199,20 @@ visibility-aware dither shader and Google's official mark. Agent runs now read
 one provider-neutral display name and include it as inert profile context so
 email drafts can use the real sender name (`src/features/auth/SignInPage.tsx`,
 `src/features/auth/AuthDitherShader.tsx`, `convex/agentInstructions.ts`).
+
+### 2026-09-04 - adf6f35
+
+Made the workspace easier to enter and revisit: four illustrated starters, a
+compact composer, a properly sized external-link dialog, scrolling from the page
+margins, and a conversation-history sidebar. History uses the Agent component's
+owner-scoped, paginated query rather than another thread table
+(`convex/threadHistory.ts`, `src/features/thread/ThreadWorkspace.tsx`).
+
+Grouped repeated research steps into a collapsible history and kept one randomly
+chosen monochrome orb stable throughout each assistant turn. Malformed embeds
+are omitted while useful response text remains. Added repeatable development
+account verification and checks for activity transitions, keyboard access, and
+reduced motion (`docs/VERIFICATION.md`, `src/features/thread/ThreadTranscript.tsx`,
+`tests/e2e/thread-activity.spec.ts`). The latest checks passed 77 unit tests and
+four focused browser tests; the full 21-test browser suite passed before the
+final orb-selection adjustment. No production deployment was performed.
