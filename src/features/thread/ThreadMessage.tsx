@@ -101,22 +101,27 @@ function AssistantMessage({
     return refs
   }, [message.parts])
 
-  const visibleParts = message.parts.filter(
-    (part) =>
-      (part.type === 'text' && part.text.trim().length > 0) ||
-      ((part.type === 'tool-showCandidates' ||
-        part.type === 'tool-showMap' ||
-        part.type === 'tool-showOutreachDraft') &&
-        part.state === 'output-available'),
+  const visibleParts = message.parts.flatMap((part, index) =>
+    (part.type === 'text' && part.text.trim().length > 0) ||
+    ((part.type === 'tool-showCandidates' ||
+      part.type === 'tool-showMap' ||
+      part.type === 'tool-showOutreachDraft') &&
+      part.state === 'output-available')
+      ? [{ part, index }]
+      : [],
   )
   if (visibleParts.length === 0 && !failed) return null
 
   return (
     <MapSceneBridgeProvider mappedRefs={mappedRefs} weather={weather}>
       <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black empty:hidden">
-        {visibleParts.map((part, index) => (
+        {visibleParts.map(({ part, index }) => (
           <AssistantPart
-            key={`${message.key}-${part.type}-${index}`}
+            key={
+              'toolCallId' in part
+                ? `${message.key}-tool-${part.toolCallId}`
+                : `${message.key}-${part.type}-${index}`
+            }
             part={part}
             readPages={readPages}
             streaming={message.status === 'streaming'}
