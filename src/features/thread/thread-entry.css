@@ -1,3 +1,25 @@
+/* Native dialog backdrops are pseudo-elements, so CSS owns their opacity. */
+.thread-history::backdrop {
+  opacity: 1;
+  transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.thread-history[inert]::backdrop {
+  opacity: 0;
+}
+
+@starting-style {
+  .thread-history[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread-history::backdrop {
+    transition: none;
+  }
+}
+
 .thread-starter {
   border: 1px solid var(--color-border-muted);
   border-bottom-color: color-mix(

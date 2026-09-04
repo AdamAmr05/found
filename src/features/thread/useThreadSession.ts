@@ -13,7 +13,12 @@ import { useResumableThread } from './useResumableThread'
 export function useThreadSession() {
   const { forgetThread, rememberThread, restoring, threadId } =
     useResumableThread()
-  const [draft, setDraft] = useState('')
+  const [drafts, setDrafts] = useState<Map<string, string>>(() => new Map())
+  const draftKey = threadId ?? 'new-thread'
+  const draft = drafts.get(draftKey) ?? ''
+  function setDraft(value: string): void {
+    setDrafts((previous) => new Map(previous).set(draftKey, value))
+  }
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
   const startThread = useMutation(api.thread.start)
@@ -76,8 +81,14 @@ export function useThreadSession() {
   }
 
   function startNewThread(): void {
+    if (submitting) return
     forgetThread()
-    setDraft('')
+    setSubmitError(undefined)
+  }
+
+  function selectThread(id: string): void {
+    if (submitting || id === threadId) return
+    rememberThread(id)
     setSubmitError(undefined)
   }
 
@@ -88,6 +99,7 @@ export function useThreadSession() {
     openingThread,
     runActive,
     setDraft,
+    selectThread,
     startNewThread,
     submit,
     submitError,

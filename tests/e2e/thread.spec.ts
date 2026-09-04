@@ -48,7 +48,7 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
 
   // A short viewport makes this real conversation scroll without depending on
   // the model's response length. Both empty margins must scroll the messages.
-  await page.setViewportSize({ width: 1440, height: 280 })
+  await page.setViewportSize({ width: 1440, height: 232 })
   const conversation = page.getByRole('log')
   const scroller = conversation.locator(':scope > div').first()
   await expect
@@ -96,6 +96,50 @@ test('starts from a focused accommodation conversation', async ({ page }) => {
   await expect(page.getByText(selectedPrompt, { exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByText(selectedPrompt, { exact: true })).toBeVisible()
+
+  await page.getByRole('button', { name: 'New thread', exact: true }).click()
+  await composer.fill('Keep this unfinished draft')
+  await page
+    .getByRole('button', { name: 'Thread history', exact: true })
+    .click()
+  const history = page.getByRole('navigation', { name: 'Conversations' })
+  await expect(history.getByRole('listitem')).toHaveCount(2)
+  const olderThread = history.getByRole('button', {
+    name: /I need a place in Berlin/,
+  })
+  await olderThread.click()
+  await expect(savedPrompt).toBeVisible()
+  await expect(olderThread).toHaveAttribute('aria-current', 'page')
+  await expect(
+    page.getByRole('log').getByText(selectedPrompt, { exact: true }),
+  ).toHaveCount(0)
+  await page.getByRole('button', { name: 'New thread', exact: true }).click()
+  await expect(composer).toHaveValue('Keep this unfinished draft')
+  await olderThread.click()
+  await page.reload()
+  await expect(savedPrompt).toBeVisible()
+
+  // The same sidebar becomes a native modal on mobile, and selection dismisses it.
+  await page.setViewportSize({ width: 375, height: 640 })
+  const historyTrigger = page.getByRole('button', {
+    name: 'Thread history',
+    exact: true,
+  })
+  await historyTrigger.click()
+  const drawer = page.getByRole('dialog', { name: 'History' })
+  await expect(drawer).toBeVisible()
+  expect(await drawer.evaluate((element) => element.matches(':modal'))).toBe(
+    true,
+  )
+  const drawerBounds = await drawer.boundingBox()
+  expect(drawerBounds?.width).toBeLessThanOrEqual(319)
+  await page.keyboard.press('Escape')
+  await expect(drawer).toHaveCount(0)
+  await expect(historyTrigger).toBeFocused()
+  await historyTrigger.click()
+  await olderThread.click()
+  await expect(drawer).toHaveCount(0)
+  await expect(savedPrompt).toBeVisible()
 })
 
 test('keeps the idle screen usable on a small viewport with reduced motion', async ({
@@ -104,6 +148,14 @@ test('keeps the idle screen usable on a small viewport with reduced motion', asy
   await page.setViewportSize({ width: 375, height: 640 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await signUpFreshAccount(page)
+
+  await page
+    .getByRole('button', { name: 'Thread history', exact: true })
+    .click()
+  await expect(
+    page.getByText('Your conversations will appear here.'),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Close history', exact: true }).click()
 
   const starters = page.getByRole('group', { name: 'Start a conversation' })
   await expect(starters.getByRole('button')).toHaveCount(4)

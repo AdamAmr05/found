@@ -9,6 +9,9 @@ export async function signUpFreshAccount(page: Page): Promise<string> {
   await page.getByLabel('Username').fill(username)
   await page.getByLabel('Password').fill('correct-horse-battery-e2e')
   await page.getByRole('button', { name: 'Create account' }).click()
-  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
+  // Account creation crosses the development backend and can include a cold start.
+  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible({
+    timeout: 15_000,
+  })
   return username
 }

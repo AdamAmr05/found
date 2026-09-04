@@ -28,6 +28,7 @@ import type * as outreachRevision from "../outreachRevision.js";
 import type * as savedCandidates from "../savedCandidates.js";
 import type * as thread from "../thread.js";
 import type * as threadAccess from "../threadAccess.js";
+import type * as threadHistory from "../threadHistory.js";
 import type * as tools_firecrawlAdapter from "../tools/firecrawlAdapter.js";
 import type * as tools_maps from "../tools/maps.js";
 import type * as tools_mapsAdapter from "../tools/mapsAdapter.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   savedCandidates: typeof savedCandidates;
   thread: typeof thread;
   threadAccess: typeof threadAccess;
+  threadHistory: typeof threadHistory;
   "tools/firecrawlAdapter": typeof tools_firecrawlAdapter;
   "tools/maps": typeof tools_maps;
   "tools/mapsAdapter": typeof tools_mapsAdapter;

@@ -123,6 +123,34 @@ universal representation for every state.
 - Keep entry copy to the heading, questions, and input placeholder. No category
   eyebrow, keyboard instructions, or implementation-oriented footer is needed.
 
+### Conversation history
+
+- A collapsible 248px sidebar lists the viewer's existing Agent component
+  threads, newest-created first, in pages of 20. It does not duplicate thread
+  records in the application schema. Titles come from the first prompt.
+- Thread controls share the app header beside the wordmark. New thread appears
+  in the header while collapsed and inside the sidebar while expanded. The
+  sidebar is dedicated to conversations; global navigation stays in the header.
+- The sidebar uses a lightly toned surface; the conversation keeps its original
+  canvas with a 20px upper-left corner and a faint inset edge. Conversation rows
+  are single-line 40px targets with full titles on hover, no repeated dates, and
+  a white selected state. Sidebar controls are 40px targets.
+- Opening and closing ease the desktop sidebar's actual width over 200ms, with
+  a 160ms opacity transition and at most 6px of content travel. The conversation
+  corner follows the same width timing; no text or bordered surface is scaled.
+  Exiting history is inert until removal, and reduced motion makes transitions
+  instant. Rapid toggles reverse from the current position.
+- On screens narrower than 768px, history becomes a native modal drawer with
+  background inertness, Escape dismissal, and focus return to its opener. The
+  drawer is 288px wide with 20px outer corners. The compact header hides study
+  links and uses an accessible icon for Sign out to avoid crowding.
+  Selecting a conversation dismisses the mobile drawer.
+- Switching threads preserves their unsent drafts for the mounted session,
+  resets the message viewport, and resumes the same persisted messages and
+  artifacts. New thread creates a record only when the first message is sent.
+- Existing agent runs continue when the user switches conversations. Navigation
+  pauses only while the send mutation itself is pending.
+
 ### External links
 
 - Thread markdown uses Streamdown's link-safety hook with a product-owned native
