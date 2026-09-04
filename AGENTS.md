@@ -150,6 +150,12 @@ and generated identifiers unless the name is genuinely part of a public surface.
 
 ## Testing
 
+- For browser verification, start with `docs/VERIFICATION.md`. Run
+  `pnpm verify:setup` to provision or check the reusable development test account;
+  its credentials live in the gitignored `.cache/verification/account.json`.
+- Keep the reusable account for manual/agent exploration. Automated interaction
+  tests use fresh accounts through `tests/e2e/auth.ts`.
+
 - Test observable behavior through the closest stable public interface.
 - Keep tests deterministic with explicit fixtures or factories.
 - Unit tests must not use the network or production side effects.

@@ -20,9 +20,13 @@ approving outreach. Backend and provider integrations are not connected yet.
 
 ```sh
 pnpm dev
+pnpm verify:setup
 pnpm check
 pnpm test:e2e
 pnpm deadcode
 ```
 
 Read [`AGENTS.md`](./AGENTS.md) before making architectural changes.
+
+For a reusable development test account and browser verification workflow, read
+[`docs/VERIFICATION.md`](./docs/VERIFICATION.md).

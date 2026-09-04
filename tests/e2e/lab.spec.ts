@@ -69,7 +69,14 @@ test('keeps Fold and the shortlist crisp through their size morphs', async ({
 
   await trayToggle.click()
   await expect(page.getByTestId('shortlist-body')).toBeVisible()
-  await page.waitForTimeout(420)
+  await expect
+    .poll(() =>
+      traySurface.evaluate((element) => element.getBoundingClientRect().width),
+    )
+    .toBeCloseTo(380, 0)
+  const expandedWidth = await traySurface.evaluate(
+    (element) => element.getBoundingClientRect().width,
+  )
   await trayToggle.click()
   await page.waitForTimeout(40)
 
@@ -91,11 +98,13 @@ test('keeps Fold and the shortlist crisp through their size morphs', async ({
   expect(collapsing.width).toBeLessThan(380)
 
   await expect(page.getByTestId('shortlist-body')).toHaveCount(0)
+  // The 40ms sample can already be fully collapsed on a busy runner.
+  // Compare the settled states instead of requiring another animation frame.
   await expect
     .poll(() =>
       traySurface.evaluate((element) => element.getBoundingClientRect().width),
     )
-    .toBeLessThan(collapsing.width)
+    .toBeLessThan(expandedWidth)
 })
 
 test('re-ranks candidates when a requirement becomes a must-have', async ({
