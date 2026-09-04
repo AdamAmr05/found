@@ -14,7 +14,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-04T22:04:08Z
+- **Last updated:** 2026-09-04T22:48:44Z
 
 ## Log
 
@@ -216,3 +216,19 @@ reduced motion (`docs/VERIFICATION.md`, `src/features/thread/ThreadTranscript.ts
 `tests/e2e/thread-activity.spec.ts`). The latest checks passed 77 unit tests and
 four focused browser tests; the full 21-test browser suite passed before the
 final orb-selection adjustment. No production deployment was performed.
+
+### 2026-09-04 - 003767e
+
+Unified Chat, Inbox, and Bookmarks under one persistent header and history
+sidebar, preserved drafts across navigation, and reused the white card material.
+Kept development studies out of production routes. Stable streamed-part keys
+now preserve card tabs and open source dialogs when earlier results arrive
+(`src/features/navigation/AppWorkspace.tsx`, `src/features/thread/ThreadMessage.tsx`).
+
+Replaced the inbox’s 100-conversation cutoff with owner-scoped, indexed Convex
+cursor pagination in batches of 20. Verified that Bookmarks already paginates,
+and kept both Load more controls visible and disabled while fetching. Tests
+reach all 105 inbox fixtures across six pages without crossing account boundaries
+(`convex/outreachInbox.ts`, `convex/outreachInbox.test.ts`). The layout passed
+25 browser tests and a production build; pagination passed 79 unit tests and
+two focused browser tests. Synced the backend change to development only.
