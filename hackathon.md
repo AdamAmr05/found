@@ -14,7 +14,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-04T22:48:44Z
+- **Last updated:** 2026-09-05T11:09:29Z
 
 ## Log
 
@@ -232,3 +232,31 @@ reach all 105 inbox fixtures across six pages without crossing account boundarie
 (`convex/outreachInbox.ts`, `convex/outreachInbox.test.ts`). The layout passed
 25 browser tests and a production build; pagination passed 79 unit tests and
 two focused browser tests. Synced the backend change to development only.
+
+### 2026-09-04 - fb0c652
+
+Refined the editable email header's spacing and transitions, preserved the
+change-request field during expansion, and animated the Send glyph on hover
+and keyboard focus with reduced-motion support
+(`src/features/outreach/OutreachDraftHeader.tsx`,
+`tests/e2e/outreach-header.spec.ts`).
+
+### 2026-09-05 - e2f6899
+
+Improved research from directory pages to individual listings through the
+Firecrawl Convex component: page reads now return bounded source links, report
+target-page HTTP failures, and support fresh reads for current terms. Focused
+extraction keeps property facts separate; agent guidance preserves exploratory
+leads while distinguishing known term conflicts from unresolved availability
+(`convex/tools/research.ts`, `convex/tools/firecrawlAdapter.ts`,
+`convex/agentInstructions.ts`). The preceding `2356629` clarified that unknown
+email fields must be omitted rather than filled with invalid placeholders.
+
+Repeated the live Berlin search and received cards linked to individual
+apartments. A fresh follow-up correctly identified a six-month minimum as a
+conflict with a three-month stay. The initial search still used 19 activity
+steps; no speed improvement is claimed. A separate weather lookup failed while
+the map still rendered. `pnpm check` passed 83 unit tests with the existing
+candidate-media complexity warning; all 29 browser tests passed before the
+final instruction clarification, and account verification passed. Synced the
+backend to development only.
