@@ -52,9 +52,10 @@ export const searchWeb = createTool({
 export const readPage = createTool({
   description: [
     'Read a single known web page through Firecrawl.',
-    'Pass focus for a compact answer to a specific question.',
-    'Omit focus only when the complete page content is genuinely needed.',
-    'Use searchWeb before this when you do not know the exact URL.',
+    'Returns page content, images, extracted links, and source HTTP status when available. Links are navigation leads, not evidence that their target pages were read.',
+    'Pass focus for a compact answer to a specific question. Omit focus to inspect source wording and linked listing identities directly, especially on directory pages.',
+    'Follow relevant returned links to the individual property or operator page. If linksTruncated is true and the desired listing is absent, use a targeted search for its exact title instead of guessing its URL.',
+    'Use fresh only when checking current details or refreshing stale evidence. A fresh scrape cannot confirm dates hidden behind a booking calendar.',
   ].join(' '),
   inputSchema: readPageInputSchema,
   outputSchema: readPageOutputSchema,
@@ -64,14 +65,21 @@ export const readPage = createTool({
       onlyMainContent: true,
       removeBase64Images: true,
       blockAds: true,
-      maxAge: 86_400_000,
+      maxAge: input.fresh ? 0 : 86_400_000,
     }
     if (input.focus) {
       options.extra = {
-        formats: [{ type: 'question', question: input.focus }, 'images'],
+        formats: [
+          {
+            type: 'question',
+            question: `${input.focus}\nKeep each property's facts separate. Include exact listing URLs and short supporting source quotations when present. State what the page does not establish; do not infer missing dates, prices, or contact details.`,
+          },
+          'images',
+          'links',
+        ],
       }
     } else {
-      options.formats = ['markdown', 'images']
+      options.formats = ['markdown', 'images', 'links']
     }
     const decoded = await runFirecrawlOperation(
       'read',

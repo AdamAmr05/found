@@ -5,6 +5,7 @@ import {
   HTTP_URL_MAX_LENGTH,
   PAGE_CONTENT_MAX_LENGTH,
   PAGE_IMAGE_MAX_COUNT,
+  PAGE_LINK_MAX_COUNT,
   PAGE_WARNING_MAX_LENGTH,
   PROVIDER_DESCRIPTION_MAX_LENGTH,
   PROVIDER_TITLE_MAX_LENGTH,
@@ -47,6 +48,9 @@ export function firecrawlRequestErrorFromCause(cause: unknown) {
 }
 
 const providerMetadataSchema = Schema.Struct({
+  statusCode: Schema.optionalKey(
+    Schema.Int.check(Schema.isBetween({ minimum: 100, maximum: 599 })),
+  ),
   description: Schema.optionalKey(Schema.String),
   sourceURL: Schema.optionalKey(Schema.String),
   title: Schema.optionalKey(Schema.String),
@@ -67,6 +71,7 @@ const providerSearchResponseSchema = Schema.Struct({
 })
 
 const providerPageSchema = Schema.Struct({
+  links: Schema.optionalKey(Schema.Array(Schema.String)),
   answer: Schema.optionalKey(Schema.String),
   images: Schema.optionalKey(Schema.Array(Schema.String)),
   markdown: Schema.optionalKey(Schema.String),
@@ -136,6 +141,32 @@ function isContractUrl(value: string): boolean {
   return value.length <= HTTP_URL_MAX_LENGTH && isHttpUrl(value)
 }
 
+function pageNavigation(links: readonly string[] | undefined) {
+  if (!links) return {}
+  const validLinks = Array.from(
+    new Set(links.map((link) => link.trim()).filter(isContractUrl)),
+  )
+  return {
+    links: validLinks.slice(0, PAGE_LINK_MAX_COUNT),
+    linksTruncated: validLinks.length > PAGE_LINK_MAX_COUNT,
+  }
+}
+
+function pageStatus(
+  metadata: ProviderPage['metadata'],
+): Pick<ReadPageOutput, 'statusCode' | 'warning'> {
+  const statusCode = metadata?.statusCode
+  if (statusCode === undefined) return {}
+  const failed = (statusCode < 200 || statusCode >= 300) && statusCode !== 304
+  if (failed) {
+    return {
+      statusCode,
+      warning: `The source page returned HTTP ${statusCode}; do not treat it as listing evidence.`,
+    }
+  }
+  return { statusCode }
+}
+
 export function normalizeSearchResponse(
   response: ProviderSearchResponse,
   limit: number,
@@ -197,9 +228,12 @@ export function normalizePageResponse(
   const emptyWarning = rawContent
     ? undefined
     : 'The page returned no readable content.'
-  const warning = providerWarning ?? emptyWarning
+  const status = pageStatus(document.metadata)
+  const warning = status.warning ?? providerWarning ?? emptyWarning
 
   const output: ReadPageOutput = {
+    ...pageNavigation(document.links),
+    ...status,
     url,
     mode,
     content: truncateText(rawContent, PAGE_CONTENT_MAX_LENGTH),

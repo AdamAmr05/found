@@ -5,6 +5,7 @@ import { Effect } from 'effect'
 import {
   HTTP_URL_MAX_LENGTH,
   PAGE_CONTENT_MAX_LENGTH,
+  PAGE_LINK_MAX_COUNT,
   PROVIDER_TITLE_MAX_LENGTH,
 } from '../../shared/foundTools'
 import {
@@ -17,6 +18,85 @@ import {
 } from './firecrawlAdapter'
 
 describe('Firecrawl result normalization', () => {
+  it('preserves followable listing links from a focused directory read', async () => {
+    const document = await Effect.runPromise(
+      decodePageResponse({
+        answer: 'Two furnished apartments have desks.',
+        links: [
+          'https://example.com/listings/one',
+          'https://example.com/listings/one',
+          'javascript:alert(1)',
+          'mailto:host@example.com',
+          'https://example.com/listings/two',
+        ],
+      }),
+    )
+
+    expect(
+      normalizePageResponse(
+        document,
+        'https://example.com/listings',
+        'focused',
+      ),
+    ).toMatchObject({
+      content: 'Two furnished apartments have desks.',
+      links: [
+        'https://example.com/listings/one',
+        'https://example.com/listings/two',
+      ],
+      linksTruncated: false,
+    })
+  })
+
+  it('reports a blocked target page even when Firecrawl returns readable text', async () => {
+    const document = await Effect.runPromise(
+      decodePageResponse({
+        markdown: 'Access denied',
+        metadata: { statusCode: 403 },
+      }),
+    )
+
+    expect(
+      normalizePageResponse(document, 'https://example.com/listing', 'full'),
+    ).toMatchObject({
+      statusCode: 403,
+      warning:
+        'The source page returned HTTP 403; do not treat it as listing evidence.',
+    })
+  })
+
+  it('bounds navigation links and reports when a directory has more to explore', async () => {
+    const links = Array.from(
+      { length: PAGE_LINK_MAX_COUNT + 1 },
+      (_, index) => `https://example.com/listing/${index}`,
+    )
+    const document = await Effect.runPromise(decodePageResponse({ links }))
+    const output = normalizePageResponse(
+      document,
+      'https://example.com',
+      'full',
+    )
+
+    expect(output.links).toEqual(links.slice(0, PAGE_LINK_MAX_COUNT))
+    expect(output.linksTruncated).toBe(true)
+  })
+
+  it('preserves provider warnings on successful and cache-validated pages', async () => {
+    for (const statusCode of [200, 304]) {
+      const document = await Effect.runPromise(
+        decodePageResponse({
+          markdown: 'Listing details',
+          metadata: { statusCode },
+          warning: 'Some content was unavailable',
+        }),
+      )
+
+      expect(
+        normalizePageResponse(document, 'https://example.com', 'full'),
+      ).toMatchObject({ statusCode, warning: 'Some content was unavailable' })
+    }
+  })
+
   it('drops unusable and duplicate search results without inventing fields', async () => {
     const response = await Effect.runPromise(
       decodeSearchResponse({

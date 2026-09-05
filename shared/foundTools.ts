@@ -7,6 +7,7 @@ export const PROVIDER_TITLE_MAX_LENGTH = 300
 export const PROVIDER_DESCRIPTION_MAX_LENGTH = 600
 export const PAGE_CONTENT_MAX_LENGTH = 16_000
 export const PAGE_IMAGE_MAX_COUNT = 12
+export const PAGE_LINK_MAX_COUNT = 40
 export const PAGE_WARNING_MAX_LENGTH = 500
 export const CANDIDATE_PRESENTATION_MAX_COUNT = 12
 export const CANDIDATE_REF_MAX_LENGTH = 48
@@ -75,7 +76,15 @@ export const searchWebOutputSchema = z.object({
 })
 
 export const readPageInputSchema = z.object({
-  url: httpUrl.describe('The exact page URL returned by searchWeb.'),
+  url: httpUrl.describe(
+    'An exact URL supplied by the user or returned by searchWeb or readPage links. Never construct a guessed listing URL.',
+  ),
+  fresh: z
+    .boolean()
+    .optional()
+    .describe(
+      'Bypass the page cache when explicitly checking current price or availability, or refreshing a stale source. Omit for ordinary exploration.',
+    ),
   focus: z
     .string()
     .trim()
@@ -99,6 +108,10 @@ export const readPageOutputSchema = z.object({
   mode: z.enum(['focused', 'full']),
   content: z.string().max(PAGE_CONTENT_MAX_LENGTH),
   images: z.array(httpUrl).max(PAGE_IMAGE_MAX_COUNT),
+  // Optional so historical page snapshots remain valid.
+  links: z.array(httpUrl).max(PAGE_LINK_MAX_COUNT).optional(),
+  linksTruncated: z.boolean().optional(),
+  statusCode: z.number().int().min(100).max(599).optional(),
   warning: z.string().trim().min(1).max(PAGE_WARNING_MAX_LENGTH).optional(),
   truncated: z.boolean(),
 })

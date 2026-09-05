@@ -187,6 +187,7 @@ settings, and scrape options do not enter the tool contract.
 type ReadPageInput = {
   url: string
   focus?: string
+  fresh?: boolean
 }
 
 type ReadPageOutput = {
@@ -196,6 +197,9 @@ type ReadPageOutput = {
   mode: 'focused' | 'full'
   content: string
   images: readonly string[]
+  links?: readonly string[]
+  linksTruncated?: boolean
+  statusCode?: number
   warning?: string
   truncated: boolean
 }
@@ -207,6 +211,22 @@ scrape. Without `focus`, it returns main-content markdown when the agent truly
 needs the complete page. The adapter normalizes both forms into `content`,
 validates source and image URLs, removes base64 images, and reports truncation
 instead of silently returning an oversized tool result.
+
+Both read modes request extracted links alongside images. The adapter returns
+up to 40 distinct HTTP(S) links and reports link truncation separately from
+content truncation. Links are navigation leads, not evidence from unread pages.
+These output fields are optional so historical message snapshots remain valid.
+Source HTTP status is preserved when present; non-2xx responses other than 304
+carry a warning even if Firecrawl's API request succeeded. The optional `fresh`
+flag sets Firecrawl `maxAge` to zero for an explicit price or availability check;
+ordinary exploration retains the one-day cache policy. A fresh scrape does not
+establish availability hidden behind a booking calendar.
+
+Focused questions ask for property-specific facts, exact links, and supporting
+quotations. Full markdown remains available for inspecting original wording and
+associating directory entries with their individual links. Useful partial leads
+can still be presented with unresolved evidence; these controls do not impose a
+booking or completeness gate on exploration.
 
 The agent may issue several independent `readPage` calls in one model step.
 Found does not need a second batch tool merely to express parallel reads.
