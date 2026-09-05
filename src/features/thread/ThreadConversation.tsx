@@ -4,24 +4,53 @@ import { useCallback, useRef, useState } from 'react'
 import type { StickToBottomContext } from 'use-stick-to-bottom'
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom'
 
+import { useHistoryScrollAnchor } from './useHistoryScrollAnchor'
+
 interface ThreadConversationProps {
   readonly children: ReactNode
+  readonly canLoadOlderMessages: boolean
+  readonly loadingOlderMessages: boolean
+  readonly onLoadOlderMessages: () => void
 }
 
-export function ThreadConversation({ children }: ThreadConversationProps) {
+export function ThreadConversation({
+  children,
+  canLoadOlderMessages,
+  loadingOlderMessages,
+  onLoadOlderMessages,
+}: ThreadConversationProps) {
   const scrollContainerRef = useRef<HTMLElement | null>(null)
+  const contextRef = useRef<StickToBottomContext | null>(null)
+  const previousScrollTopRef = useRef(0)
+  const captureAnchor = useHistoryScrollAnchor(
+    scrollContainerRef,
+    loadingOlderMessages,
+  )
   const [showTopFade, setShowTopFade] = useState(false)
   const setConversationContext = useCallback(
     (context: StickToBottomContext | null): void => {
+      contextRef.current = context
       scrollContainerRef.current = context?.scrollRef.current ?? null
     },
     [],
   )
 
+  function loadOlderMessages(): void {
+    const container = scrollContainerRef.current
+    if (!container || !canLoadOlderMessages || loadingOlderMessages) return
+    captureAnchor()
+    contextRef.current?.stopScroll()
+    onLoadOlderMessages()
+  }
+
   function handleScroll(event: UIEvent<HTMLDivElement>): void {
     const container = scrollContainerRef.current
     if (!container || event.target !== container) return
+    const scrollingUp = container.scrollTop < previousScrollTopRef.current
+    captureAnchor()
+    previousScrollTopRef.current = container.scrollTop
     setShowTopFade(container.scrollTop > 4)
+    if (scrollingUp && container.scrollTop <= 32) loadOlderMessages()
   }
 
   return (
@@ -38,6 +67,20 @@ export function ThreadConversation({ children }: ThreadConversationProps) {
           className="mx-auto flex w-full max-w-784 flex-col gap-24 px-20 py-36 sm:px-32 sm:py-44"
           scrollClassName="overflow-y-auto overscroll-contain"
         >
+          {canLoadOlderMessages || loadingOlderMessages ? (
+            <div className="flex min-h-40 justify-center" aria-live="polite">
+              <button
+                className="min-h-40 rounded-10 px-14 text-label-small text-foreground-muted hover:bg-accent-black/4 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:cursor-wait"
+                type="button"
+                disabled={loadingOlderMessages}
+                onClick={loadOlderMessages}
+              >
+                {loadingOlderMessages
+                  ? 'Loading older messages…'
+                  : 'Load older messages'}
+              </button>
+            </div>
+          ) : null}
           {children}
         </StickToBottom.Content>
         <ConversationScrollButton />

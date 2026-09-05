@@ -172,6 +172,14 @@ universal representation for every state.
 - Switching threads preserves their unsent drafts for the mounted session,
   resets the message viewport, and resumes the same persisted messages and
   artifacts. New thread creates a record only when the first message is sent.
+- The transcript starts with 40 message records and loads earlier history in
+  pages of 40 when scrolling to the top or using Load older messages. Tool steps
+  count toward a page; there is no total-history cutoff. Earlier pages retain
+  the current message's viewport position, and the control stays disabled while
+  loading and disappears when history is exhausted.
+  At the loading boundary, upward wheel input stops instead of carrying into
+  the arriving page. Position is restored as messages arrive, even before the
+  loading indicator clears; scrolling back down remains available.
 - Existing agent runs continue when the user switches conversations. Navigation
   pauses only while the send mutation itself is pending.
 

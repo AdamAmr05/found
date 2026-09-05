@@ -54,6 +54,12 @@ export function useThreadSession() {
   const openingThread =
     restoring || (threadId && messageQuery.status === 'LoadingFirstPage')
 
+  function loadOlderMessages(): void {
+    if (threadId && messageQuery.status === 'CanLoadMore') {
+      messageQuery.loadMore(40)
+    }
+  }
+
   async function submit(promptOverride?: string): Promise<void> {
     const prompt = (promptOverride ?? draft).trim()
     if (!prompt || interactionBlocked) return
@@ -93,6 +99,11 @@ export function useThreadSession() {
   }
 
   return {
+    canLoadOlderMessages:
+      Boolean(threadId) && messageQuery.status === 'CanLoadMore',
+    loadingOlderMessages:
+      Boolean(threadId) && messageQuery.status === 'LoadingMore',
+    loadOlderMessages,
     draft,
     interactionBlocked,
     messages,

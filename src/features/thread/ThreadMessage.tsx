@@ -44,7 +44,10 @@ export function ThreadMessage({
 
 function UserMessage({ message }: { message: FoundUIMessage }) {
   return (
-    <article className="ml-auto max-w-560 rounded-12 bg-accent-black px-14 py-10 text-body-large text-white">
+    <article
+      data-message-key={message.key}
+      className="ml-auto max-w-560 rounded-12 bg-accent-black px-14 py-10 text-body-large text-white"
+    >
       {message.parts.map((part, index) =>
         part.type === 'text' ? (
           <MessageText
@@ -114,7 +117,10 @@ function AssistantMessage({
 
   return (
     <MapSceneBridgeProvider mappedRefs={mappedRefs} weather={weather}>
-      <article className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black empty:hidden">
+      <article
+        data-message-key={message.key}
+        className="flex max-w-720 flex-col gap-14 text-body-large text-accent-black empty:hidden"
+      >
         {visibleParts.map(({ part, index }) => (
           <AssistantPart
             key={

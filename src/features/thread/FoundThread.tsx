@@ -7,6 +7,9 @@ import { ThreadComposer } from './ThreadComposer'
 
 export function FoundThread() {
   const {
+    canLoadOlderMessages,
+    loadingOlderMessages,
+    loadOlderMessages,
     draft,
     interactionBlocked,
     messages,
@@ -43,7 +46,12 @@ export function FoundThread() {
             onSelect={(prompt) => void submit(prompt)}
           />
         ) : (
-          <ThreadConversation key={threadId}>
+          <ThreadConversation
+            key={threadId}
+            canLoadOlderMessages={canLoadOlderMessages}
+            loadingOlderMessages={loadingOlderMessages}
+            onLoadOlderMessages={loadOlderMessages}
+          >
             <ThreadTranscript
               messages={messages}
               active={runActive || submitting}
