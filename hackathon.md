@@ -243,17 +243,10 @@ and keyboard focus with reduced-motion support
 
 ### 2026-09-05 - e2f6899
 
-Improved research from directory pages to individual listings through the
-Firecrawl Convex component: page reads now return bounded source links, report
-target-page HTTP failures, and support fresh reads for current terms. Focused
-extraction keeps property facts separate; agent guidance preserves exploratory
-leads while distinguishing known term conflicts from unresolved availability
-(`convex/tools/research.ts`, `convex/tools/firecrawlAdapter.ts`,
-`convex/agentInstructions.ts`). The preceding `2356629` clarified that unknown
-email fields must be omitted rather than filled with invalid placeholders.
-
-Repeated the live Berlin search and received cards linked to individual
-apartments. A fresh follow-up correctly identified a six-month minimum as a
-conflict with a three-month stay. Verified the research changes with 83 unit
-tests, 29 browser tests, and reusable-account verification. Synced the backend
-to development only.
+Found can now follow a promising search result to its individual apartment
+listing, giving users a direct source to explore alongside the candidate's
+photos, evidence, and map. Firecrawl supplies the listing details, and OpenAI
+uses them to explain how a place fits the search. Users can ask Found to recheck
+current terms and clarify restrictions before deciding what to save or whom to
+contact. Unanswered questions remain part of the exploration rather than
+preventing a useful place from being shown.
