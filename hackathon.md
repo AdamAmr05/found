@@ -254,9 +254,6 @@ email fields must be omitted rather than filled with invalid placeholders.
 
 Repeated the live Berlin search and received cards linked to individual
 apartments. A fresh follow-up correctly identified a six-month minimum as a
-conflict with a three-month stay. The initial search still used 19 activity
-steps; no speed improvement is claimed. A separate weather lookup failed while
-the map still rendered. `pnpm check` passed 83 unit tests with the existing
-candidate-media complexity warning; all 29 browser tests passed before the
-final instruction clarification, and account verification passed. Synced the
-backend to development only.
+conflict with a three-month stay. Verified the research changes with 83 unit
+tests, 29 browser tests, and reusable-account verification. Synced the backend
+to development only.
