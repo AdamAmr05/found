@@ -12,6 +12,7 @@ import {
 import { components, internal } from './_generated/api'
 import { action, env } from './_generated/server'
 import { FOUND_MODEL } from './aiModel'
+import { OUTREACH_WRITING_INSTRUCTIONS } from './outreachWriting'
 import { requireViewerId } from './viewer'
 
 const revisedDraftSchema = z.object({
@@ -21,9 +22,11 @@ const revisedDraftSchema = z.object({
 })
 
 const REVISION_INSTRUCTIONS = `You revise one email draft for its author.
-Apply only the requested changes. Preserve accurate details, intent, and the
+Apply the requested changes and the email writing rules below. Keep unrelated edits minimal. Preserve accurate details, intent, and the
 author's voice. Do not invent recipient addresses or facts. Return the complete
-recipient, subject, and body, including unchanged content.`
+recipient, subject, and body, including unchanged content.
+
+${OUTREACH_WRITING_INSTRUCTIONS}`
 
 // Normal use never approaches this burst. It prevents a malformed client from
 // launching the entire hourly paid-model allowance simultaneously.
