@@ -87,10 +87,11 @@ export function AsciiAtmosphere({
     }
 
     const resize = (): void => {
-      const bounds = root.getBoundingClientRect()
       const pixelRatio = Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO)
-      cssWidth = Math.max(1, bounds.width)
-      cssHeight = Math.max(1, bounds.height)
+      // Layout projection can temporarily scale the media to thumbnail size.
+      // Measure layout pixels so that transform cannot shrink the bitmap.
+      cssWidth = Math.max(1, root.clientWidth)
+      cssHeight = Math.max(1, root.clientHeight)
       canvas.width = Math.round(cssWidth * pixelRatio)
       canvas.height = Math.round(cssHeight * pixelRatio)
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)

@@ -1,5 +1,41 @@
 import { expect, test } from '@playwright/test'
 
+test('keeps ASCII resolution independent of an expansion transform', async ({
+  page,
+}) => {
+  await page.goto('/playground/materials/ascii')
+  const field = page.locator('[data-ascii-atmosphere]').first()
+  await expect(field).toBeVisible()
+
+  // Resize while projected at thumbnail scale, then finish the transform.
+  // Transform completion alone does not notify ResizeObserver.
+  await field.evaluate((element) => {
+    element.style.transform = 'scale(0.08, 0.2)'
+    element.style.width = '600px'
+    element.style.height = '196px'
+  })
+  await expect
+    .poll(() =>
+      field.locator('canvas').evaluate((canvas: HTMLCanvasElement) => ({
+        width: canvas.width,
+        height: canvas.height,
+        expectedWidth: Math.round(600 * Math.min(devicePixelRatio, 1.75)),
+        expectedHeight: Math.round(196 * Math.min(devicePixelRatio, 1.75)),
+      })),
+    )
+    .toMatchObject({
+      width: 600,
+      height: 196,
+      expectedWidth: 600,
+      expectedHeight: 196,
+    })
+
+  await field.evaluate((element) => {
+    element.style.transform = 'none'
+  })
+  await expect(field.locator('canvas')).toHaveAttribute('width', '600')
+})
+
 test('presents the isolated ASCII material and its variants', async ({
   page,
 }) => {
