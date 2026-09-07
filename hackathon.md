@@ -5,16 +5,16 @@
 - **Project:** Found
 - **Event:** Convex All Gas Hackathon sponsored by OpenAI, Firecrawl, and AgentMail
 - **What it does:** A thread-based accommodation research workspace for finding, checking, comparing, and contacting candidates.
-- **Live app:** not deployed
+- **Live app:** https://mellow-hamster-66.convex.site
 - **Repo:** https://github.com/AdamAmr05/found
-- **Frontend:** not deployed
-- **Convex deployment:** https://sensible-bee-189.eu-west-1.convex.cloud
-- **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @firecrawl/firecrawl-convex, @agentmail/convex
+- **Frontend:** Convex static hosting
+- **Convex deployment:** https://mellow-hamster-66.convex.cloud
+- **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @convex-dev/static-hosting, @firecrawl/firecrawl-convex, @agentmail/convex
 - **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-05T11:09:29Z
+- **Last updated:** 2026-09-07T19:56:53Z
 
 ## Log
 
@@ -250,3 +250,30 @@ uses them to explain how a place fits the search. Users can ask Found to recheck
 current terms and clarify restrictions before deciding what to save or whom to
 contact. Unanswered questions remain part of the exploration rather than
 preventing a useful place from being shown.
+
+### 2026-09-07 - 70cf3d0
+
+Published Found's frontend and Convex backend together in US production using
+the registered static-hosting component. The SPA entry preserves deep links,
+authentication routes, and the AgentMail webhook (`convex/convex.config.ts`,
+`convex/http.ts`, `vite.config.ts`). Added animated primary navigation, tightened
+mobile spacing, and replaced the sign-out text with an accessible icon.
+
+Since the previous entry, repaired earlier-message pagination and scroll
+anchoring, corrected ASCII canvas resolution during expansion, shared email
+writing instructions across drafting and revision, and fixed markdown styling
+(`src/features/thread/useHistoryScrollAnchor.ts`, `convex/outreachWriting.ts`).
+
+Verified production password sessions, live research, maps, saved candidates,
+manual and AI draft edits, and an approved test email redirected to the owner.
+The owner's reply reached Inbox with unread state, persisted after reload, and
+was read correctly by the agent, confirming the production signing-secret and
+webhook flow without contacting a researched property.
+
+Separated private server Maps keys from the restricted public browser key.
+The client-bundle scan found no backend secrets, unsigned webhook requests were
+rejected, and tested unauthorized Maps calls were blocked. Checks passed with
+83 unit tests and 34 browser tests; password-session verification passed again
+after the icon change. Google OAuth sign-in remains unverified end to end,
+Maps shows its alpha-channel notice, and the dead-code check still reports
+existing unused files, dependencies, and exports.
