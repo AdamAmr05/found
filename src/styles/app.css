@@ -2,6 +2,12 @@
 @import 'tailwindcss';
 @source '../../node_modules/streamdown/dist/*.js';
 
+/* Google currently prefixes this alpha-only notice with a generated class name.
+   This unsupported override targets only the dismissible notice, not map attribution. */
+[role='region'][class$='-api-load-alpha-banner'] {
+  display: none !important;
+}
+
 @theme {
   /* Every numeric utility step is one literal pixel. */
   --spacing: 1px;
