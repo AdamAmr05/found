@@ -1,4 +1,5 @@
 import { AgentMail } from '@agentmail/convex'
+import { registerStaticRoutes } from '@convex-dev/static-hosting'
 import { httpRouter } from 'convex/server'
 
 import { components, internal } from './_generated/api'
@@ -21,5 +22,7 @@ http.route({
     return await agentmail.handleWebhook(ctx, request)
   }),
 })
+
+registerStaticRoutes(http, components.staticHosting)
 
 export default http

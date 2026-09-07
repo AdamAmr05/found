@@ -21,12 +21,11 @@ export function AccountControl() {
       <button
         aria-label="Sign out"
         title="Sign out"
-        className="flex min-h-40 shrink-0 items-center justify-center rounded-8 px-10 py-8 text-label-small whitespace-nowrap text-foreground-muted transition-colors hover:bg-background-lighter hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"
+        className="flex size-40 shrink-0 items-center justify-center rounded-8 text-foreground-muted transition-colors hover:bg-background-lighter hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100"
         type="button"
         onClick={() => void signOut().catch(globalThis.reportError)}
       >
-        <SignOut aria-hidden className="size-18 sm:hidden" />
-        <span className="hidden sm:inline">Sign out</span>
+        <SignOut aria-hidden className="size-18" />
       </button>
     </div>
   )

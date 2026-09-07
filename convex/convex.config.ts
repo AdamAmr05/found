@@ -4,6 +4,7 @@ import oauth from '@convex-dev/auth/providers/oauth/convex.config'
 import passwordProvider from '@convex-dev/auth/providers/password/convex.config'
 import username from '@convex-dev/auth/username/convex.config'
 import rateLimiter from '@convex-dev/rate-limiter/convex.config'
+import staticHosting from '@convex-dev/static-hosting/convex.config'
 import firecrawl from '@firecrawl/firecrawl-convex/convex.config'
 import agentmail from '@agentmail/convex/convex.config'
 import { defineApp } from 'convex/server'
@@ -29,6 +30,7 @@ const app = defineApp({
 })
 
 app.use(agent)
+app.use(staticHosting)
 app.use(agentmail, {
   env: {
     AGENTMAIL_API_KEY: app.env.AGENTMAIL_API_KEY,

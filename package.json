@@ -7,6 +7,7 @@
     "dev": "convex dev --start 'vite dev'",
     "typecheck": "tsc6 --noEmit",
     "build": "pnpm typecheck && vite build",
+    "deploy": "static-hosting deploy --dist dist/client --build-command 'pnpm build'",
     "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -45,6 +45,7 @@ export function FoundHeader({
           <GooeyNav
             aria-label="Primary navigation"
             items={navItems}
+            separation={2}
             labelClassName="min-h-40 min-w-40 px-10 py-8 text-label-small"
           />
           <AccountControl />
