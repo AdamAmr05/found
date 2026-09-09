@@ -14,7 +14,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-07T19:56:53Z
+- **Last updated:** 2026-09-09T01:30:54Z
 
 ## Log
 
@@ -277,3 +277,28 @@ rejected, and tested unauthorized Maps calls were blocked. Checks passed with
 after the icon change. Google OAuth sign-in remains unverified end to end,
 Maps shows its alpha-channel notice, and the dead-code check still reports
 existing unused files, dependencies, and exports.
+
+### 2026-09-09 - 7390d6f
+
+Gave Found a carefully composed front door at `/`. I wanted it to feel warm,
+open, and quietly hopeful: somewhere to pause and imagine what comes next.
+The orange shader moves behind soft off-white lettering, while a small vector
+scene of someone looking toward a neighborhood gives that feeling a human
+presence. I spent time on the space between things, the balance of color and
+type, and the way the entry button fits into the frame. The care lives in
+those small decisions, down to the arrow's gentle roll on hover or keyboard
+focus. Motion respects reduced-motion settings, and the shader pauses when
+hidden (`src/features/landing/`).
+
+Moved the workspace, Inbox, and Bookmarks under `/app`. Open found uses the
+existing Convex Auth session gate: signed-out visitors see authentication,
+while verified sessions enter the workspace. Added routes back to the landing
+page, replaced preview assets and controls with the final SVG and production
+components, and hid the dismissible Maps alpha notice
+(`src/routes/app.tsx`, `tests/e2e/landing.spec.ts`, `src/styles/app.css`).
+
+Checks passed with 83 unit tests and a production build. Both landing/session
+browser tests passed; the broader browser run passed 35 of 36, with the
+scroll test passing on its focused rerun. Verified arrow motion for pointer,
+keyboard, and reduced-motion settings. These changes are pushed to main;
+production deployment of this update is not yet verified.
