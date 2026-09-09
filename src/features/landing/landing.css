@@ -62,8 +62,8 @@
 
 @media (min-width: 768px) {
   .landing-scene {
-    top: 43%;
-    right: 48px;
+    top: 47%;
+    right: 64px;
     width: min(43%, 580px);
   }
 }
