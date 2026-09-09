@@ -1,5 +1,5 @@
-import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
+import { EntryArrow } from './EntryArrow'
 import { HeroAtmosphere } from './HeroAtmosphere'
 import './landing.css'
 
@@ -43,7 +43,7 @@ export function LandingPage() {
             className="inline-flex h-64 w-full items-center justify-between gap-16 rounded-20 border-[1.5px] border-accent-black/60 bg-accent-white px-24 text-label-large transition-colors duration-4 hover:border-accent-black hover:bg-background-base focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-black motion-reduce:transition-none"
           >
             Open found
-            <ArrowUpRightIcon aria-hidden="true" className="size-20" />
+            <EntryArrow />
           </Link>
         </div>
       </section>

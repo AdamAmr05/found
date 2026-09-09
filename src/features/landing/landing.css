@@ -67,3 +67,21 @@
     width: min(43%, 580px);
   }
 }
+
+.landing-arrow-track {
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-entry a:is(:hover, :focus-visible) .landing-arrow-track {
+  transform: translateX(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-arrow-track {
+    transition: none;
+  }
+
+  .landing-entry a:is(:hover, :focus-visible) .landing-arrow-track {
+    transform: none;
+  }
+}
