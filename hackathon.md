@@ -280,7 +280,7 @@ existing unused files, dependencies, and exports.
 
 ### 2026-09-09 - 7390d6f
 
-Gave Found a carefully composed front door at `/`. I wanted it to feel warm,
+Gave Found a carefully composed landing page at `/`. I wanted it to feel warm,
 open, and quietly hopeful: somewhere to pause and imagine what comes next.
 The orange shader moves behind soft off-white lettering, while a small vector
 scene of someone looking toward a neighborhood gives that feeling a human

@@ -33,8 +33,8 @@ export function LandingPage() {
             what comes next.
           </h1>
           <p className="mt-24 max-w-340 text-body-large md:mt-32 md:max-w-380">
-            Research homes, compare your options, and find the one that fits
-            your life.
+            Explore places to live, ask the questions that matter, and take the
+            next step.
           </p>
         </div>
         <div className="landing-entry absolute right-0 bottom-0 h-76 w-208 rounded-tl-32 bg-accent-white pt-12 pl-12 md:w-228">
