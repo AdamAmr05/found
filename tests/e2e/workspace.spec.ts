@@ -60,7 +60,7 @@ test('keeps the workspace steady and preserves drafts across app routes', async 
   await expect(composer).toHaveValue('Keep this draft while I check my inbox')
   await page.getByRole('link', { name: 'Bookmarks', exact: true }).click()
   await page.getByRole('button', { name: 'New thread', exact: true }).click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/app\/?$/)
   await expect(composer).toHaveValue('Keep this draft while I check my inbox')
   await expect(page.getByRole('link', { name: 'Playground' })).toHaveCount(0)
   await expect(

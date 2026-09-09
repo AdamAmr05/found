@@ -176,3 +176,10 @@
     }
   }
 }
+
+/* Adjacent warm tones for the landing atmosphere study. Heat remains the anchor. */
+@theme static {
+  --color-atmosphere-ink: #f5f5f5;
+  --color-atmosphere-amber: #ffc247;
+  --color-atmosphere-burnt: #a74312;
+}

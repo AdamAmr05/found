@@ -1,0 +1,69 @@
+/* The button and shader share 20px corners. The cut's 32px inside
+   corner is concentric with the button, separated by a 12px gutter.
+   Half-pixel overlap keeps the antialiased masks from exposing orange seams. */
+.landing-entry::before,
+.landing-entry::after {
+  position: absolute;
+  width: 20.5px;
+  height: 20.5px;
+  content: '';
+  pointer-events: none;
+  background: radial-gradient(
+    circle at top left,
+    transparent 19.5px,
+    var(--color-accent-white) 20px
+  );
+}
+
+.landing-entry::before {
+  top: -20px;
+  right: 0;
+}
+
+.landing-entry::after {
+  bottom: 0;
+  left: -20px;
+}
+
+/* Keep contrast stable where the copy sits without dimming the open field. */
+.landing-copy-shade {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-accent-black) 57.6%, transparent),
+    color-mix(in srgb, var(--color-accent-black) 43.2%, transparent) 42%,
+    transparent 85%
+  );
+}
+
+.landing-headline {
+  font-size: 44px;
+  line-height: 46px;
+  letter-spacing: -1.5px;
+}
+
+@media (min-width: 768px) {
+  .landing-headline {
+    font-size: 80px;
+    line-height: 82px;
+    letter-spacing: -2.4px;
+  }
+}
+
+/* The landscape supplies a horizontal scene in the open middle-right field.
+   Mobile keeps it above the copy. */
+.landing-scene {
+  aspect-ratio: 2 / 1;
+  mask: url('/images/landing/neighborhood.svg') center / contain no-repeat;
+  top: 31%;
+  right: 20px;
+  width: calc(100% - 40px);
+  transform: translateY(-50%);
+}
+
+@media (min-width: 768px) {
+  .landing-scene {
+    top: 43%;
+    right: 48px;
+    width: min(43%, 580px);
+  }
+}

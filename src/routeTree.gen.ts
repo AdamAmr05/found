@@ -9,16 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteImport } from './routes/_app'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as LabRouteImport } from './routes/lab'
 import { Route as PlaygroundRouteImport } from './routes/playground'
-import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as AppBookmarksRouteImport } from './routes/_app.bookmarks'
-import { Route as AppInboxRouteImport } from './routes/_app.inbox'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppBookmarksRouteImport } from './routes/app.bookmarks'
+import { Route as AppInboxRouteImport } from './routes/app.inbox'
 import { Route as PlaygroundMaterialsAsciiRouteImport } from './routes/playground_.materials.ascii'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
-  id: '/_app',
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LabRoute = LabRouteImport.update({
@@ -54,60 +61,69 @@ const PlaygroundMaterialsAsciiRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
+  '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
-  '/bookmarks': typeof AppBookmarksRoute
-  '/inbox': typeof AppInboxRoute
+  '/app/bookmarks': typeof AppBookmarksRoute
+  '/app/inbox': typeof AppInboxRoute
+  '/app/': typeof AppIndexRoute
   '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
-  '/bookmarks': typeof AppBookmarksRoute
-  '/inbox': typeof AppInboxRoute
-  '/': typeof AppIndexRoute
+  '/app/bookmarks': typeof AppBookmarksRoute
+  '/app/inbox': typeof AppInboxRoute
+  '/app': typeof AppIndexRoute
   '/playground/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_app': typeof AppRouteWithChildren
+  '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/lab': typeof LabRoute
   '/playground': typeof PlaygroundRoute
-  '/_app/bookmarks': typeof AppBookmarksRoute
-  '/_app/inbox': typeof AppInboxRoute
-  '/_app/': typeof AppIndexRoute
+  '/app/bookmarks': typeof AppBookmarksRoute
+  '/app/inbox': typeof AppInboxRoute
+  '/app/': typeof AppIndexRoute
   '/playground_/materials/ascii': typeof PlaygroundMaterialsAsciiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/app'
     | '/lab'
     | '/playground'
-    | '/bookmarks'
-    | '/inbox'
+    | '/app/bookmarks'
+    | '/app/inbox'
+    | '/app/'
     | '/playground/materials/ascii'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/lab'
     | '/playground'
-    | '/bookmarks'
-    | '/inbox'
-    | '/'
+    | '/app/bookmarks'
+    | '/app/inbox'
+    | '/app'
     | '/playground/materials/ascii'
   id:
     | '__root__'
-    | '/_app'
+    | '/'
+    | '/app'
     | '/lab'
     | '/playground'
-    | '/_app/bookmarks'
-    | '/_app/inbox'
-    | '/_app/'
+    | '/app/bookmarks'
+    | '/app/inbox'
+    | '/app/'
     | '/playground_/materials/ascii'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LabRoute: typeof LabRoute
   PlaygroundRoute: typeof PlaygroundRoute
@@ -116,10 +132,17 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
-      path: ''
+    '/': {
+      id: '/'
+      path: '/'
       fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -137,24 +160,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlaygroundRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/': {
-      id: '/_app/'
+    '/app/': {
+      id: '/app/'
       path: '/'
-      fullPath: '/'
+      fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/bookmarks': {
-      id: '/_app/bookmarks'
+    '/app/bookmarks': {
+      id: '/app/bookmarks'
       path: '/bookmarks'
-      fullPath: '/bookmarks'
+      fullPath: '/app/bookmarks'
       preLoaderRoute: typeof AppBookmarksRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/inbox': {
-      id: '/_app/inbox'
+    '/app/inbox': {
+      id: '/app/inbox'
       path: '/inbox'
-      fullPath: '/inbox'
+      fullPath: '/app/inbox'
       preLoaderRoute: typeof AppInboxRouteImport
       parentRoute: typeof AppRoute
     }
@@ -183,6 +206,7 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LabRoute: LabRoute,
   PlaygroundRoute: PlaygroundRoute,

@@ -3,6 +3,7 @@ import './auth.css'
 import { useOauth } from '@convex-dev/auth/providers/oauth/react'
 import { domAnimation, LazyMotion, m, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 
 import { GOOGLE_FLOW_ERROR_COPY } from './authCopy'
 import { AuthDitherShader } from './AuthDitherShader'
@@ -56,6 +57,12 @@ export function SignInPage() {
         </div>
 
         <main className="auth-form-panel">
+          <Link
+            to="/"
+            className="absolute top-24 right-24 rounded-8 px-12 py-8 text-label-medium text-accent-black focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            Back to found
+          </Link>
           <m.div
             className="auth-card"
             initial={entrance}

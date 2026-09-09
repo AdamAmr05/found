@@ -34,7 +34,7 @@ test('prepares a reusable account and verifies real password sessions', async ({
     mode: 0o600,
   })
 
-  await page.goto('/')
+  await page.goto('/app')
   await page.getByLabel('Username').fill(account.username)
   await page.getByLabel('Password').fill(account.password)
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
@@ -68,7 +68,7 @@ test('prepares a reusable account and verifies real password sessions', async ({
   })
   try {
     const freshPage = await context.newPage()
-    await freshPage.goto('/')
+    await freshPage.goto('/app')
     await freshPage.getByLabel('Username').fill(account.username)
     await freshPage.getByLabel('Password').fill(account.password)
     await freshPage

@@ -24,7 +24,8 @@ export function AppWorkspace({ children }: { readonly children: ReactNode }) {
   const { threadId, submitting } = session
   const navigate = useNavigate()
   const inConversation = useLocation({
-    select: (location) => location.pathname === '/',
+    select: (location) =>
+      location.pathname === '/app' || location.pathname === '/app/',
   })
   const [historyOpen, setHistoryOpen] = useState(false)
   const historyTrigger = useRef<HTMLButtonElement>(null)
@@ -37,13 +38,13 @@ export function AppWorkspace({ children }: { readonly children: ReactNode }) {
   function onNewThread(): void {
     if (submitting) return
     session.startNewThread()
-    void navigate({ to: '/' })
+    void navigate({ to: '/app' })
   }
 
   function onSelectThread(id: string): void {
     if (submitting) return
     session.selectThread(id)
-    void navigate({ to: '/' })
+    void navigate({ to: '/app' })
   }
 
   return (

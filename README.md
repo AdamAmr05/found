@@ -5,7 +5,9 @@ Firecrawl, AgentMail, and Codex hackathon.
 
 The repository contains the technical foundation and working interaction
 surfaces for comparing accommodation candidates, inspecting evidence, and
-approving outreach. Backend and provider integrations are not connected yet.
+approving outreach. The public landing page lives at `/`; `/app` opens sign-in or the workspace
+according to the verified session. Inbox and bookmarks live at `/app/inbox`
+and `/app/bookmarks`. The workspace wordmark returns to the landing page.
 
 ## Foundation
 

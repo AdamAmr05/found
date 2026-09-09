@@ -14,7 +14,7 @@ function Playground() {
       <nav className="backdrop-blur-12 sticky top-0 z-50 flex min-h-52 items-center justify-between border-b-1 border-black/8 bg-white/88 px-16 md:px-28">
         <Link
           className="text-label-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-heat-100"
-          to="/"
+          to="/app"
         >
           Back to chat
         </Link>

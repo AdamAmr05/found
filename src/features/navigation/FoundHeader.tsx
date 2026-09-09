@@ -7,20 +7,20 @@ import { AccountControl } from '../auth/AccountControl'
 
 const navItems: ReadonlyArray<GooeyNavItem> = [
   {
-    href: '/',
+    href: '/app',
     exact: true,
     ariaLabel: 'Chat',
     icon: <ChatCircleText aria-hidden className="size-18 sm:hidden" />,
     label: <span className="hidden sm:inline">Chat</span>,
   },
   {
-    href: '/inbox',
+    href: '/app/inbox',
     ariaLabel: 'Inbox',
     icon: <Tray aria-hidden className="size-18 sm:hidden" />,
     label: <span className="hidden sm:inline">Inbox</span>,
   },
   {
-    href: '/bookmarks',
+    href: '/app/bookmarks',
     ariaLabel: 'Bookmarks',
     icon: <BookmarkSimple aria-hidden className="size-18 sm:hidden" />,
     label: <span className="hidden sm:inline">Bookmarks</span>,

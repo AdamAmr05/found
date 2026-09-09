@@ -22,7 +22,7 @@ against the development deployment first.
 ## Browse as the test account
 
 Run `pnpm dev`, or reuse the app if it is already running, then open
-`http://127.0.0.1:3000`. Read `.cache/verification/account.json` locally and use
+`http://127.0.0.1:3000/app`. Read `.cache/verification/account.json` locally and use
 its `username` and `password` in the sign-in form. Use this same origin consistently;
 `localhost` and `127.0.0.1` have separate browser sessions.
 
@@ -40,7 +40,8 @@ accounts for those runs.
 
 ## Verification surfaces and evidence
 
-- `/`: real authentication and durable conversation surface. Sending a message
+- `/`: public landing page. Open found enters `/app`.
+- `/app`: real authentication and durable conversation surface. Sending a message
   can invoke the model and provider integrations; only do so for a relevant task.
 - `/playground`: fixture-based accommodation interaction study.
 - `/lab`: fixture-based representation and interaction studies. Success here
