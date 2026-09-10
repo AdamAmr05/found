@@ -47,3 +47,20 @@ test('separates place, subject, and address into distinct tiers', async ({
     'Studierendenwerk Ulm — apartment category (residence to confirm)',
   )
 })
+
+test('filters rows by delivery state', async ({ page }) => {
+  const group = page.getByRole('group', { name: 'Filter by state' })
+  await expect(group.getByRole('button', { name: 'All' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await group.getByRole('button', { name: 'Replied' }).click()
+  const rows = page.getByRole('button', { name: /Open outreach to/ })
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first()).toContainText('Replied')
+  await group.getByRole('button', { name: 'Drafts' }).click()
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first()).toContainText('€343 apartment lead')
+  await group.getByRole('button', { name: 'All' }).click()
+  await expect(rows).toHaveCount(4)
+})

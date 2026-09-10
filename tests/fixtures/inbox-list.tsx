@@ -2,6 +2,11 @@ import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import type { Id } from '../../convex/_generated/dataModel'
+import {
+  InboxFilter,
+  type InboxStateFilter,
+  inboxFilterState,
+} from '../../src/features/outreach/InboxFilter'
 import { InboxRow, type InboxItem } from '../../src/features/outreach/InboxRow'
 import '../../src/styles/app.css'
 
@@ -63,11 +68,17 @@ const items: InboxItem[] = [
 
 function InboxListFixture() {
   const [opened, setOpened] = useState('')
+  const [filter, setFilter] = useState<InboxStateFilter>('all')
+  const state = inboxFilterState(filter)
+  const visible = state ? items.filter((item) => item.state === state) : items
   return (
     <main className="mx-auto w-full max-w-1040 px-20 py-40 sm:px-32">
       <h1 className="text-title-h4 text-accent-black">Inbox</h1>
-      <div className="mt-32 grid gap-12">
-        {items.map((item) => (
+      <div className="mt-24">
+        <InboxFilter value={filter} onChange={setFilter} />
+      </div>
+      <div className="mt-20 grid gap-12">
+        {visible.map((item) => (
           <InboxRow
             key={item.outreachId}
             item={item}

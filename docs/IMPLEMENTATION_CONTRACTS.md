@@ -118,6 +118,17 @@ characters, so it does not go through the thread's Markdown renderer. Web
 links open through the same external-link dialog as thread links; email
 addresses are plain `mailto:` links.
 
+## Inbox filtering
+
+Inbox narrows by delivery state the way tw-connect narrows shipments: the list
+query takes an optional state and paginates over
+`by_user_and_state_and_latest_activity` when it is present, or
+`by_user_and_latest_activity` when it is absent. Both indexes end in the sort
+field, so a page reads only the rows it returns. There is no post-index
+`.filter()`. Filters that would span several states or compare fields, such as
+unread replies, need a denormalized field kept in sync by every state-changing
+mutation and are not offered until that exists.
+
 ## Outreach attachments
 
 AgentMail's webhook and thread payloads describe a reply's attachments but do

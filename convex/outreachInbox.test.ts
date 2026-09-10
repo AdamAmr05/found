@@ -73,3 +73,50 @@ test('returns an exhausted empty page and rejects unauthenticated access', async
     data: { code: 'UNAUTHENTICATED' },
   })
 })
+
+test('narrows to one delivery state through its own index without reading others', async () => {
+  const t = convexTest(schema, modules)
+  const ownerId = await t.run(async (ctx) => {
+    const ownerId = await ctx.db.insert('users', { displayName: 'Owner' })
+    const states = ['draft', 'sent', 'replied', 'sent', 'failed'] as const
+    for (const [index, state] of states.entries()) {
+      await ctx.db.insert('outreachDrafts', {
+        userId: ownerId,
+        threadId: 'fixture-thread',
+        toolCallId: `outreach-${index}`,
+        candidateTitle: `Place ${index}`,
+        recipient: 'contact@example.com',
+        subject: `Subject ${index}`,
+        body: 'Is this place available?',
+        revision: 1,
+        lastAgentSeenRevision: 1,
+        state,
+        updatedAt: index,
+        latestActivityAt: index,
+        replyRevision: 0,
+        humanReadThroughReplyRevision: 0,
+        agentReadThroughReplyRevision: 0,
+      })
+    }
+    return ownerId
+  })
+  const owner = t.withIdentity({ subject: ownerId })
+  const sent = await owner.query(api.outreachInbox.list, {
+    paginationOpts: { cursor: null, numItems: 20 },
+    state: 'sent',
+  })
+  expect(sent.page.map((item) => item.candidateTitle)).toEqual([
+    'Place 3',
+    'Place 1',
+  ])
+  expect(sent.isDone).toBe(true)
+  const replied = await owner.query(api.outreachInbox.list, {
+    paginationOpts: { cursor: null, numItems: 20 },
+    state: 'replied',
+  })
+  expect(replied.page.map((item) => item.candidateTitle)).toEqual(['Place 2'])
+  const all = await owner.query(api.outreachInbox.list, {
+    paginationOpts: { cursor: null, numItems: 20 },
+  })
+  expect(all.page).toHaveLength(5)
+})

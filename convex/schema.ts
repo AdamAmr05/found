@@ -87,6 +87,11 @@ const schema = defineSchema({
       'latestActivityAt',
     ])
     .index('by_user_and_latest_activity', ['userId', 'latestActivityAt'])
+    .index('by_user_and_state_and_latest_activity', [
+      'userId',
+      'state',
+      'latestActivityAt',
+    ])
     .index('by_thread_and_tool_call', ['threadId', 'toolCallId'])
     .index('by_agentmail_thread', ['agentmailThreadId'])
     .index('by_agentmail_message', ['agentmailMessageId']),

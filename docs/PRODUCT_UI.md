@@ -116,6 +116,13 @@ universal representation for every state.
   Load more keeps existing rows visible, stays disabled while fetching, and
   disappears when the list is exhausted. Inbox orders by latest activity;
   Bookmarks orders by when a place was saved. Neither has a total-item cutoff.
+- Inbox filters by delivery state through a row of plain text options under
+  the heading: All, Replied, Sent, Drafts, Failed. The selected option sits on
+  a `background-lighter` 8px surface; the others are muted text. Transient
+  states (approved, sending, unconfirmed) appear only under All. Each filter
+  is its own paginated query over a state-prefixed index, never a client-side
+  filter, and an empty filtered list says which state is empty. Opening an
+  email and returning to Inbox preserves the selected filter and loaded pages.
 - An Inbox row has three tiers: the place in `label-large`, the email subject
   in `body-medium` black, and the recipient address with the activity time in
   muted `mono-x-small`. The delivery state is a plain `label-small` word at the

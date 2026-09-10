@@ -5,6 +5,12 @@ import { useRef, useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
+import {
+  InboxFilter,
+  type InboxStateFilter,
+  inboxFilterLabel,
+  inboxFilterState,
+} from './InboxFilter'
 import { InboxRow } from './InboxRow'
 import { MailBody } from './MailBody'
 import { StoredMessageAttachments } from './MessageAttachments'
@@ -13,12 +19,6 @@ type MailThread = FunctionReturnType<typeof api.outreachInbox.read>
 const INBOX_PAGE_SIZE = 20
 
 export function InboxPage() {
-  const inbox = usePaginatedQuery(
-    api.outreachInbox.list,
-    {},
-    { initialNumItems: INBOX_PAGE_SIZE },
-  )
-  const items = inbox.results
   const readThread = useAction(api.outreachInbox.read)
   const markRead = useMutation(api.outreachInbox.markRead)
   const [selectedId, setSelectedId] = useState<Id<'outreachDrafts'>>()
@@ -59,79 +59,124 @@ export function InboxPage() {
     <main className="min-h-0 flex-1 overflow-y-auto">
       <section className="mx-auto w-full max-w-1040 px-20 py-40 sm:px-32 sm:py-56">
         {selectedId ? (
-          <button
-            className="mb-20 flex items-center gap-7 text-label-small text-foreground-muted hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100"
-            type="button"
-            onClick={() => {
-              requestSequence.current += 1
-              setSelectedId(undefined)
-              setThread(undefined)
-              setError(undefined)
-            }}
-          >
-            <ArrowLeft aria-hidden size={15} />
-            Inbox
-          </button>
-        ) : (
           <>
-            <h1 className="text-title-h4 text-accent-black">Inbox</h1>
-            <p className="mt-12 max-w-620 text-body-large text-foreground-muted">
-              Drafts, sent emails, and replies.
-            </p>
-          </>
-        )}
-
-        {selectedId ? (
-          <ThreadDetail
-            error={error}
-            loading={loading}
-            outreachId={selectedId}
-            thread={thread}
-          />
-        ) : inbox.status === 'LoadingFirstPage' ? (
-          <p className="mt-40 font-mono text-mono-small text-foreground-muted">
-            Loading outreach…
-          </p>
-        ) : items.length === 0 ? (
-          <div className="surface-paper mt-32 rounded-16 p-24 text-center">
-            <EnvelopeSimple
-              aria-hidden
-              className="mx-auto text-foreground-muted"
-              size={24}
-            />
-            <p className="mt-10 text-label-large">No outreach yet</p>
-            <p className="mx-auto mt-6 max-w-440 text-body-medium text-foreground-muted">
-              Ask Found to draft an email to a place and it will appear here.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-32 grid gap-12">
-            {items.map((item) => (
-              <InboxRow
-                key={item.outreachId}
-                item={item}
-                onOpen={() => void select(item.outreachId, item.threadId)}
-              />
-            ))}
-          </div>
-        )}
-        {!selectedId &&
-        (inbox.status === 'CanLoadMore' || inbox.status === 'LoadingMore') ? (
-          <div className="mt-24 flex justify-center">
             <button
-              className="min-h-44 rounded-10 border border-border-muted bg-background-lighter px-16 py-10 text-label-small text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100 disabled:cursor-default disabled:opacity-60"
+              className="mb-20 flex items-center gap-7 text-label-small text-foreground-muted hover:text-accent-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100"
               type="button"
-              disabled={inbox.status === 'LoadingMore'}
-              onClick={() => inbox.loadMore(INBOX_PAGE_SIZE)}
+              onClick={() => {
+                requestSequence.current += 1
+                setSelectedId(undefined)
+                setThread(undefined)
+                setError(undefined)
+              }}
             >
-              {inbox.status === 'LoadingMore'
-                ? 'Loading…'
-                : 'Load more conversations'}
+              <ArrowLeft aria-hidden size={15} />
+              Inbox
             </button>
-          </div>
+            <ThreadDetail
+              error={error}
+              loading={loading}
+              outreachId={selectedId}
+              thread={thread}
+            />
+          </>
         ) : null}
+        {/* Keep the filter and loaded pages alive while reading a conversation. */}
+        <div hidden={selectedId !== undefined}>
+          <InboxList
+            onOpen={(outreachId, foundThreadId) =>
+              void select(outreachId, foundThreadId)
+            }
+          />
+        </div>
       </section>
     </main>
+  )
+}
+
+/** The filtered, paginated conversation list: owns its query and empty states. */
+function InboxList({
+  onOpen,
+}: {
+  readonly onOpen: (
+    outreachId: Id<'outreachDrafts'>,
+    foundThreadId: string,
+  ) => void
+}) {
+  const [filter, setFilter] = useState<InboxStateFilter>('all')
+  const state = inboxFilterState(filter)
+  const inbox = usePaginatedQuery(
+    api.outreachInbox.list,
+    state ? { state } : {},
+    { initialNumItems: INBOX_PAGE_SIZE },
+  )
+  const items = inbox.results
+  const canLoadMore =
+    inbox.status === 'CanLoadMore' || inbox.status === 'LoadingMore'
+
+  return (
+    <>
+      <h1 className="text-title-h4 text-accent-black">Inbox</h1>
+      <p className="mt-12 max-w-620 text-body-large text-foreground-muted">
+        Drafts, sent emails, and replies.
+      </p>
+      <div className="mt-24">
+        <InboxFilter value={filter} onChange={setFilter} />
+      </div>
+      {inbox.status === 'LoadingFirstPage' ? (
+        <p className="mt-40 font-mono text-mono-small text-foreground-muted">
+          Loading outreach…
+        </p>
+      ) : items.length === 0 ? (
+        <InboxEmpty filter={filter} />
+      ) : (
+        <div className="mt-20 grid gap-12">
+          {items.map((item) => (
+            <InboxRow
+              key={item.outreachId}
+              item={item}
+              onOpen={() => onOpen(item.outreachId, item.threadId)}
+            />
+          ))}
+        </div>
+      )}
+      {canLoadMore ? (
+        <div className="mt-24 flex justify-center">
+          <button
+            className="min-h-44 rounded-10 border border-border-muted bg-background-lighter px-16 py-10 text-label-small text-accent-black transition-colors hover:border-border-loud focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-heat-100 disabled:cursor-default disabled:opacity-60"
+            type="button"
+            disabled={inbox.status === 'LoadingMore'}
+            onClick={() => inbox.loadMore(INBOX_PAGE_SIZE)}
+          >
+            {inbox.status === 'LoadingMore'
+              ? 'Loading…'
+              : 'Load more conversations'}
+          </button>
+        </div>
+      ) : null}
+    </>
+  )
+}
+
+function InboxEmpty({ filter }: { readonly filter: InboxStateFilter }) {
+  return (
+    <div className="surface-paper mt-20 rounded-16 p-24 text-center">
+      <EnvelopeSimple
+        aria-hidden
+        className="mx-auto text-foreground-muted"
+        size={24}
+      />
+      <p className="mt-10 text-label-large">
+        {filter === 'all'
+          ? 'No outreach yet'
+          : `Nothing under ${inboxFilterLabel(filter)}`}
+      </p>
+      <p className="mx-auto mt-6 max-w-440 text-body-medium text-foreground-muted">
+        {filter === 'all'
+          ? 'Ask Found to draft an email to a place and it will appear here.'
+          : 'Conversations move here as their delivery state changes.'}
+      </p>
+    </div>
   )
 }
 

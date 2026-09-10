@@ -44,17 +44,31 @@ const vInboxItem = v.object({
 })
 
 export const list = query({
-  args: { paginationOpts: paginationOptsValidator },
+  args: {
+    paginationOpts: paginationOptsValidator,
+    // Narrow to one delivery state through its own index range; absent means
+    // every conversation in activity order.
+    state: v.optional(vOutreachState),
+  },
   returns: paginationResultValidator(vInboxItem),
   handler: async (ctx, args) => {
     const userId = await requireViewerId(ctx)
-    const drafts = await ctx.db
-      .query('outreachDrafts')
-      .withIndex('by_user_and_latest_activity', (index) =>
-        index.eq('userId', userId),
-      )
-      .order('desc')
-      .paginate(args.paginationOpts)
+    const state = args.state
+    const drafts = state
+      ? await ctx.db
+          .query('outreachDrafts')
+          .withIndex('by_user_and_state_and_latest_activity', (index) =>
+            index.eq('userId', userId).eq('state', state),
+          )
+          .order('desc')
+          .paginate(args.paginationOpts)
+      : await ctx.db
+          .query('outreachDrafts')
+          .withIndex('by_user_and_latest_activity', (index) =>
+            index.eq('userId', userId),
+          )
+          .order('desc')
+          .paginate(args.paginationOpts)
     return {
       ...drafts,
       page: drafts.page.map((draft) => ({
