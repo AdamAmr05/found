@@ -146,6 +146,20 @@ universal representation for every state.
   20px mobile / 32px desktop gutters. The composer remains docked while scrolling.
 - Keep entry copy to the heading, questions, and input placeholder. No category
   eyebrow, keyboard instructions, or implementation-oriented footer is needed.
+- A 36px microphone control sits between the input and Send when the browser
+  can record. Recording swaps the input for a live level meter, dashed rest
+  line, and `m:ss` timer in a 160ms fade; the same control becomes Stop and
+  Send becomes Transcribe and send, so neither moves. A 36px Discard control
+  leads the recording row and drops the capture without transcribing, leaving
+  the draft untouched. Stop appends the
+  transcript to the draft with one space and focuses the input; Transcribe
+  and send submits the combined draft. Capture stops at five minutes;
+  recordings over 3 MiB are rejected before upload. The microphone is
+  released on stop, cancel, or unmount. The
+  transcription action is budgeted per user. Failures render as one
+  plain-language alert above the composer and clear on the next edit or
+  recording; raw diagnostics never appear. Reduced motion makes the swap
+  instant and stops the busy spinner.
 
 ### Conversation history
 

@@ -40,6 +40,7 @@ import type * as tools_research from "../tools/research.js";
 import type * as tools_toolOwner from "../tools/toolOwner.js";
 import type * as users from "../users.js";
 import type * as viewer from "../viewer.js";
+import type * as voiceTranscription from "../voiceTranscription.js";
 
 import type {
   ApiFromModules,
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "tools/toolOwner": typeof tools_toolOwner;
   users: typeof users;
   viewer: typeof viewer;
+  voiceTranscription: typeof voiceTranscription;
 }>;
 
 /**

@@ -82,7 +82,7 @@ export function FoundThread() {
               disabled={interactionBlocked}
               value={draft}
               onChange={setDraft}
-              onSubmit={() => void submit()}
+              onSubmit={(prompt) => void submit(prompt)}
             />
           </div>
         </div>
