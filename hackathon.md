@@ -12,9 +12,9 @@
 - **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @convex-dev/static-hosting, @firecrawl/firecrawl-convex, @agentmail/convex
 - **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting
 - **Auth:** Convex Auth
-- **AI models:** OpenAI `gpt-5.6-luna` (live generation verified)
+- **AI models:** OpenAI `gpt-5.6-luna` (live generation verified), `gpt-transcribe` (voice transcription verified in development)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-09T01:30:54Z
+- **Last updated:** 2026-09-10T07:20:19Z
 
 ## Log
 
@@ -302,3 +302,24 @@ browser tests passed; the broader browser run passed 35 of 36, with the
 scroll test passing on its focused rerun. Verified arrow motion for pointer,
 keyboard, and reduced-motion settings. These changes are pushed to main;
 production deployment of this update is not yet verified.
+
+### 2026-09-10 - c82b26d
+
+Added voice input to the composer with a quiet live waveform, timer, and stable
+microphone and send controls. Stop appends the transcript to the existing draft;
+Transcribe and send submits it, while Discard leaves the draft untouched.
+Recording stops automatically at five minutes, releases the microphone, and
+rejects audio over 3 MiB before upload (`src/features/thread/voice/`,
+`src/features/thread/ThreadComposer.tsx`).
+
+The authenticated Convex action calls OpenAI `gpt-transcribe`, validates WebM
+and MP4 audio, and budgets calls per user through the registered rate limiter
+(`convex/voiceTranscription.ts`, `shared/voiceRecording.ts`). Verified actual
+speech reaching the draft through the development backend. The browser test now
+requires recognizable speech from a checked-in audio fixture; provider errors
+cannot count as success. Checks passed with 102 unit tests and all 37 browser
+tests; the existing unrelated complexity warning remains.
+
+Also refined the landing copy and centered its illustration with an inset
+matching the text (`src/features/landing/`). These changes are pushed to main;
+production deployment of transcription is not yet verified.
