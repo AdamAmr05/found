@@ -9,12 +9,12 @@
 - **Repo:** https://github.com/AdamAmr05/found
 - **Frontend:** Convex static hosting
 - **Convex deployment:** https://mellow-hamster-66.convex.cloud
-- **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @convex-dev/static-hosting, @firecrawl/firecrawl-convex, @agentmail/convex
-- **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting
+- **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @convex-dev/static-hosting, @convex-dev/workpool, @firecrawl/firecrawl-convex, @agentmail/convex
+- **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting, file storage
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified), `gpt-transcribe` (voice transcription verified in development)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-10T07:20:19Z
+- **Last updated:** 2026-09-10T14:21:01Z
 
 ## Log
 
@@ -326,13 +326,10 @@ production deployment of transcription is not yet verified.
 
 ### 2026-09-10 - inbound attachments
 
-Traced why a Studierendenwerk reply showed no attachments in Inbox. The
-`<url> url` pairs in that email are Outlook's plain-text rendering of links,
-not attachments; the message's one real attachment, an inline signature image,
-was described in AgentMail's webhook but never surfaced. The component keeps
-the description inside its raw payload, the thread reader dropped it, and the
-bytes sit behind an expiring AgentMail download URL with no published
-retention.
+Traced missing attachments in Inbox. Outlook's `<url> url` pairs are
+plain-text links rather than attachments. AgentMail describes actual files in
+its webhook payload, but the thread reader previously dropped that metadata
+and did not preserve the bytes behind expiring download URLs.
 
 Found now records one `outreachAttachments` row per attachment in the same
 mutation that marks a reply, then moves the bytes into Convex file storage
@@ -351,16 +348,20 @@ and email addresses as links behind the existing external-link dialog, without
 passing untrusted mail through the Markdown renderer
 (`convex/outreachMailText.ts`, `src/features/outreach/MailBody.tsx`).
 
+Added a state filter to Inbox, ported from tw-connect's shipments list: an
+optional state on the paginated query switches to a state-prefixed index, and
+the page shows All, Replied, Sent, Drafts, and Failed as plain text options
+(`convex/outreachInbox.ts`, `src/features/outreach/InboxFilter.tsx`).
+
 Restructured the Inbox row into three tiers: place, then the email subject in
 black, then address and time as monospace metadata, with the delivery state as
 a plain colored word rather than a pill (`src/features/outreach/InboxRow.tsx`).
 
-Checks passed with 110 unit tests and a production build; the existing
-unrelated complexity warning remains. New fixture-based browser specs cover
-the link rendering, dialog, attachment chips, and row hierarchy. Verified against the live
-record on the development backend: reading the Studierendenwerk thread
-recorded its inline image and stored the 1,408-byte file. The change is not
-committed or deployed.
+Initial checks passed with 110 unit tests and a production build; the existing
+unrelated complexity warning remained. New fixture-based browser specs cover
+the link rendering, dialog, attachment chips, and row hierarchy. Attachment
+capture was also verified against the development backend before the review
+follow-up below.
 
 Review follow-up: attachment transfers now use the already-installed Workpool
 component for bounded concurrency, durable retries, and completion after
@@ -377,3 +378,31 @@ verification, and the production build passed. Synced to the development
 deployment and verified that rerunning a completed transfer preserves its
 stored state. `pnpm deadcode` still reports existing unused code and browser
 fixture entry points it does not recognize; no production deployment was run.
+
+### 2026-09-10 - f5f6e82
+
+Committed and pushed the reviewed attachment and Inbox changes to main.
+Workpool recovers interrupted downloads, while indexed reads fetch only the
+attachments on each displayed message (`convex/outreachAttachmentTransfers.ts`,
+`convex/outreachAttachments.ts`). Final checks passed 114 unit tests, 40 browser
+tests, and the build; existing complexity and dead-code findings remain.
+Verified in development; this update has not been deployed to production.
+
+### 2026-09-10 - 757cf02
+
+Added delivery-state filters to Inbox with owner-scoped, indexed pagination:
+All, Replied, Sent, Drafts, and Failed. Opening an email keeps the list mounted
+but hidden, so returning preserves the selected filter and all loaded pages
+(`convex/outreachInbox.ts`, `src/features/outreach/InboxPage.tsx`).
+
+The new browser regression exercises the real Inbox page and Convex pagination
+with a fixture WebSocket transport. It reproduced the filter reset before the
+fix and passed afterward. The full check passed with 115 unit tests; all 42
+browser tests passed, and React Doctor scored 100. The existing CandidateMedia
+complexity warning remains. Dead-code checking still reports existing findings
+and HTML-loaded browser fixtures, including the new Inbox fixture, as unused.
+The reusable development account verification also passed during review.
+
+Committed and pushed the code to main. This change was not deployed to
+production; the browser regression verifies UI state against fixture responses,
+while the Convex unit tests verify indexed filtering.
