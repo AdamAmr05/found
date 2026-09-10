@@ -1,7 +1,10 @@
+import { vWorkIdValidator } from '@convex-dev/workpool'
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
 import {
+  vOutreachAttachmentDisposition,
+  vOutreachAttachmentTransfer,
   vOutreachProposal,
   vOutreachRevisionRequest,
   vOutreachState,
@@ -87,6 +90,24 @@ const schema = defineSchema({
     .index('by_thread_and_tool_call', ['threadId', 'toolCallId'])
     .index('by_agentmail_thread', ['agentmailThreadId'])
     .index('by_agentmail_message', ['agentmailMessageId']),
+  // One row per attachment on an inbound reply. Metadata lands with the
+  // webhook; bytes follow through a scheduled transfer into Convex storage.
+  outreachAttachments: defineTable({
+    userId: v.id('users'),
+    outreachId: v.id('outreachDrafts'),
+    inboxId: v.string(),
+    messageId: v.string(),
+    attachmentId: v.string(),
+    filename: v.optional(v.string()),
+    contentType: v.optional(v.string()),
+    contentId: v.optional(v.string()),
+    size: v.number(),
+    disposition: vOutreachAttachmentDisposition,
+    transfer: vOutreachAttachmentTransfer,
+    transferWorkId: v.optional(vWorkIdValidator),
+  })
+    .index('by_message_and_attachment', ['messageId', 'attachmentId'])
+    .index('by_outreach_and_message', ['outreachId', 'messageId']),
 })
 
 export default schema

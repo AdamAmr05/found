@@ -16,6 +16,10 @@ import {
   outreachContentHash,
   validateOutreachContent,
 } from './outreachContent'
+import {
+  inboundAttachments,
+  recordInboundAttachments,
+} from './outreachAttachments'
 import { viewerDraft } from './outreachDrafts'
 import { vOutreachState } from './outreachModel'
 import { replyRevision } from './outreachReplyState'
@@ -28,6 +32,8 @@ const inboundMessageSchema = z.object({
   message_id: z.string(),
   thread_id: z.string(),
   in_reply_to: z.string().optional(),
+  // Parsed per entry later so a malformed attachment cannot hide the reply.
+  attachments: z.array(z.unknown()).optional(),
 })
 
 const outboundEventSchema = z.object({
@@ -268,6 +274,11 @@ export const onMessageReceived = internalMutation({
       state: 'replied',
       replyRevision: nextReplyRevision,
       latestActivityAt: Date.now(),
+    })
+    await recordInboundAttachments(ctx, draft, {
+      inboxId: parsed.data.inbox_id,
+      messageId: parsed.data.message_id,
+      attachments: inboundAttachments(parsed.data.attachments),
     })
     return null
   },

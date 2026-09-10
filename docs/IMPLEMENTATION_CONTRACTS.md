@@ -106,7 +106,45 @@ Thread normalization selects the first non-empty complete body: extracted plain
 text, plain text, converted extracted HTML, or converted HTML. AgentMail's
 shortened preview is only a final fallback. HTML-only mail—as iPhone Mail may
 produce—is converted to inert plain text before applying the same body bound.
-Raw email HTML is never rendered or passed to the agent.
+Every body then passes one normalization: non-breaking spaces become spaces,
+Outlook's `<target> label` hyperlink pairs collapse to the single address (the
+label survives only when it names something else), line-edge whitespace is
+trimmed, and runs of blank lines collapse to one. Raw email HTML is never
+rendered or passed to the agent.
+
+Inbox renders the normalized body as plain text with web and email addresses
+turned into links. Email is untrusted and often contains Markdown-significant
+characters, so it does not go through the thread's Markdown renderer. Web
+links open through the same external-link dialog as thread links; email
+addresses are plain `mailto:` links.
+
+## Outreach attachments
+
+AgentMail's webhook and thread payloads describe a reply's attachments but do
+not carry their bytes; the bytes sit behind a download URL that expires, and
+AgentMail publishes no retention guarantee for them. Found therefore records
+one `outreachAttachments` row per attachment in the same mutation that marks
+the reply, then moves the bytes into Convex file storage through the installed
+Workpool component, with at most three transfers running concurrently. A row is keyed by AgentMail message and attachment id, so
+redelivered webhooks and repeated thread reads never duplicate it, and the
+transfer only settles a row that is still pending.
+
+The bound is 20 attachments per message and 10 MiB per file. Larger files keep
+their metadata with a `skipped` transfer; a transient AgentMail failure retries
+with backoff up to four attempts. Workpool also recovers runtime-interrupted
+actions; its completion mutation marks exhausted or permanent failures as
+`failed`, so the owner may request another transfer from Inbox. Completion is
+bound to the queued work id, so an older job cannot fail a newer retry. Thread reads also record any
+attachment they see, which covers replies that arrived before capture existed.
+Each attachment is parsed on its own so a malformed entry never hides the
+reply or its siblings.
+
+The thread projection lists attachments by name, type, size, and inline or
+attachment disposition for both Inbox and the agent. Only Inbox receives file
+URLs, through an owner-checked, indexed query for each displayed message
+(at most 20 rows per read, with no conversation-wide cutoff); the agent reads descriptions, never
+bytes. Inline images referenced from the HTML body are stored like any other
+file and labelled inline, since raw HTML is never rendered.
 
 AI-powered draft revision has a generous per-session token bucket of 200
 requests per hour with capacity for 20 immediate requests. Manual editing and

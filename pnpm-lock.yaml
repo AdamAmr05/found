@@ -8,6 +8,9 @@ patchedDependencies:
   '@agentmail/convex@0.1.0':
     hash: bab7cf1febd13d5fcbb2a0a3ffab12dd349fd552df496cb1e2700b56d97abcde
     path: patches/@agentmail__convex@0.1.0.patch
+  '@convex-dev/workpool@0.4.10':
+    hash: 6179363bd20220b3cb5c5eb858eb90976cc543c6c349280fd65dc53486cd0e21
+    path: patches/@convex-dev__workpool@0.4.10.patch
 
 importers:
 
@@ -39,10 +42,10 @@ importers:
         version: 0.2.1(convex@1.45.0(react@19.2.8))(react@19.2.8)
       '@convex-dev/workflow':
         specifier: ^0.4.6
-        version: 0.4.6(@convex-dev/workpool@0.4.10(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8))(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))
+        version: 0.4.6(@convex-dev/workpool@0.4.10(patch_hash=6179363bd20220b3cb5c5eb858eb90976cc543c6c349280fd65dc53486cd0e21)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8))(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))
       '@convex-dev/workpool':
         specifier: ^0.4.10
-        version: 0.4.10(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8)
+        version: 0.4.10(patch_hash=6179363bd20220b3cb5c5eb858eb90976cc543c6c349280fd65dc53486cd0e21)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8)
       '@firecrawl/firecrawl-convex':
         specifier: ^0.1.1
         version: 0.1.1(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3)
@@ -3546,9 +3549,9 @@ snapshots:
       convex: 1.45.0(react@19.2.8)
       react: 19.2.8
 
-  '@convex-dev/workflow@0.4.6(@convex-dev/workpool@0.4.10(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8))(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))':
+  '@convex-dev/workflow@0.4.6(@convex-dev/workpool@0.4.10(patch_hash=6179363bd20220b3cb5c5eb858eb90976cc543c6c349280fd65dc53486cd0e21)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8))(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))':
     dependencies:
-      '@convex-dev/workpool': 0.4.10(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8)
+      '@convex-dev/workpool': 0.4.10(patch_hash=6179363bd20220b3cb5c5eb858eb90976cc543c6c349280fd65dc53486cd0e21)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8)
       async-channel: 0.2.0
       convex: 1.45.0(react@19.2.8)
       convex-helpers: 0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3)
@@ -3558,7 +3561,7 @@ snapshots:
       convex: 1.45.0(react@19.2.8)
       convex-helpers: 0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3)
 
-  '@convex-dev/workpool@0.4.10(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8)':
+  '@convex-dev/workpool@0.4.10(patch_hash=6179363bd20220b3cb5c5eb858eb90976cc543c6c349280fd65dc53486cd0e21)(convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(@typescript/typescript6@6.0.2)(convex@1.45.0(react@19.2.8))(react@19.2.8)(zod@4.4.3))(convex@1.45.0(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@convex-dev/batch-worker': 0.2.1(convex@1.45.0(react@19.2.8))(react@19.2.8)
       convex: 1.45.0(react@19.2.8)

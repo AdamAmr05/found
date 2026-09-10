@@ -15,6 +15,8 @@ export const OUTREACH_BODY_MAX_LENGTH = 4_000
 export const OUTREACH_INSTRUCTION_MAX_LENGTH = 1_000
 export const OUTREACH_SUBJECT_MAX_LENGTH = 200
 export const OUTREACH_THREAD_MAX_MESSAGES = 20
+export const OUTREACH_MESSAGE_MAX_ATTACHMENTS = 20
+export const OUTREACH_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024
 
 const httpUrl = z
   .string()
@@ -334,6 +336,17 @@ export const readOutreachThreadOutputSchema = z.object({
         timestamp: z.string(),
         body: z.string().max(OUTREACH_BODY_MAX_LENGTH),
         bodyTruncated: z.boolean(),
+        attachments: z
+          .array(
+            z.object({
+              attachmentId: z.string(),
+              filename: z.string(),
+              contentType: z.string().nullable(),
+              size: z.number().int().nonnegative(),
+              disposition: z.enum(['inline', 'attachment']),
+            }),
+          )
+          .max(OUTREACH_MESSAGE_MAX_ATTACHMENTS),
       }),
     )
     .max(OUTREACH_THREAD_MAX_MESSAGES),

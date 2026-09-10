@@ -4,6 +4,7 @@ import oauth from '@convex-dev/auth/providers/oauth/convex.config'
 import passwordProvider from '@convex-dev/auth/providers/password/convex.config'
 import username from '@convex-dev/auth/username/convex.config'
 import rateLimiter from '@convex-dev/rate-limiter/convex.config'
+import workpool from '@convex-dev/workpool/convex.config'
 import staticHosting from '@convex-dev/static-hosting/convex.config'
 import firecrawl from '@firecrawl/firecrawl-convex/convex.config'
 import agentmail from '@agentmail/convex/convex.config'
@@ -13,6 +14,8 @@ import { v } from 'convex/values'
 const app = defineApp({
   env: {
     AGENTMAIL_API_KEY: v.optional(v.string()),
+    // Optional regional API origin, e.g. https://api.agentmail.eu/v0.
+    AGENTMAIL_BASE_URL: v.optional(v.string()),
     AGENTMAIL_INBOX_ID: v.optional(v.string()),
     AGENTMAIL_WEBHOOK_SECRET: v.optional(v.string()),
     // Production browser origin allowed to finish Google sign-in. Local dev
@@ -30,10 +33,12 @@ const app = defineApp({
 })
 
 app.use(agent)
+app.use(workpool, { name: 'attachmentTransfers' })
 app.use(staticHosting)
 app.use(agentmail, {
   env: {
     AGENTMAIL_API_KEY: app.env.AGENTMAIL_API_KEY,
+    AGENTMAIL_BASE_URL: app.env.AGENTMAIL_BASE_URL,
     AGENTMAIL_WEBHOOK_SECRET: app.env.AGENTMAIL_WEBHOOK_SECRET,
   },
 })

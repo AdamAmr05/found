@@ -116,6 +116,20 @@ universal representation for every state.
   Load more keeps existing rows visible, stays disabled while fetching, and
   disappears when the list is exhausted. Inbox orders by latest activity;
   Bookmarks orders by when a place was saved. Neither has a total-item cutoff.
+- An Inbox row has three tiers: the place in `label-large`, the email subject
+  in `body-medium` black, and the recipient address with the activity time in
+  muted `mono-x-small`. The delivery state is a plain `label-small` word at the
+  top right, never a pill: heat for Replied, crimson for Failed, muted
+  otherwise. Drafts without a recipient leave the address blank.
+- An Inbox message body is plain text with web and email addresses rendered as
+  heat-colored underlined links. Web links open through the external-link
+  dialog; Outlook's duplicated `<url> url` pairs and blank non-breaking
+  paragraphs are already collapsed before the body reaches the page.
+- An Inbox message lists its attachments as 32px, 8px-radius chips beneath the
+  body: paperclip, filename, size, and an inline tag for images the sender
+  embedded. A stored file opens in a new tab; a chip still saving shows a
+  spinner, a file too large to save says so, and a failed transfer offers a
+  24px retry control. Chips arrive reactively as transfers finish.
 - Compact headers use labeled icons for Chat, Inbox, and Bookmarks. Lab and
   Playground are development-only studies, absent from product navigation and
   unavailable in production. Their development headers provide Back to chat.

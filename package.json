@@ -88,7 +88,8 @@
       "@tailwindcss/oxide"
     ],
     "patchedDependencies": {
-      "@agentmail/convex@0.1.0": "patches/@agentmail__convex@0.1.0.patch"
+      "@agentmail/convex@0.1.0": "patches/@agentmail__convex@0.1.0.patch",
+      "@convex-dev/workpool@0.4.10": "patches/@convex-dev__workpool@0.4.10.patch"
     }
   },
   "packageManager": "pnpm@10.10.0",

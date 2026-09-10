@@ -16,6 +16,8 @@ import type * as auth from "../auth.js";
 import type * as candidatePartMessages from "../candidatePartMessages.js";
 import type * as candidateParts from "../candidateParts.js";
 import type * as http from "../http.js";
+import type * as outreachAttachmentTransfers from "../outreachAttachmentTransfers.js";
+import type * as outreachAttachments from "../outreachAttachments.js";
 import type * as outreachContent from "../outreachContent.js";
 import type * as outreachDelivery from "../outreachDelivery.js";
 import type * as outreachDrafts from "../outreachDrafts.js";
@@ -57,6 +59,8 @@ declare const fullApi: ApiFromModules<{
   candidatePartMessages: typeof candidatePartMessages;
   candidateParts: typeof candidateParts;
   http: typeof http;
+  outreachAttachmentTransfers: typeof outreachAttachmentTransfers;
+  outreachAttachments: typeof outreachAttachments;
   outreachContent: typeof outreachContent;
   outreachDelivery: typeof outreachDelivery;
   outreachDrafts: typeof outreachDrafts;
@@ -112,6 +116,7 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
+  attachmentTransfers: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"attachmentTransfers">;
   staticHosting: import("@convex-dev/static-hosting/_generated/component.js").ComponentApi<"staticHosting">;
   agentmail: import("@agentmail/convex/_generated/component.js").ComponentApi<"agentmail">;
   auth: import("@convex-dev/auth/core/_generated/component.js").ComponentApi<"auth">;

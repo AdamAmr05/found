@@ -5,18 +5,12 @@ import { useRef, useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
+import { InboxRow } from './InboxRow'
+import { MailBody } from './MailBody'
+import { StoredMessageAttachments } from './MessageAttachments'
 
 type MailThread = FunctionReturnType<typeof api.outreachInbox.read>
 const INBOX_PAGE_SIZE = 20
-
-function activityLabel(timestamp: number): string {
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(timestamp)
-}
 
 export function InboxPage() {
   const inbox = usePaginatedQuery(
@@ -88,7 +82,12 @@ export function InboxPage() {
         )}
 
         {selectedId ? (
-          <ThreadDetail error={error} loading={loading} thread={thread} />
+          <ThreadDetail
+            error={error}
+            loading={loading}
+            outreachId={selectedId}
+            thread={thread}
+          />
         ) : inbox.status === 'LoadingFirstPage' ? (
           <p className="mt-40 font-mono text-mono-small text-foreground-muted">
             Loading outreach…
@@ -108,40 +107,11 @@ export function InboxPage() {
         ) : (
           <div className="mt-32 grid gap-12">
             {items.map((item) => (
-              <button
+              <InboxRow
                 key={item.outreachId}
-                aria-label={`Open outreach to ${item.candidateTitle}: ${item.subject || 'No subject'}`}
-                className="surface-paper surface-paper-interactive grid w-full grid-cols-[minmax(0,1fr)_auto] gap-12 rounded-16 px-18 py-16 text-left focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:cursor-default sm:gap-16"
-                disabled={!item.canReadThread}
-                type="button"
-                onClick={() => void select(item.outreachId, item.threadId)}
-              >
-                <span className="min-w-0">
-                  <span className="flex items-center gap-8">
-                    {item.unreadReplyCount > 0 ? (
-                      <span
-                        aria-label={`${item.unreadReplyCount} unread replies`}
-                        className="size-7 shrink-0 rounded-full bg-heat-100"
-                      />
-                    ) : null}
-                    <span className="truncate text-label-large">
-                      {item.candidateTitle}
-                    </span>
-                  </span>
-                  <span className="mt-4 block truncate text-body-medium text-foreground-muted">
-                    {item.subject || 'No subject'} ·{' '}
-                    {item.recipient || 'No recipient'}
-                  </span>
-                </span>
-                <span className="text-right">
-                  <span className="block text-label-small text-accent-black capitalize">
-                    {item.state}
-                  </span>
-                  <span className="mt-4 block text-mono-x-small text-foreground-muted tabular-nums">
-                    {activityLabel(item.latestActivityAt)}
-                  </span>
-                </span>
-              </button>
+                item={item}
+                onOpen={() => void select(item.outreachId, item.threadId)}
+              />
             ))}
           </div>
         )}
@@ -168,10 +138,12 @@ export function InboxPage() {
 function ThreadDetail({
   error,
   loading,
+  outreachId,
   thread,
 }: {
   readonly error: string | undefined
   readonly loading: boolean
+  readonly outreachId: Id<'outreachDrafts'>
   readonly thread: MailThread | undefined
 }) {
   if (loading) {
@@ -220,13 +192,24 @@ function ThreadDetail({
                 {new Date(message.timestamp).toLocaleString()}
               </time>
             </header>
-            <p className="mt-12 text-body-large whitespace-pre-wrap">
-              {message.body || 'No plain-text content.'}
-            </p>
+            {message.body ? (
+              <MailBody text={message.body} />
+            ) : (
+              <p className="mt-12 text-body-large text-foreground-muted">
+                No plain-text content.
+              </p>
+            )}
             {message.bodyTruncated ? (
               <p className="mt-10 text-body-small text-foreground-muted">
                 Message shortened to 4,000 characters.
               </p>
+            ) : null}
+            {message.direction === 'inbound' &&
+            message.attachments.length > 0 ? (
+              <StoredMessageAttachments
+                outreachId={outreachId}
+                messageId={message.messageId}
+              />
             ) : null}
           </article>
         ))}

@@ -323,3 +323,57 @@ tests; the existing unrelated complexity warning remains.
 Also refined the landing copy and centered its illustration with an inset
 matching the text (`src/features/landing/`). These changes are pushed to main;
 production deployment of transcription is not yet verified.
+
+### 2026-09-10 - inbound attachments
+
+Traced why a Studierendenwerk reply showed no attachments in Inbox. The
+`<url> url` pairs in that email are Outlook's plain-text rendering of links,
+not attachments; the message's one real attachment, an inline signature image,
+was described in AgentMail's webhook but never surfaced. The component keeps
+the description inside its raw payload, the thread reader dropped it, and the
+bytes sit behind an expiring AgentMail download URL with no published
+retention.
+
+Found now records one `outreachAttachments` row per attachment in the same
+mutation that marks a reply, then moves the bytes into Convex file storage
+through a scheduled, idempotent transfer with bounded retries, a 10 MiB cap,
+and an owner-requested retry for permanent failures. Thread reads also record
+attachments they see, so earlier replies are captured on their next open. Inbox
+lists each message's files as reactive chips that open the stored file, and
+the agent's thread projection names attachments without receiving bytes
+(`convex/outreachAttachments.ts`, `src/features/outreach/MessageAttachments.tsx`,
+`docs/IMPLEMENTATION_CONTRACTS.md`).
+
+Also cleaned up how reply bodies read. Outlook's duplicated `<url> url` and
+`<mailto:x> x` pairs collapse to one address and blank non-breaking paragraphs
+disappear before the body reaches Inbox or the agent; Inbox then renders web
+and email addresses as links behind the existing external-link dialog, without
+passing untrusted mail through the Markdown renderer
+(`convex/outreachMailText.ts`, `src/features/outreach/MailBody.tsx`).
+
+Restructured the Inbox row into three tiers: place, then the email subject in
+black, then address and time as monospace metadata, with the delivery state as
+a plain colored word rather than a pill (`src/features/outreach/InboxRow.tsx`).
+
+Checks passed with 110 unit tests and a production build; the existing
+unrelated complexity warning remains. New fixture-based browser specs cover
+the link rendering, dialog, attachment chips, and row hierarchy. Verified against the live
+record on the development backend: reading the Studierendenwerk thread
+recorded its inline image and stored the 1,408-byte file. The change is not
+committed or deployed.
+
+Review follow-up: attachment transfers now use the already-installed Workpool
+component for bounded concurrency, durable retries, and completion after
+runtime interruption. Attachment subscriptions read only the displayed message
+through an outreach/message index instead of truncating the conversation at
+200 files. Regression tests cover the cutoff, exhausted retries, interrupted
+completion, stale callbacks, and duplicate settlement. Workpool's exported test
+helper required a one-line package patch to preserve a compile-time assertion
+without an unused local under the repository's strict TypeScript settings.
+
+Follow-up validation: `pnpm check` passed 114 unit tests with the existing
+CandidateMedia complexity warning; all 40 browser tests, reusable-account
+verification, and the production build passed. Synced to the development
+deployment and verified that rerunning a completed transfer preserves its
+stored state. `pnpm deadcode` still reports existing unused code and browser
+fixture entry points it does not recognize; no production deployment was run.

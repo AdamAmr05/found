@@ -5,10 +5,11 @@ import { z } from 'zod'
 
 import {
   OUTREACH_BODY_MAX_LENGTH,
+  OUTREACH_MESSAGE_MAX_ATTACHMENTS,
   OUTREACH_THREAD_MAX_MESSAGES,
 } from '../shared/foundTools'
 import type { Id } from './_generated/dataModel'
-import { components } from './_generated/api'
+import { components, internal } from './_generated/api'
 import {
   type ActionCtx,
   env,
@@ -16,6 +17,7 @@ import {
   internalMutation,
   internalQuery,
 } from './_generated/server'
+import { inboundAttachments, toMailAttachment } from './outreachAttachments'
 import { ownedDraft } from './outreachDrafts'
 import { emailBodyToPlainText } from './outreachMailText'
 import {
@@ -77,6 +79,7 @@ const messageSchema = z.object({
   html: z.string().optional(),
   extracted_html: z.string().optional(),
   preview: z.string().optional(),
+  attachments: z.array(z.unknown()).optional(),
 })
 const threadSchema = z.object({
   // AgentMail's Get Thread endpoint is not paginated. Keep only the recent
@@ -267,35 +270,59 @@ async function loadThreadData(
   const messages = response.messages
     .slice(-OUTREACH_THREAD_MAX_MESSAGES)
     .map((message) => messageSchema.parse(message))
+  const projected = messages.map((message) => {
+    const from = Array.isArray(message.from)
+      ? message.from.join(', ')
+      : message.from
+    const fullBody = emailBodyToPlainText({
+      extractedText: message.extracted_text,
+      text: message.text,
+      extractedHtml: message.extracted_html,
+      html: message.html,
+      preview: message.preview,
+    })
+    const attachments = inboundAttachments(message.attachments).slice(
+      0,
+      OUTREACH_MESSAGE_MAX_ATTACHMENTS,
+    )
+    return {
+      messageId: message.message_id,
+      direction: from.includes(inboxId)
+        ? ('outbound' as const)
+        : ('inbound' as const),
+      from,
+      to: message.to,
+      timestamp: message.timestamp,
+      body: fullBody.slice(0, OUTREACH_BODY_MAX_LENGTH),
+      bodyTruncated: fullBody.length > OUTREACH_BODY_MAX_LENGTH,
+      attachments,
+    }
+  })
+  const inboundWithAttachments = projected.filter(
+    (message) =>
+      message.direction === 'inbound' && message.attachments.length > 0,
+  )
+  if (inboundWithAttachments.length > 0) {
+    await ctx.runMutation(internal.outreachAttachments.recordFromThread, {
+      userId: args.userId,
+      outreachId: args.outreachId,
+      inboxId,
+      messages: inboundWithAttachments.map((message) => ({
+        messageId: message.messageId,
+        attachments: message.attachments,
+      })),
+    })
+  }
   return {
     outreachId: args.outreachId,
     candidateTitle: details.candidateTitle,
     subject: details.subject,
     observedReplyRevision: details.observedReplyRevision,
     omittedMessageCount,
-    messages: messages.map((message) => {
-      const from = Array.isArray(message.from)
-        ? message.from.join(', ')
-        : message.from
-      const fullBody = emailBodyToPlainText({
-        extractedText: message.extracted_text,
-        text: message.text,
-        extractedHtml: message.extracted_html,
-        html: message.html,
-        preview: message.preview,
-      })
-      return {
-        messageId: message.message_id,
-        direction: from.includes(inboxId)
-          ? ('outbound' as const)
-          : ('inbound' as const),
-        from,
-        to: message.to,
-        timestamp: message.timestamp,
-        body: fullBody.slice(0, OUTREACH_BODY_MAX_LENGTH),
-        bodyTruncated: fullBody.length > OUTREACH_BODY_MAX_LENGTH,
-      }
-    }),
+    messages: projected.map((message) => ({
+      ...message,
+      attachments: message.attachments.map(toMailAttachment),
+    })),
   }
 }
 
