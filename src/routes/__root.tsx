@@ -10,6 +10,12 @@ import * as React from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import appCss from '~/styles/app.css?url'
 
+// Scrapers do not reliably resolve relative og:image paths, so the share image
+// is referenced absolutely against the deployed origin.
+const ogImageUrl = 'https://mellow-hamster-66.convex.site/og-image.webp'
+const ogImageAlt =
+  'The Found landing page: a warm orange gradient reading "A place for what comes next."'
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
@@ -24,6 +30,42 @@ export const Route = createRootRouteWithContext<{
       },
       {
         title: 'Found',
+      },
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:image',
+        content: ogImageUrl,
+      },
+      {
+        property: 'og:image:type',
+        content: 'image/webp',
+      },
+      {
+        property: 'og:image:width',
+        content: '1200',
+      },
+      {
+        property: 'og:image:height',
+        content: '722',
+      },
+      {
+        property: 'og:image:alt',
+        content: ogImageAlt,
+      },
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'twitter:image',
+        content: ogImageUrl,
+      },
+      {
+        name: 'twitter:image:alt',
+        content: ogImageAlt,
       },
     ],
     links: [
