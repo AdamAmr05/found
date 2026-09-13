@@ -300,8 +300,7 @@ components, and hid the dismissible Maps alpha notice
 Checks passed with 83 unit tests and a production build. Both landing/session
 browser tests passed; the broader browser run passed 35 of 36, with the
 scroll test passing on its focused rerun. Verified arrow motion for pointer,
-keyboard, and reduced-motion settings. These changes are pushed to main;
-production deployment of this update is not yet verified.
+keyboard, and reduced-motion settings.
 
 ### 2026-09-10 - c82b26d
 
@@ -321,8 +320,7 @@ cannot count as success. Checks passed with 102 unit tests and all 37 browser
 tests; the existing unrelated complexity warning remains.
 
 Also refined the landing copy and centered its illustration with an inset
-matching the text (`src/features/landing/`). These changes are pushed to main;
-production deployment of transcription is not yet verified.
+matching the text (`src/features/landing/`).
 
 ### 2026-09-10 - inbound attachments
 
@@ -377,16 +375,15 @@ CandidateMedia complexity warning; all 40 browser tests, reusable-account
 verification, and the production build passed. Synced to the development
 deployment and verified that rerunning a completed transfer preserves its
 stored state. `pnpm deadcode` still reports existing unused code and browser
-fixture entry points it does not recognize; no production deployment was run.
+fixture entry points it does not recognize.
 
 ### 2026-09-10 - f5f6e82
 
-Committed and pushed the reviewed attachment and Inbox changes to main.
 Workpool recovers interrupted downloads, while indexed reads fetch only the
 attachments on each displayed message (`convex/outreachAttachmentTransfers.ts`,
 `convex/outreachAttachments.ts`). Final checks passed 114 unit tests, 40 browser
 tests, and the build; existing complexity and dead-code findings remain.
-Verified in development; this update has not been deployed to production.
+Verified in development.
 
 ### 2026-09-10 - 757cf02
 
@@ -403,6 +400,5 @@ complexity warning remains. Dead-code checking still reports existing findings
 and HTML-loaded browser fixtures, including the new Inbox fixture, as unused.
 The reusable development account verification also passed during review.
 
-Committed and pushed the code to main. This change was not deployed to
-production; the browser regression verifies UI state against fixture responses,
-while the Convex unit tests verify indexed filtering.
+The browser regression verifies UI state against fixture responses, while the
+Convex unit tests verify indexed filtering.
