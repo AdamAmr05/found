@@ -192,7 +192,10 @@ universal representation for every state.
   the question in 16/24, its hint in 14/20 muted, then the field. Options are
   stacked 44px rows with a radio or checkbox indicator, an optional
   description, and a shortcut badge; digits pick them. Every kind also has a
-  free-text field, and voice records inside that field.
+  free-text field, and voice records inside that field. A count is a rolling
+  figure between round minus and plus controls, with no box; tapping the
+  figure types into it. Money stays a plain text field because it is typed,
+  not stepped.
 - Money and dates are free text with no fixed currency or picker; the model
   reads them. Answers are sent as one prose user message, one line per
   question, and the transcript renders that message as chips.

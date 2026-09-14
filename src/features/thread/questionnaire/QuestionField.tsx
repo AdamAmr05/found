@@ -1,10 +1,12 @@
 import { CalendarBlank, MapPin, Minus, Plus } from '@phosphor-icons/react'
+import { RollingNumber } from '@kitlangton/rolling-number/react'
+import { useState } from 'react'
 import type { KeyboardEvent, Ref } from 'react'
+import '@kitlangton/rolling-number/styles.css'
 
 import {
   ChoiceRow,
   focusRing,
-  innerRadius,
   Segmented,
   TextAreaEntry,
   TextEntry,
@@ -127,6 +129,12 @@ function WhenField({
   )
 }
 
+/**
+ * A count is changed by tapping, so it reads as a rolling figure rather than
+ * a boxed input: minus, the number, plus, the unit. The input is still there
+ * underneath for typing and voice; it shows its own text while focused or
+ * whenever the text is not a clean number, and the rolling figure otherwise.
+ */
 function NumberField({
   question,
   answer,
@@ -135,9 +143,11 @@ function NumberField({
   onEnter,
   entryRef,
 }: FieldProps<NumberQuestion, Extract<Answer, { kind: 'number' }>>) {
+  const [focused, setFocused] = useState(false)
   const min = question.min ?? 0
   const max = question.max ?? Number.POSITIVE_INFINITY
   const current = parseLoose(answer.text)
+  const rolling = current !== null && !focused
 
   function step(delta: number): void {
     const base = current ?? (delta > 0 ? min - 1 : min + 1)
@@ -145,10 +155,24 @@ function NumberField({
     onChange({ ...answer, text: String(next) })
   }
 
-  const stepButton = `grid size-44 shrink-0 place-items-center ${innerRadius} border-1 border-border-muted text-accent-black transition-[scale,border-color] duration-150 ease-out hover:border-border-loud active:not-disabled:scale-[0.96] disabled:opacity-40 ${focusRing}`
+  if (recording) {
+    return (
+      <TextEntry
+        entryRef={entryRef}
+        aria-label={question.prompt}
+        recording={recording}
+        trailing={question.unit}
+        value={answer.text}
+        onChange={(event) => onChange({ ...answer, text: event.target.value })}
+      />
+    )
+  }
+
+  const stepButton = `grid size-40 shrink-0 place-items-center rounded-full bg-black/4 text-accent-black transition-[scale,background-color] duration-150 ease-out hover:bg-black/8 active:not-disabled:scale-[0.96] disabled:opacity-40 ${focusRing}`
+  const figure = 'col-start-1 row-start-1 text-title-h5 text-accent-black tabular-nums'
 
   return (
-    <div className="flex flex-wrap items-center gap-8">
+    <div className="flex items-center gap-12">
       <button
         type="button"
         aria-label="Fewer"
@@ -158,17 +182,29 @@ function NumberField({
       >
         <Minus aria-hidden className="size-16" weight="regular" />
       </button>
-      <TextEntry
-        entryRef={entryRef}
-        aria-label={question.prompt}
-        className={recording ? 'min-w-0 flex-1' : 'w-96 shrink-0 text-center'}
-        inputMode="numeric"
-        placeholder="—"
-        recording={recording}
-        value={answer.text}
-        onChange={(event) => onChange({ ...answer, text: event.target.value })}
-        onKeyDown={enterAdvances(onEnter)}
-      />
+      <label className="inline-grid min-w-48 cursor-text place-items-center px-4">
+        <span className="sr-only">{question.prompt}</span>
+        <input
+          ref={entryRef}
+          className={`${figure} min-w-48 bg-transparent text-center outline-none placeholder:text-foreground-muted ${rolling ? 'text-transparent caret-transparent selection:bg-transparent' : ''}`}
+          inputMode="numeric"
+          placeholder="—"
+          size={Math.max(1, answer.text.length)}
+          value={answer.text}
+          onBlur={() => setFocused(false)}
+          onChange={(event) => onChange({ ...answer, text: event.target.value })}
+          onFocus={() => setFocused(true)}
+          onKeyDown={enterAdvances(onEnter)}
+        />
+        {rolling ? (
+          <RollingNumber
+            aria-hidden
+            className={`${figure} pointer-events-none`}
+            duration={360}
+            value={current}
+          />
+        ) : null}
+      </label>
       <button
         type="button"
         aria-label="More"
