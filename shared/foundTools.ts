@@ -295,6 +295,126 @@ export const showOutreachDraftOutputSchema = z.object({
   draftId: z.string().min(1),
 })
 
+
+const questionBase = {
+  id: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .describe('A stable id, unique within this call, such as budget.'),
+  header: z
+    .string()
+    .trim()
+    .min(1)
+    .max(12)
+    .describe('A chip label under twelve characters, such as Budget.'),
+  prompt: z
+    .string()
+    .trim()
+    .min(1)
+    .max(160)
+    .describe('The question as you would say it.'),
+  hint: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .optional()
+    .describe('Why you ask, or where a prefilled value came from.'),
+  required: z.boolean().optional(),
+}
+
+const questionOption = z.object({
+  value: z.string().trim().min(1).max(40),
+  label: z.string().trim().min(1).max(80),
+  description: z.string().trim().min(1).max(120).optional(),
+})
+
+const choiceQuestionSchema = z.object({
+  kind: z.literal('choice'),
+  ...questionBase,
+  options: z.array(questionOption).min(2).max(8),
+  multiple: z.boolean().optional().describe('Allow several answers.'),
+  prefill: z
+    .array(z.string().trim().min(1).max(40))
+    .optional()
+    .describe('Option values the user already implied.'),
+})
+
+const numberQuestionSchema = z.object({
+  kind: z.literal('number'),
+  ...questionBase,
+  unit: z.string().trim().min(1).max(24).describe('people, bedrooms, months.'),
+  min: z.number().int().optional(),
+  max: z.number().int().optional(),
+  prefill: z.number().optional(),
+})
+
+const amountQuestionSchema = z.object({
+  kind: z.literal('amount'),
+  ...questionBase,
+  per: z
+    .string()
+    .trim()
+    .min(1)
+    .max(24)
+    .optional()
+    .describe('The cadence, such as month or night. Never a currency.'),
+  prefill: z
+    .object({
+      mode: z.enum(['upto', 'between']),
+      low: z.string().trim().min(1).max(40).optional(),
+      high: z.string().trim().min(1).max(40).optional(),
+    })
+    .optional()
+    .describe('Money as the user said it, currency included if they gave one.'),
+})
+
+const locationQuestionSchema = z.object({
+  kind: z.literal('location'),
+  ...questionBase,
+  prefill: z.string().trim().min(1).max(160).optional(),
+})
+
+const whenQuestionSchema = z.object({
+  kind: z.literal('when'),
+  ...questionBase,
+  options: z
+    .array(z.string().trim().min(1).max(40))
+    .min(2)
+    .max(6)
+    .describe('Timing choices in words, such as This month or Flexible.'),
+  prefill: z.string().trim().min(1).max(40).optional(),
+})
+
+const textQuestionSchema = z.object({
+  kind: z.literal('text'),
+  ...questionBase,
+  placeholder: z.string().trim().min(1).max(80).optional(),
+  prefill: z.string().trim().min(1).max(400).optional(),
+})
+
+export const askQuestionsInputSchema = z.object({
+  questions: z
+    .array(
+      z.discriminatedUnion('kind', [
+        choiceQuestionSchema,
+        numberQuestionSchema,
+        amountQuestionSchema,
+        locationQuestionSchema,
+        whenQuestionSchema,
+        textQuestionSchema,
+      ]),
+    )
+    .min(1)
+    .max(6),
+})
+
+export const askQuestionsOutputSchema = z.object({
+  asked: z.number().int().min(1).max(6),
+})
+
 export const listOutreachUpdatesInputSchema = z.object({})
 export const listOutreachUpdatesOutputSchema = z.object({
   updates: z
@@ -365,6 +485,8 @@ export type ShowOutreachDraftInput = z.infer<
 export type ShowOutreachDraftOutput = z.infer<
   typeof showOutreachDraftOutputSchema
 >
+export type AskQuestionsInput = z.infer<typeof askQuestionsInputSchema>
+export type AskQuestionsOutput = z.infer<typeof askQuestionsOutputSchema>
 export type ListOutreachUpdatesOutput = z.infer<
   typeof listOutreachUpdatesOutputSchema
 >
@@ -376,6 +498,7 @@ export type ReadOutreachThreadOutput = z.infer<
 >
 
 export type FoundUITools = {
+  askQuestions: { input: AskQuestionsInput; output: AskQuestionsOutput }
   searchWeb: { input: SearchWebInput; output: SearchWebOutput }
   readPage: { input: ReadPageInput; output: ReadPageOutput }
   showCandidates: { input: ShowCandidatesInput; output: ShowCandidatesOutput }
