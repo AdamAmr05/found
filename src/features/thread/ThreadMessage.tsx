@@ -9,6 +9,8 @@ import {
 } from '../../../shared/googleMaps'
 import { sceneCandidateRefs } from '../accommodation/map3dScene'
 import { MapSceneBridgeProvider } from './mapSceneBridge'
+import { AnswerChips } from './questionnaire/AnswerChips'
+import { parseAnswersMessage } from './questionnaire/questions'
 import type { FoundThreadTools } from './toolState'
 
 const StreamingMarkdown = lazy(() => import('./ThreadMarkdown'))
@@ -43,6 +45,20 @@ export function ThreadMessage({
 }
 
 function UserMessage({ message }: { message: FoundUIMessage }) {
+  const text = message.parts
+    .flatMap((part) => (part.type === 'text' ? [part.text] : []))
+    .join('')
+  const chips = parseAnswersMessage(text)
+  if (chips) {
+    return (
+      <article
+        data-message-key={message.key}
+        className="ml-auto max-w-560 rounded-12 bg-accent-black px-10 py-8"
+      >
+        <AnswerChips chips={chips} />
+      </article>
+    )
+  }
   return (
     <article
       data-message-key={message.key}

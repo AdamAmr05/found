@@ -7,6 +7,8 @@ import { ThreadComposer } from './ThreadComposer'
 
 export function FoundThread() {
   const {
+    answerQuestions,
+    questionnaire,
     canLoadOlderMessages,
     loadingOlderMessages,
     loadOlderMessages,
@@ -80,7 +82,9 @@ export function FoundThread() {
               key={threadId ?? 'new-thread'}
               showIdleBeam={idleScreen}
               disabled={interactionBlocked}
+              questionnaire={questionnaire}
               value={draft}
+              onAnswers={(answers) => void answerQuestions(answers)}
               onChange={setDraft}
               onSubmit={(prompt) => void submit(prompt)}
             />

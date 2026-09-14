@@ -1,11 +1,12 @@
 import { Agent } from '@convex-dev/agent'
 import { createOpenAI } from '@ai-sdk/openai'
-import { isStepCount } from 'ai'
+import { hasToolCall, isStepCount } from 'ai'
 
 import { components } from './_generated/api'
 import { env } from './_generated/server'
 import { FOUND_MODEL } from './aiModel'
 import { FOUND_BASE_INSTRUCTIONS } from './agentInstructions'
+import { askQuestions } from './tools/askQuestions'
 import {
   computeRoutes,
   lookupWeather,
@@ -27,6 +28,7 @@ export const foundAgent = new Agent(components.agent, {
   languageModel: openai(FOUND_MODEL),
   instructions: FOUND_BASE_INSTRUCTIONS,
   tools: {
+    askQuestions,
     readPage,
     searchWeb,
     showCandidates,
@@ -39,5 +41,6 @@ export const foundAgent = new Agent(components.agent, {
     lookupWeather,
     resolvePlaces,
   },
-  stopWhen: isStepCount(16),
+  // Asking ends the turn: the answers arrive as the user's next message.
+  stopWhen: [isStepCount(16), hasToolCall('askQuestions')],
 })

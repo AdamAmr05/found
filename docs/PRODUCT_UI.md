@@ -182,6 +182,21 @@ universal representation for every state.
   recording; raw diagnostics never appear. Reduced motion makes the swap
   instant and stops the busy spinner.
 
+### Clarifying questions
+
+- When the agent calls askQuestions, the composer itself becomes the form. The
+  white surface keeps its corners and shadow and animates its real height; the
+  send and microphone controls never move, dropping into a footer row beside
+  Back and Skip so the question gets the full width.
+- One question at a time, on shadcn's Questionnaire rhythm: a "1 of 3" line,
+  the question in 16/24, its hint in 14/20 muted, then the field. Options are
+  stacked 44px rows with a radio or checkbox indicator, an optional
+  description, and a shortcut badge; digits pick them. Every kind also has a
+  free-text field, and voice records inside that field.
+- Money and dates are free text with no fixed currency or picker; the model
+  reads them. Answers are sent as one prose user message, one line per
+  question, and the transcript renders that message as chips.
+
 ### Conversation history
 
 - A collapsible 248px sidebar lists the viewer's existing Agent component

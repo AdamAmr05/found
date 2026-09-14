@@ -6,6 +6,11 @@ import { useMutation } from 'convex/react'
 import { useState } from 'react'
 
 import { api } from '../../../convex/_generated/api'
+import { pendingQuestionnaire } from './questionnaire/pending'
+import {
+  formatAnswersMessage,
+  type SubmittedAnswer,
+} from './questionnaire/questions'
 import type { FoundUIMessage } from './ThreadMessage'
 import { useResumableThread } from './useResumableThread'
 
@@ -51,6 +56,7 @@ export function useThreadSession() {
           latestMessage.status === 'streaming'))),
   )
   const interactionBlocked = submitting || runActive || restoring
+  const questionnaire = runActive ? null : pendingQuestionnaire(latestMessage)
   const openingThread =
     restoring || (threadId && messageQuery.status === 'LoadingFirstPage')
 
@@ -86,6 +92,12 @@ export function useThreadSession() {
     }
   }
 
+  async function answerQuestions(
+    answers: readonly SubmittedAnswer[],
+  ): Promise<void> {
+    await submit(formatAnswersMessage(answers))
+  }
+
   function startNewThread(): void {
     if (submitting) return
     forgetThread()
@@ -99,6 +111,8 @@ export function useThreadSession() {
   }
 
   return {
+    answerQuestions,
+    questionnaire,
     canLoadOlderMessages:
       Boolean(threadId) && messageQuery.status === 'CanLoadMore',
     loadingOlderMessages:

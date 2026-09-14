@@ -6,6 +6,11 @@ import { isToolActive, type FoundThreadTools } from './toolState'
 export type ActivityPart = ToolUIPart<FoundThreadTools>
 
 const activityLabels = {
+  'tool-askQuestions': [
+    'Asking you a few things',
+    'Asked a few things',
+    'Questions unavailable',
+  ],
   'tool-searchWeb': [
     'Searching the web',
     'Searched the web',
