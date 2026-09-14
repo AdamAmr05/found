@@ -57,8 +57,15 @@ export type QuestionnaireController = {
   readonly error: string | null
   readonly statuses: readonly AnswerStatus[]
   readonly setAnswer: (answer: Answer) => void
-  /** Voice lands in the free-text slot; `advanceAfter` is Transcribe and send. */
-  readonly appendTranscript: (transcript: string, advanceAfter?: boolean) => void
+  /**
+   * Voice lands in the free-text slot of `questionId`, the question that was
+   * open when recording started; `advanceAfter` is Transcribe and send.
+   */
+  readonly appendTranscript: (
+    transcript: string,
+    advanceAfter?: boolean,
+    questionId?: string,
+  ) => void
   readonly next: () => void
   readonly skip: () => void
   readonly previous: () => void
@@ -76,7 +83,9 @@ export function useQuestionnaire(
   onSubmit: (answers: readonly SubmittedAnswer[]) => void,
 ): QuestionnaireController | null {
   const [stored, setState] = useState(() => initialState(questionnaire))
-  const stale = stored.forId !== (questionnaire?.id ?? null)
+  // Only a different questionnaire resets the answers. Going null keeps them,
+  // so a send that fails and rolls back reopens the form as the user left it.
+  const stale = questionnaire !== null && stored.forId !== questionnaire.id
   const state = stale ? initialState(questionnaire) : stored
   if (stale) setState(state)
 
@@ -104,10 +113,12 @@ export function useQuestionnaire(
     }))
   }
 
+  // An explicit skip sends skipped even when a prefill or earlier answer
+  // exists; otherwise the model would read it as a confirmation.
   function submitted(final: State): readonly SubmittedAnswer[] {
     return questions.map((each) => {
       const { answer, status } = entryFor(final, each)
-      const text = answerText(each, answer)
+      const text = status === 'skipped' ? null : answerText(each, answer)
       return { question: each, status: text === null ? 'skipped' : status, text }
     })
   }
@@ -130,7 +141,7 @@ export function useQuestionnaire(
       ...state.entries,
       [question.id]: {
         answer,
-        status: complete ? 'answered' : 'skipped',
+        status: complete && !skipping ? 'answered' : 'skipped',
       } satisfies Entry,
     }
     if (isLast) {
@@ -151,10 +162,33 @@ export function useQuestionnaire(
     error: state.error,
     statuses: questions.map((each) => entryFor(state, each).status),
     setAnswer,
-    appendTranscript: (transcript, advanceAfter = false) => {
-      const answer = applyTranscript(entry.answer, transcript)
-      if (advanceAfter) advance(false, answer)
-      else setAnswer(answer)
+    appendTranscript: (transcript, advanceAfter = false, questionId) => {
+      if (questionId === undefined || questionId === question.id) {
+        const answer = applyTranscript(entry.answer, transcript)
+        if (advanceAfter) advance(false, answer)
+        else setAnswer(answer)
+        return
+      }
+      // The user moved on while the transcript was in flight: it still lands
+      // on the question it was recorded for, and nothing advances.
+      const target = questions.find((each) => each.id === questionId)
+      if (!target) return
+      setState((current) => {
+        const answer = applyTranscript(
+          entryFor(current, target).answer,
+          transcript,
+        )
+        return {
+          ...current,
+          entries: {
+            ...current.entries,
+            [target.id]: {
+              answer,
+              status: isAnswered(target, answer) ? 'answered' : 'unanswered',
+            } satisfies Entry,
+          },
+        }
+      })
     },
     next: () => advance(false),
     skip: () => advance(true),

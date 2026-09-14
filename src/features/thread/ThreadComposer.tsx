@@ -234,17 +234,23 @@ export function ThreadComposer({
   const entryRef = useRef<HTMLInputElement>(null)
   const areaRef = useRef<HTMLTextAreaElement>(null)
   const paneRef = useRef<HTMLFieldSetElement>(null)
+  /** The question that was open when the microphone started. */
+  const recordingFor = useRef<string | null>(null)
   const [interacted, setInteracted] = useState(false)
   const reducedMotion = useReducedMotion()
   const instant = reducedMotion === true
 
-  const controller = useQuestionnaire(questionnaire, (answers) => {
+  const questionnaireController = useQuestionnaire(questionnaire, (answers) => {
     setInteracted(true)
     onAnswers?.(answers)
   })
   const voice = useVoiceTranscription((transcript, completion) => {
     if (controller) {
-      controller.appendTranscript(transcript, completion === 'submit')
+      controller.appendTranscript(
+        transcript,
+        completion === 'submit',
+        recordingFor.current ?? undefined,
+      )
       return
     }
     const prompt = appendTranscriptToDraft(value, transcript)
@@ -260,6 +266,12 @@ export function ThreadComposer({
   const recording = voice.state.status === 'recording'
   const voiceBusy =
     voice.state.status !== 'idle' && voice.state.status !== 'error'
+  // While a transcript is in flight, Next waits for it; Back and Skip stay
+  // free because the transcript is bound to the question it was recorded on.
+  const controller =
+    questionnaireController && voiceBusy
+      ? { ...questionnaireController, next: () => undefined }
+      : questionnaireController
   const idle = !interacted && !disabled && !value && !controller
   const beamActive = showIdleBeam && idle && !instant
   const canSend = !disabled && !voiceBusy && value.trim().length > 0
@@ -438,6 +450,7 @@ export function ThreadComposer({
                     state={voice.state}
                     onStart={() => {
                       setInteracted(true)
+                      recordingFor.current = controller?.question.id ?? null
                       voice.startRecording()
                     }}
                     onStop={() => voice.stopRecording('draft')}

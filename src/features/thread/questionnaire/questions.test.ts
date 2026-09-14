@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { askQuestionsInputSchema } from '../../../../shared/foundTools'
+
 import {
   answerText,
   applyTranscript,
@@ -69,5 +71,20 @@ describe('answers message', () => {
   it('leaves ordinary messages alone', () => {
     expect(parseAnswersMessage('Somewhere near the canal')).toBeNull()
     expect(parseAnswersMessage('Answers to your questions:\nno colon')).toBeNull()
+  })
+})
+
+describe('askQuestions schema', () => {
+  it('rejects duplicate question ids', () => {
+    const result = askQuestionsInputSchema.safeParse({
+      questions: [
+        { ...type, id: 'same' },
+        { ...budget, id: 'same' },
+      ],
+    })
+    expect(result.success).toBe(false)
+    expect(
+      askQuestionsInputSchema.safeParse({ questions: [type, budget] }).success,
+    ).toBe(true)
   })
 })

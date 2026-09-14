@@ -408,7 +408,13 @@ export const askQuestionsInputSchema = z.object({
       ]),
     )
     .min(1)
-    .max(6),
+    .max(6)
+    .refine(
+      (questions) =>
+        new Set(questions.map((question) => question.id)).size ===
+        questions.length,
+      { message: 'Question ids must be unique within one call.' },
+    ),
 })
 
 export const askQuestionsOutputSchema = z.object({

@@ -66,9 +66,13 @@ export function useThreadSession() {
     }
   }
 
-  async function submit(promptOverride?: string): Promise<void> {
+  async function submit(
+    promptOverride?: string,
+    options: { readonly restoreDraftOnFailure?: boolean } = {},
+  ): Promise<void> {
     const prompt = (promptOverride ?? draft).trim()
     if (!prompt || interactionBlocked) return
+    const { restoreDraftOnFailure = true } = options
 
     setSubmitting(true)
     setSubmitError(undefined)
@@ -81,7 +85,7 @@ export function useThreadSession() {
         rememberThread(newThreadId)
       }
     } catch (error) {
-      setDraft(prompt)
+      if (restoreDraftOnFailure) setDraft(prompt)
       setSubmitError(
         error instanceof Error
           ? error.message
@@ -95,7 +99,11 @@ export function useThreadSession() {
   async function answerQuestions(
     answers: readonly SubmittedAnswer[],
   ): Promise<void> {
-    await submit(formatAnswersMessage(answers))
+    // On failure the form reopens with its answers kept; the prose must not
+    // sit hidden in the draft behind it.
+    await submit(formatAnswersMessage(answers), {
+      restoreDraftOnFailure: false,
+    })
   }
 
   function startNewThread(): void {
