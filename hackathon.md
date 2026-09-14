@@ -14,7 +14,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna` (live generation verified), `gpt-transcribe` (voice transcription verified in development)
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-10T14:21:01Z
+- **Last updated:** 2026-09-14T17:46:24Z
 
 ## Log
 
@@ -402,3 +402,46 @@ The reusable development account verification also passed during review.
 
 The browser regression verifies UI state against fixture responses, while the
 Convex unit tests verify indexed filtering.
+
+### 2026-09-13 - 67882d8
+
+Added an Open Graph share image so a posted Found link shows the landing hero,
+referenced against the deployed origin because scrapers do not reliably resolve
+relative paths (`public/og-image.webp`, `src/routes/__root.tsx`). Replaced the
+stock favicons with the landing illustration rendered over the shader at its
+resting frame, shipped as WebP where platforms allow it and PNG or ICO where
+they do not (`public/`).
+
+### 2026-09-14 - 90ab181
+
+Found can now ask before it searches. When a request is too vague, the agent
+calls a new askQuestions tool and the composer itself becomes the form: the
+same white surface animates its real height, the send and microphone controls
+stay exactly where they are, and one question shows at a time. The agent
+composes the questions, up to six of any kind: a stacked list of options, a
+count, money, a place, timing, or open text. Every kind keeps a free-text
+field, and money and dates stay free text with no fixed currency or picker;
+the model reads what the user wrote (`convex/tools/askQuestions.ts`,
+`shared/foundTools.ts`, `src/features/thread/questionnaire/`,
+`src/features/thread/ThreadComposer.tsx`).
+
+Most of the time went into how it feels to answer. Options follow shadcn's
+questionnaire rows with digit shortcuts; typing any character on a question
+starts filling its field; a count is a rolling figure between round minus and
+plus rather than a boxed input. Voice records inside the field the words will
+land in, so the wave sits where the text appears, and a transcript still lands
+on its own question if the user has moved on while it was in flight. Answers
+go back as one prose message the transcript shows as chips, and the run stops
+after the call so the model waits for them
+(`src/features/thread/useThreadSession.ts`,
+`src/features/thread/ThreadMessage.tsx`).
+
+The asking rules live in the instructions rather than code: ask in text when
+one question would do, use the form when two or more unknowns block a search,
+prefill what the user already said, and expect it at most once per thread
+(`convex/agentInstructions.ts`). Skip sends skipped even over a prefill,
+answers survive a send that fails, and question ids must be unique. A guarded
+`/lab/composer` stage drove the design with scripted arrivals. Checks passed
+with 120 unit tests, typecheck, and lint with the existing complexity
+warnings; the morph, keyboard paths, and in-field recording were verified with
+headless Chromium. Not yet exercised against a live model run.
