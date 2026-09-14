@@ -60,9 +60,14 @@ export function ComposerLabScene() {
     setLines((current) => [...current, { ...line, id }])
   }
 
+  // Each arrival is its own tool call in the app, so it gets a fresh id here
+  // too; answers are kept only for a questionnaire that comes back unchanged.
   function arrive(arrival: Arrival, rest: readonly Arrival[] = []): void {
     push({ kind: 'assistant', text: arrival.lead, muted: false })
-    setPending(arrival.questionnaire)
+    setPending({
+      ...arrival.questionnaire,
+      id: `${arrival.questionnaire.id}-${counter.current}`,
+    })
     setQueue(rest)
   }
 
