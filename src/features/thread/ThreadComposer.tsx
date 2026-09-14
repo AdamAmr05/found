@@ -245,8 +245,8 @@ export function ThreadComposer({
     onAnswers?.(answers)
   })
   const voice = useVoiceTranscription((transcript, completion) => {
-    if (controller) {
-      controller.appendTranscript(
+    if (questionnaireController) {
+      questionnaireController.appendTranscript(
         transcript,
         completion === 'submit',
         recordingFor.current ?? undefined,
