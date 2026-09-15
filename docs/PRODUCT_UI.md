@@ -344,6 +344,16 @@ universal representation for every state.
 - It is a behavioral shell, not a visual card that forces every artifact into
   the same rectangle.
 
+### Missing-image material
+
+- Missing candidate images use the shared `AsciiFireCanvas` frame player: 48
+  frames, 85ms cadence, 8px Geist Mono, and 10px line spacing in sRGB orange.
+- Fire occupies the bottom of the media surface. The image icon and missing-image
+  copy stay readable above it; provider logos never appear in these placeholders.
+- Fold and saved-candidate thumbnails use the same frames at half scale, with
+  only the image icon. Full cards retain the explanatory text.
+- Hidden and offscreen players pause. Reduced motion shows a single static frame.
+
 ### AsciiAtmosphere
 
 - A reusable canvas material for whitespace ornament, source activity, and the

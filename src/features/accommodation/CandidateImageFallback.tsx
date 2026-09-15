@@ -1,6 +1,6 @@
 import { Image } from '@phosphor-icons/react'
 
-import { AsciiAtmosphere } from '../materials/ascii/AsciiAtmosphere'
+import { AsciiFireCanvas } from '~/components/materials/ascii-fire/AsciiFireCanvas'
 
 export function CandidateImageFallback({
   compact = false,
@@ -9,15 +9,24 @@ export function CandidateImageFallback({
 }) {
   return (
     <div className="relative grid size-full place-items-center overflow-hidden rounded-[inherit] bg-background-base shadow-[inset_0_0_0_1px_rgb(0_0_0/0.08)]">
-      <AsciiAtmosphere
-        color="#FA5D19"
-        density={compact ? 'quiet' : 'rich'}
-        opacity={compact ? 0.68 : 0.82}
-        seed={31}
-        variant="signal"
-      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-10 overflow-clip select-none"
+      >
+        <div
+          className={
+            compact
+              ? 'absolute -bottom-20 left-1/2 h-120 w-348 -translate-x-1/2'
+              : 'absolute -bottom-40 left-1/2 h-240 w-696 -translate-x-1/2'
+          }
+        >
+          <div className={compact ? 'origin-top-left scale-50' : ''}>
+            <AsciiFireCanvas />
+          </div>
+        </div>
+      </div>
       {compact ? (
-        <span className="relative z-10 grid size-24 place-items-center bg-background-base text-heat-100">
+        <span className="relative z-10 grid size-36 place-items-center rounded-full bg-background-base text-heat-100">
           <ImageIcon />
         </span>
       ) : (
