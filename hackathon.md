@@ -14,7 +14,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna`, `gpt-transcribe`
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-14T17:46:24Z
+- **Last updated:** 2026-09-15T16:58:06Z
 
 ## Log
 
@@ -399,3 +399,11 @@ answers survive a send that fails, and question ids must be unique. A guarded
 morph, keyboard paths, and in-field recording in the browser.
 The questionnaire had not yet been exercised against a live model run at this
 point.
+
+### 2026-09-15 - 436f788
+
+Replaced the noisy missing-image texture with animated ASCII fire. The flames
+rise beneath the image icon and message, giving listings without photos a more
+considered appearance. The same animation works in full cards and small
+thumbnails, and stays still for people who prefer reduced motion
+(`src/features/accommodation/CandidateImageFallback.tsx`).
