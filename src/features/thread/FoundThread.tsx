@@ -53,6 +53,7 @@ export function FoundThread() {
             canLoadOlderMessages={canLoadOlderMessages}
             loadingOlderMessages={loadingOlderMessages}
             onLoadOlderMessages={loadOlderMessages}
+            shortlist={<ThreadShortlist threadId={threadId} />}
           >
             <ThreadTranscript
               messages={messages}
@@ -69,7 +70,6 @@ export function FoundThread() {
           }
         >
           <div className="mx-auto max-w-720">
-            {threadId ? <ThreadShortlist threadId={threadId} /> : null}
             {submitError ? (
               <p
                 className="mb-10 text-body-small text-accent-crimson"

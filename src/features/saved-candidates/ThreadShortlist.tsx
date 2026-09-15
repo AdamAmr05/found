@@ -50,7 +50,7 @@ export function ThreadShortlist({ threadId }: { readonly threadId: string }) {
   }
 
   return (
-    <div className="mb-10">
+    <div className="pointer-events-none">
       <ShortlistTray
         footerNote={
           removeError

@@ -8,6 +8,7 @@ import { useHistoryScrollAnchor } from './useHistoryScrollAnchor'
 
 interface ThreadConversationProps {
   readonly children: ReactNode
+  readonly shortlist?: ReactNode
   readonly canLoadOlderMessages: boolean
   readonly loadingOlderMessages: boolean
   readonly onLoadOlderMessages: () => void
@@ -15,6 +16,7 @@ interface ThreadConversationProps {
 
 export function ThreadConversation({
   children,
+  shortlist,
   canLoadOlderMessages,
   loadingOlderMessages,
   onLoadOlderMessages,
@@ -83,7 +85,10 @@ export function ThreadConversation({
           ) : null}
           {children}
         </StickToBottom.Content>
-        <ConversationScrollButton />
+        <div className="pointer-events-none absolute inset-x-0 bottom-16 z-40 flex flex-col items-center gap-10">
+          <ConversationScrollButton />
+          {shortlist}
+        </div>
       </StickToBottom>
       <div
         aria-hidden="true"
@@ -107,7 +112,7 @@ function ConversationScrollButton() {
   return (
     <button
       aria-label="Jump to latest message"
-      className="absolute bottom-16 left-1/2 z-20 grid size-40 -translate-x-1/2 place-items-center rounded-full bg-background-lighter text-accent-black shadow-surface-compact transition-[transform,box-shadow] duration-150 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:translate-y-0 active:scale-[0.98]"
+      className="pointer-events-auto grid size-40 place-items-center rounded-full bg-background-lighter text-accent-black shadow-surface-compact transition-[transform,box-shadow] duration-150 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 active:translate-y-0 active:scale-[0.98]"
       type="button"
       onClick={handleScrollToBottom}
     >
