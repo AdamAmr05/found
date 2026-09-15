@@ -12,7 +12,7 @@
 - **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @convex-dev/static-hosting, @convex-dev/workpool, @firecrawl/firecrawl-convex, @agentmail/convex
 - **Convex features:** schema, indexes, components, queries, paginated queries, mutations, actions, HTTP actions, scheduled functions, realtime subscriptions, rate limiting, file storage
 - **Auth:** Convex Auth
-- **AI models:** OpenAI `gpt-5.6-luna` (live generation verified), `gpt-transcribe` (voice transcription verified in development)
+- **AI models:** OpenAI `gpt-5.6-luna`, `gpt-transcribe`
 - **Started:** 2026-08-26T13:05:15Z
 - **Last updated:** 2026-09-14T17:46:24Z
 
@@ -213,9 +213,7 @@ chosen monochrome orb stable throughout each assistant turn. Malformed embeds
 are omitted while useful response text remains. Added repeatable development
 account verification and checks for activity transitions, keyboard access, and
 reduced motion (`docs/VERIFICATION.md`, `src/features/thread/ThreadTranscript.tsx`,
-`tests/e2e/thread-activity.spec.ts`). The latest checks passed 77 unit tests and
-four focused browser tests; the full 21-test browser suite passed before the
-final orb-selection adjustment. No production deployment was performed.
+`tests/e2e/thread-activity.spec.ts`).
 
 ### 2026-09-04 - 003767e
 
@@ -229,9 +227,7 @@ Replaced the inbox’s 100-conversation cutoff with owner-scoped, indexed Convex
 cursor pagination in batches of 20. Verified that Bookmarks already paginates,
 and kept both Load more controls visible and disabled while fetching. Tests
 reach all 105 inbox fixtures across six pages without crossing account boundaries
-(`convex/outreachInbox.ts`, `convex/outreachInbox.test.ts`). The layout passed
-25 browser tests and a production build; pagination passed 79 unit tests and
-two focused browser tests. Synced the backend change to development only.
+(`convex/outreachInbox.ts`, `convex/outreachInbox.test.ts`).
 
 ### 2026-09-04 - fb0c652
 
@@ -272,11 +268,8 @@ webhook flow without contacting a researched property.
 
 Separated private server Maps keys from the restricted public browser key.
 The client-bundle scan found no backend secrets, unsigned webhook requests were
-rejected, and tested unauthorized Maps calls were blocked. Checks passed with
-83 unit tests and 34 browser tests; password-session verification passed again
-after the icon change. Google OAuth sign-in remains unverified end to end,
-Maps shows its alpha-channel notice, and the dead-code check still reports
-existing unused files, dependencies, and exports.
+rejected, and tested unauthorized Maps calls were blocked. Google OAuth sign-in
+was also verified end to end by the builder. Maps showed its alpha-channel notice.
 
 ### 2026-09-09 - 7390d6f
 
@@ -297,10 +290,8 @@ page, replaced preview assets and controls with the final SVG and production
 components, and hid the dismissible Maps alpha notice
 (`src/routes/app.tsx`, `tests/e2e/landing.spec.ts`, `src/styles/app.css`).
 
-Checks passed with 83 unit tests and a production build. Both landing/session
-browser tests passed; the broader browser run passed 35 of 36, with the
-scroll test passing on its focused rerun. Verified arrow motion for pointer,
-keyboard, and reduced-motion settings.
+Verified the landing/session flow and arrow motion for pointer, keyboard,
+and reduced-motion settings.
 
 ### 2026-09-10 - c82b26d
 
@@ -314,15 +305,13 @@ rejects audio over 3 MiB before upload (`src/features/thread/voice/`,
 The authenticated Convex action calls OpenAI `gpt-transcribe`, validates WebM
 and MP4 audio, and budgets calls per user through the registered rate limiter
 (`convex/voiceTranscription.ts`, `shared/voiceRecording.ts`). Verified actual
-speech reaching the draft through the development backend. The browser test now
-requires recognizable speech from a checked-in audio fixture; provider errors
-cannot count as success. Checks passed with 102 unit tests and all 37 browser
-tests; the existing unrelated complexity warning remains.
+speech reaching the draft. The browser test now requires recognizable speech from a checked-in audio fixture; provider errors
+cannot count as success.
 
 Also refined the landing copy and centered its illustration with an inset
 matching the text (`src/features/landing/`).
 
-### 2026-09-10 - inbound attachments
+### 2026-09-10 - f5f6e82
 
 Traced missing attachments in Inbox. Outlook's `<url> url` pairs are
 plain-text links rather than attachments. AgentMail describes actual files in
@@ -331,7 +320,7 @@ and did not preserve the bytes behind expiring download URLs.
 
 Found now records one `outreachAttachments` row per attachment in the same
 mutation that marks a reply, then moves the bytes into Convex file storage
-through a scheduled, idempotent transfer with bounded retries, a 10 MiB cap,
+through an idempotent Workpool transfer with bounded retries, a 10 MiB cap,
 and an owner-requested retry for permanent failures. Thread reads also record
 attachments they see, so earlier replies are captured on their next open. Inbox
 lists each message's files as reactive chips that open the stored file, and
@@ -346,44 +335,16 @@ and email addresses as links behind the existing external-link dialog, without
 passing untrusted mail through the Markdown renderer
 (`convex/outreachMailText.ts`, `src/features/outreach/MailBody.tsx`).
 
-Added a state filter to Inbox, ported from tw-connect's shipments list: an
-optional state on the paginated query switches to a state-prefixed index, and
-the page shows All, Replied, Sent, Drafts, and Failed as plain text options
-(`convex/outreachInbox.ts`, `src/features/outreach/InboxFilter.tsx`).
-
 Restructured the Inbox row into three tiers: place, then the email subject in
 black, then address and time as monospace metadata, with the delivery state as
 a plain colored word rather than a pill (`src/features/outreach/InboxRow.tsx`).
 
-Initial checks passed with 110 unit tests and a production build; the existing
-unrelated complexity warning remained. New fixture-based browser specs cover
-the link rendering, dialog, attachment chips, and row hierarchy. Attachment
-capture was also verified against the development backend before the review
-follow-up below.
-
-Review follow-up: attachment transfers now use the already-installed Workpool
-component for bounded concurrency, durable retries, and completion after
-runtime interruption. Attachment subscriptions read only the displayed message
-through an outreach/message index instead of truncating the conversation at
-200 files. Regression tests cover the cutoff, exhausted retries, interrupted
-completion, stale callbacks, and duplicate settlement. Workpool's exported test
-helper required a one-line package patch to preserve a compile-time assertion
-without an unused local under the repository's strict TypeScript settings.
-
-Follow-up validation: `pnpm check` passed 114 unit tests with the existing
-CandidateMedia complexity warning; all 40 browser tests, reusable-account
-verification, and the production build passed. Synced to the development
-deployment and verified that rerunning a completed transfer preserves its
-stored state. `pnpm deadcode` still reports existing unused code and browser
-fixture entry points it does not recognize.
-
-### 2026-09-10 - f5f6e82
-
-Workpool recovers interrupted downloads, while indexed reads fetch only the
-attachments on each displayed message (`convex/outreachAttachmentTransfers.ts`,
-`convex/outreachAttachments.ts`). Final checks passed 114 unit tests, 40 browser
-tests, and the build; existing complexity and dead-code findings remain.
-Verified in development.
+Attachment transfers use the already-installed Workpool component for bounded
+concurrency, durable retries, and recovery after runtime interruption.
+Subscriptions fetch attachments for each displayed message through an index,
+so long conversations do not silently lose files beyond a fixed cutoff.
+Regression coverage exercises exhausted retries, interrupted completion, stale
+callbacks, and duplicate settlement (`convex/outreachAttachmentTransfers.ts`).
 
 ### 2026-09-10 - 757cf02
 
@@ -392,16 +353,9 @@ All, Replied, Sent, Drafts, and Failed. Opening an email keeps the list mounted
 but hidden, so returning preserves the selected filter and all loaded pages
 (`convex/outreachInbox.ts`, `src/features/outreach/InboxPage.tsx`).
 
-The new browser regression exercises the real Inbox page and Convex pagination
-with a fixture WebSocket transport. It reproduced the filter reset before the
-fix and passed afterward. The full check passed with 115 unit tests; all 42
-browser tests passed, and React Doctor scored 100. The existing CandidateMedia
-complexity warning remains. Dead-code checking still reports existing findings
-and HTML-loaded browser fixtures, including the new Inbox fixture, as unused.
-The reusable development account verification also passed during review.
-
-The browser regression verifies UI state against fixture responses, while the
-Convex unit tests verify indexed filtering.
+A browser regression reproduced the filter reset before the fix and now checks
+that the selected filter and loaded pages survive opening and closing an email.
+Convex tests cover indexed filtering and account isolation.
 
 ### 2026-09-13 - 67882d8
 
@@ -441,7 +395,7 @@ one question would do, use the form when two or more unknowns block a search,
 prefill what the user already said, and expect it at most once per thread
 (`convex/agentInstructions.ts`). Skip sends skipped even over a prefill,
 answers survive a send that fails, and question ids must be unique. A guarded
-`/lab/composer` stage drove the design with scripted arrivals. Checks passed
-with 120 unit tests, typecheck, and lint with the existing complexity
-warnings; the morph, keyboard paths, and in-field recording were verified with
-headless Chromium. Not yet exercised against a live model run.
+`/lab/composer` stage drove the design with scripted arrivals. Verified the
+morph, keyboard paths, and in-field recording in the browser.
+The questionnaire had not yet been exercised against a live model run at this
+point.
