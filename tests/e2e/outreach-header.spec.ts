@@ -10,6 +10,18 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/tests/fixtures/outreach-header.html')
 })
 
+test('surfaces an asynchronous delivery failure and offers an explicit retry', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Simulate delivery failure' }).click()
+  await expect(page.getByRole('alert')).toContainText('Email delivery failed')
+  await expect(
+    page.getByRole('button', { name: 'Send', exact: true }),
+  ).toHaveCount(0)
+  await page.getByRole('button', { name: 'Retry send', exact: true }).click()
+  await expect(page.getByRole('status')).toHaveText('Send selected')
+})
+
 test('preserves the change request and returns focus when closing', async ({
   page,
 }) => {

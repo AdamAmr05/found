@@ -8,6 +8,7 @@ function OutreachHeaderFixture() {
   const [asking, setAsking] = useState(false)
   const [instruction, setInstruction] = useState('')
   const [result, setResult] = useState('')
+  const [deliveryFailed, setDeliveryFailed] = useState(false)
 
   return (
     <main className="mx-auto max-w-784 px-20 py-32 sm:px-32">
@@ -21,7 +22,7 @@ function OutreachHeaderFixture() {
           instruction={instruction}
           locked={false}
           sendDisabled={false}
-          state="draft"
+          state={deliveryFailed ? 'failed' : 'draft'}
           onAskingChange={setAsking}
           onInstructionChange={setInstruction}
           onCopy={() => setResult('Copied')}
@@ -48,6 +49,9 @@ function OutreachHeaderFixture() {
         </div>
       </section>
       <output className="mt-16 block text-body-medium">{result}</output>
+      <button type="button" onClick={() => setDeliveryFailed(true)}>
+        Simulate delivery failure
+      </button>
     </main>
   )
 }

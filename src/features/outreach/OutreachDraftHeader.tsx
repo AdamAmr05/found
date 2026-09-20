@@ -181,10 +181,18 @@ export function OutreachDraftHeader({
                 />
               </svg>
             )}
-            {deliveryButtonLabel(state)}
+            {sending ? 'Sending' : deliveryButtonLabel(state)}
           </button>
         </div>
       </div>
+      {state === 'failed' && !sending ? (
+        <p
+          className="px-8 pt-8 text-body-small text-accent-crimson"
+          role="alert"
+        >
+          Email delivery failed. Check the recipient address before retrying.
+        </p>
+      ) : null}
     </header>
   )
 }
@@ -199,6 +207,8 @@ function deliveryButtonLabel(state: DraftState): string {
       return 'Replied'
     case 'uncertain':
       return 'Check status'
+    case 'failed':
+      return 'Retry send'
     default:
       return 'Send'
   }
