@@ -7,6 +7,8 @@
 - **What it does:** A thread-based accommodation research workspace for finding, checking, comparing, and contacting candidates.
 - **Live app:** https://mellow-hamster-66.convex.site
 - **Repo:** https://github.com/AdamAmr05/found
+- **YouTube demo:** https://youtu.be/ApUeWdys44Q
+- **Portfolio:** https://adamamr.me/projects/found
 - **Frontend:** Convex static hosting
 - **Convex deployment:** https://mellow-hamster-66.convex.cloud
 - **Components:** @convex-dev/agent, @convex-dev/auth, @convex-dev/rate-limiter, @convex-dev/static-hosting, @convex-dev/workpool, @firecrawl/firecrawl-convex, @agentmail/convex
@@ -14,7 +16,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna`, `gpt-transcribe`
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-15T16:58:06Z
+- **Last updated:** 2026-09-20T16:32:42Z
 
 ## Log
 
@@ -407,3 +409,21 @@ rise beneath the image icon and message, giving listings without photos a more
 considered appearance. The same animation works in full cards and small
 thumbnails, and stays still for people who prefer reduced motion
 (`src/features/accommodation/CandidateImageFallback.tsx`).
+
+### 2026-09-20 - demo walkthrough and portfolio
+
+Recorded a 2 minute 43 second walkthrough showing accommodation search,
+email drafting, map interactions, and the inbox.
+
+[Watch the YouTube demo](https://youtu.be/ApUeWdys44Q).
+
+Added a [Found portfolio page](https://adamamr.me/projects/found) with the launch
+film and recordings of the map, email editing, and questionnaire interactions.
+It also shows the landing page shader, ASCII fire, and desktop sign-in screen.
+
+### 2026-09-20 - working tree
+
+Fixed Markdown table rendering and styling, removing the height limit and
+extra wrapper border (`src/features/thread/ThreadMarkdown.tsx`). Email drafts
+now show “Sending” during delivery, an error message when delivery fails, and
+a “Retry send” button (`src/features/outreach/OutreachDraftHeader.tsx`).
