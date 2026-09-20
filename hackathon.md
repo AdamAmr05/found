@@ -16,7 +16,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna`, `gpt-transcribe`
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-20T16:32:42Z
+- **Last updated:** 2026-09-20T18:31:36Z
 
 ## Log
 
@@ -427,3 +427,8 @@ Fixed Markdown table rendering and styling, removing the height limit and
 extra wrapper border (`src/features/thread/ThreadMarkdown.tsx`). Email drafts
 now show “Sending” during delivery, an error message when delivery fails, and
 a “Retry send” button (`src/features/outreach/OutreachDraftHeader.tsx`).
+
+### 2026-09-20 - 1c4a908
+
+Mobile refinements to conversation entry and input interactions
+(`src/features/thread/thread-entry.css`, `src/styles/app.css`).
