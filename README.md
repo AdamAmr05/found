@@ -6,7 +6,7 @@ An app for finding accommodation and contacting places you’re interested in.
 
 [Watch the walkthrough](https://adamamr.me/projects/found/)
 
-[![Found’s accommodation research workspace and interactive map](./docs/images/found-map.v1.webp)](https://adamamr.me/projects/found/)
+[![Found landing page](./docs/images/landing.v1.png)](https://mellow-hamster-66.convex.site/)
 
 ## Why I built it
 
@@ -32,6 +32,8 @@ evidence view distinguishes what the sources support from what still needs an
 answer. A place might include bills but leave availability unclear. You can
 check the source, compare candidates, and save places to revisit in Bookmarks.
 
+![Accommodation card with source evidence and unresolved questions](./docs/images/evidence.v1.png)
+
 ## Explore the place, not just the listing
 
 Selecting a place flies the camera down to it and settles into a slow orbit
@@ -42,6 +44,10 @@ The map and conversation work together. You can expand the map to explore,
 then return to the research without losing the place you were considering.
 The camera movements and transitions are part of how Found helps you build a
 sense of somewhere you haven’t visited yet.
+
+![Accommodation search with an inline map and walking route](./docs/images/search.v1.png)
+
+![Expanded 3D map around a selected accommodation](./docs/images/map.v1.png)
 
 ## From a question to an email
 
@@ -54,6 +60,8 @@ Sending requires your approval of the final content.
 
 The Inbox keeps sent inquiries and replies in the app, so you can follow up
 on the same search instead of moving everything into a separate email workflow.
+
+![Email editor with a proposed change and Accept and Undo controls](./docs/images/email.v1.png)
 
 ## The interface
 
