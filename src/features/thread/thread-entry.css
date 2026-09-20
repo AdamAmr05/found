@@ -30,3 +30,23 @@
   isolation: isolate;
   overflow: visible;
 }
+
+/* The idle gradient-mask animation is implicated in iPhone Safari page
+   crashes: focusing the composer stops it and the page stays stable.
+   Suppress both active and fading paint layers on touch devices. Keeping
+   the wrapper preserves composer state and geometry while focus changes. */
+@media (any-pointer: coarse) {
+  .thread-composer-beam[data-beam][data-active],
+  .thread-composer-beam[data-beam][data-fading] {
+    animation: none;
+  }
+
+  .thread-composer-beam[data-beam][data-active]::before,
+  .thread-composer-beam[data-beam][data-active]::after,
+  .thread-composer-beam[data-beam][data-fading]::before,
+  .thread-composer-beam[data-beam][data-fading]::after,
+  .thread-composer-beam[data-beam][data-active] [data-beam-bloom],
+  .thread-composer-beam[data-beam][data-fading] [data-beam-bloom] {
+    display: none;
+  }
+}

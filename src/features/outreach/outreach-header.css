@@ -65,6 +65,12 @@
   transition: opacity 90ms ease;
 }
 
+@media (any-pointer: coarse) {
+  .outreach-edit-inputs input {
+    font-size: var(--text-body-input);
+  }
+}
+
 .outreach-edit[data-open='true'] .outreach-edit-label {
   opacity: 0;
 }

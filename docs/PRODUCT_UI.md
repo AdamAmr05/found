@@ -31,7 +31,9 @@ internet to apply them:
   sRGB fallback when a surface cannot accept Display P3.
 - The authenticated app composer uses a white 20px-radius surface. Its optical
   edge is a 1px, 3%-black ring inside a restrained stack of 2–3%-black shadows;
-  the input is 15/24. Primary controls are 32px high with an 8px radius, an
+  the input is 15/24 (16/24 on touch devices to prevent focus zoom). Questionnaire
+  fields and email change requests follow the same touch-input minimum.
+  Primary controls are 32px high with an 8px radius, an
   inset heat shadow, and several tiny heat-colored outer shadows. Found reuses
   that surface and control grammar without copying provider-specific dividers
   or tool controls.
@@ -159,7 +161,9 @@ universal representation for every state.
 - The white composer retains its 20px corners and surface shadow. An understated
   warm `border-beam` treatment runs only on an untouched, empty conversation.
   Focus or editing dismisses it for that conversation; New thread resets it.
-  Reduced motion disables the beam and textarea height transitions.
+  Reduced motion disables the beam and textarea height transitions. Touch
+  devices suppress the beam's animation and paint layers to avoid the observed
+  iPhone Safari crash on the idle screen; the composer surface stays unchanged.
 - The input and send button share one row. The composer starts at 64px high
   and grows with the draft; the send button stays at the lower right.
 - The conversation's scroll viewport spans the available page width, including

@@ -152,6 +152,14 @@
     min-width: 320px;
   }
 
+  /* iOS zooms focused text fields below 16px. Keep touch inputs readable
+     without restricting the user's ability to pinch zoom. */
+  @media (any-pointer: coarse) {
+    :root {
+      --text-body-input: 16px;
+    }
+  }
+
   button,
   a {
     -webkit-tap-highlight-color: transparent;
