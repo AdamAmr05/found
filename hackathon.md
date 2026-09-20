@@ -16,7 +16,7 @@
 - **Auth:** Convex Auth
 - **AI models:** OpenAI `gpt-5.6-luna`, `gpt-transcribe`
 - **Started:** 2026-08-26T13:05:15Z
-- **Last updated:** 2026-09-20T18:31:36Z
+- **Last updated:** 2026-09-20T20:10:40Z
 
 ## Log
 
@@ -432,3 +432,9 @@ a “Retry send” button (`src/features/outreach/OutreachDraftHeader.tsx`).
 
 Mobile refinements to conversation entry and input interactions
 (`src/features/thread/thread-entry.css`, `src/styles/app.css`).
+
+### 2026-09-20 - 90a8474
+
+Committed touch-ups to mobile inbox layout (`8edb1aa`), Markdown tables and
+links (`c8da7d5`), and email delivery feedback (`90a8474`), including the
+previously logged table and email changes. Eight targeted browser tests passed.
