@@ -64,3 +64,29 @@ test('filters rows by delivery state', async ({ page }) => {
   await group.getByRole('button', { name: 'All' }).click()
   await expect(rows).toHaveCount(4)
 })
+
+test('keeps long inbox rows and their metadata inside phone widths', async ({
+  page,
+}) => {
+  for (const width of [320, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 })
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(width)
+    for (const row of await page
+      .getByRole('button', { name: /Open outreach to/ })
+      .all()) {
+      const bounds = await row.boundingBox()
+      expect(bounds).not.toBeNull()
+      if (!bounds) throw new Error('Inbox row is not laid out')
+      expect(bounds.x).toBeGreaterThanOrEqual(20)
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 20)
+      await expect(row.locator('time')).toBeVisible()
+      expect(
+        await row.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth,
+        ),
+      ).toBe(true)
+    }
+  }
+})

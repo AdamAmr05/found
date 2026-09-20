@@ -56,20 +56,20 @@ export function InboxRow({ item, onOpen }: InboxRowProps) {
   return (
     <button
       aria-label={`Open outreach to ${item.candidateTitle}: ${item.subject || 'No subject'}`}
-      className="surface-paper surface-paper-interactive w-full rounded-16 px-18 py-14 text-left focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:cursor-default"
+      className="surface-paper surface-paper-interactive w-full min-w-0 rounded-16 px-18 py-14 text-left focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-heat-100 disabled:cursor-default"
       disabled={!item.canReadThread}
       type="button"
       onClick={onOpen}
     >
-      <span className="flex items-center gap-12">
-        <span className="flex min-w-0 flex-1 items-center gap-8">
+      <span className="flex items-start gap-12 sm:items-center">
+        <span className="flex min-w-0 flex-1 items-baseline gap-8 sm:items-center">
           {item.unreadReplyCount > 0 ? (
             <span
               aria-label={`${item.unreadReplyCount} unread replies`}
               className="size-7 shrink-0 rounded-full bg-heat-100"
             />
           ) : null}
-          <span className="truncate text-label-large text-accent-black">
+          <span className="line-clamp-2 min-w-0 text-label-large wrap-anywhere text-accent-black sm:block sm:truncate">
             {item.candidateTitle}
           </span>
         </span>
@@ -78,8 +78,8 @@ export function InboxRow({ item, onOpen }: InboxRowProps) {
       <span className="mt-4 block truncate text-body-medium text-accent-black">
         {item.subject || 'No subject'}
       </span>
-      <span className="mt-6 flex items-center gap-12 font-mono text-mono-x-small text-foreground-muted">
-        <span className="min-w-0 flex-1 truncate">
+      <span className="mt-6 flex flex-col gap-2 font-mono text-mono-x-small text-foreground-muted sm:flex-row sm:items-center sm:gap-12">
+        <span className="min-w-0 truncate empty:hidden sm:flex-1">
           {item.recipient || (item.state === 'draft' ? '' : 'No recipient')}
         </span>
         <time className="shrink-0 tabular-nums">

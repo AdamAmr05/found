@@ -129,7 +129,10 @@ universal representation for every state.
   in `body-medium` black, and the recipient address with the activity time in
   muted `mono-x-small`. The delivery state is a plain `label-small` word at the
   top right, never a pill: heat for Replied, crimson for Failed, muted
-  otherwise. Drafts without a recipient leave the address blank.
+  otherwise. Drafts without a recipient leave the address blank. On phones,
+  place names use up to two lines, with the state aligned at the top; the
+  recipient and timestamp stack below the subject. Rows shrink within their
+  grid so long subjects cannot widen the page.
 - An Inbox message body is plain text with web and email addresses rendered as
   heat-colored underlined links. Web links open through the external-link
   dialog; Outlook's duplicated `<url> url` pairs and blank non-breaking
