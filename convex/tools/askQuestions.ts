@@ -14,6 +14,7 @@ export const askQuestions = createTool({
   description: [
     'Ask the user up to six questions at once through the composer, when two or more independent unknowns block a useful search and each has a small set of likely answers.',
     'Compose the questions yourself. Choose the kind that fits the answer: choice for a short list of options (multiple when several can apply), number for a small count with a unit, amount for money, location for where, when for timing with a few worded options, and text for anything open.',
+    'For a choice question, each option is an object such as { "value": "flat", "label": "Whole flat" }; value is the option identifier, label is what the user sees, and description is optional. For a when question, options are plain strings. Never use plain strings for choice options.',
     'Every kind also gives the user a free-text field and voice, so keep options short and let the user say it their own way. Money and dates are free text; never fix a currency or demand a date format.',
     'Prefill anything the user already said and use the hint to say where it came from, so the question reads as a confirmation. Never ask for something the user has answered. Use required only when research cannot start without it.',
     'Say one short sentence before calling this, then end the turn. The answers arrive as the user’s next message as prose, one line per question; a skipped question says (skipped), and a typed answer may change what was asked.',

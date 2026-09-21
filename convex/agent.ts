@@ -1,6 +1,6 @@
-import { Agent } from '@convex-dev/agent'
+import { Agent, hasSuccessfulToolCall } from '@convex-dev/agent'
 import { createOpenAI } from '@ai-sdk/openai'
-import { hasToolCall, isStepCount } from 'ai'
+import { isStepCount } from 'ai'
 
 import { components } from './_generated/api'
 import { env } from './_generated/server'
@@ -41,6 +41,7 @@ export const foundAgent = new Agent(components.agent, {
     lookupWeather,
     resolvePlaces,
   },
-  // Asking ends the turn: the answers arrive as the user's next message.
-  stopWhen: [isStepCount(16), hasToolCall('askQuestions')],
+  // A valid questionnaire ends the turn; invalid arguments go back to the
+  // agent for correction before the user is asked anything.
+  stopWhen: [isStepCount(16), hasSuccessfulToolCall('askQuestions')],
 })
